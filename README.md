@@ -77,14 +77,14 @@ orion deploy-vault --vault-type transparent --name "Algorithmic Liquidity Provis
 ### Deploy a new Encrypted Orion vault
 
 ```bash
-orion deploy-vault --vault-type encrypted --name "Fully Homomorphic Encryption for Vault Management" --symbol "FHEVM" --fee-type high_water_mark --performance-fee 0 --management-fee 2
+orion deploy-vault --vault-type encrypted --name "Fully Homomorphic Encryption for Vault Management" --symbol "FHEVM" --fee-type high_water_mark --performance-fee 10 --management-fee 2
 ```
 
 ### Submit an order intent to a vault
 
 ```bash
 # Use off-chain stack to generate an order intent
-echo '{"0x3E15268AdE04Eb579EE490CA92736301C7D644Bb": 0.4, "0x4371227723a006e8ee3941AfF5018D084a06DB95": 0.2, "0x784C3AB4C7bdC2d219b902fA63e87b376F178d82": 0.15, "0xD06b768D498FFD3151e4Bc89e0dBdAA0d1413044": 0.15, "0x1904c298d44b6cd10003C843e29D51407fE1309f": 0.1}' > order_intent.json
+echo '{"0xD33AD8cf56a58eb99ce027F64D3b86D162944e66": 0.1, "0xe7A334d3C81EAf515e0330A30fF2663Bf06B999c": 0.2, "0xd6F1Bc1F1383dc0f709489475eD1A3eADD8eE43C": 0.15, "0xfB6Df75C3D299F2Fa3A1Ebe0e86A121cD30FC591": 0.02, "0x37c2CBDE804F4Be1736887f01E46A97d42133070": 0.03, "0x6862c557245648F6f5a24fD51Ce1BAfa91543c77": 0.1, "0xb146CD21C332b909Dc0cC45dE12db7e50581F7c4": 0.1, "0x9B98f24a74CA8a66689D041792730caC36B29e6C": 0.05, "0x23FE67d2687008D24092F3b782f621Dd1A5f9360": 0.05, "0x5E8082e34e226633bdb7D80279f5A815620f403c": 0.01, "0x0fa4013910C2E31A5039cC8788206Fea97001270": 0.01, "0xADbaDfE60511aF60FC35833C3A218eFC1c062A6C": 0.08, "0x3F446382bD132ae1a25f76B688395f1eA72A790b": 0.1}' > order_intent.json
 
 # Submit the order intent to the Orion vault
 orion submit-order --order-intent-path order_intent.json

@@ -111,7 +111,7 @@ class OrionConfig(OrionSmartContract):
 
     def __init__(self):
         """Initialize the OrionConfig contract."""
-        contract_address = "0x8eD5Fb264A049b18B98e8403e01146Ee78C1e984"
+        contract_address = "0x1080C9E86cBD8c580fd08B4528450d3994cEA8F1"
         super().__init__(
             contract_name="OrionConfig",
             contract_address=contract_address,
@@ -158,9 +158,9 @@ class VaultFactory(OrionSmartContract):
     ):
         """Initialize the VaultFactory contract."""
         if vault_type == VaultType.TRANSPARENT:
-            contract_address = "0x5689219Aa5dC2766928d316E719AaE25047314e4"
+            contract_address = "0x2e904185e66E4436870e54A366ED833CA33b57aa"
         elif vault_type == VaultType.ENCRYPTED:
-            contract_address = "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F"
+            contract_address = "0x3a534Aa1f35BA5D324ae123e2e69C7E5Bd213b06"
 
         super().__init__(
             contract_name=f"{vault_type.capitalize()}VaultFactory",
