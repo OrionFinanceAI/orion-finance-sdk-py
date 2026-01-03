@@ -30,7 +30,7 @@ def load_contract_abi(contract_name: str) -> list[dict]:
     try:
         # Try to load from package data (when installed from PyPI)
         with (
-            resources.files("orion_finance_sdk")
+            resources.files("orion_finance_sdk_py")
             .joinpath("abis", f"{contract_name}.json")
             .open() as f
         ):

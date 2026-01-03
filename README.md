@@ -1,13 +1,13 @@
-# orion-finance-sdk [![Github Actions][gha-badge]][gha]
+# orion-finance-sdk-py [![Github Actions][gha-badge]][gha]
 
-[gha]: https://github.com/OrionFinanceAI/orion-finance-sdk/actions
-[gha-badge]: https://github.com/OrionFinanceAI/orion-finance-sdk/actions/workflows/build.yml/badge.svg
+[gha]: https://github.com/OrionFinanceAI/orion-finance-sdk-py/actions
+[gha-badge]: https://github.com/OrionFinanceAI/orion-finance-sdk-py/actions/workflows/build.yml/badge.svg
 
 ## About
 
 A Python Software Development Kit (SDK) to ease interactions with the Orion Finance protocol and its Vaults. This repository provides tools and utilities for quants and developers to seamlessly integrate with Orion's [portfolio management on-chain infrastructure](https://github.com/OrionFinanceAI/protocol).
 
-For additional information, please refer to the [Orion documentation](https://docs.orionfinance.ai), and the curator section in particular.
+For additional information, please refer to the [Orion documentation](https://docs.orionfinance.ai), and the manager section in particular.
 
 ## Licence
 
@@ -20,7 +20,7 @@ This software is distributed under the BSD-3-Clause license. See the [`LICENSE`]
 Install the latest stable version from PyPI:
 
 ```bash
-pip install orion-finance-sdk
+pip install orion-finance-sdk-py
 ```
 
 ### From Source
@@ -29,8 +29,8 @@ For development or to install the latest development version:
 
 ```bash
 # Clone the repository
-git clone https://github.com/OrionFinanceAI/orion-finance-sdk.git
-cd orion-finance-sdk
+git clone https://github.com/OrionFinanceAI/orion-finance-sdk-py.git
+cd orion-finance-sdk-py
 
 # Using uv (recommended)
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -50,7 +50,7 @@ make install
 
 ## Environment Variables Setup
 
-The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://docs.orionfinance.ai/curator/orion_sdk/install) to get one.
+The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://docs.orionfinance.ai/manager/orion_sdk/install) to get one.
 
 Based on the usage, additional environment variables may be required, e.g.:
 - `CURATOR_ADDRESS`: The address of the curator account.

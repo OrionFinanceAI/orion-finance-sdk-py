@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "orion-finance-sdk"
-version = "0.4.3"
+name = "orion-finance-sdk-py"
+version = "0.5.0"
 requires-python = ">=3.11"
 readme = "README.md"
 authors = [
@@ -29,7 +29,7 @@ dev = [
 ]
 
 [project.scripts]
-orion = "orion_finance_sdk.__main__:app"
+orion = "orion_finance_sdk_py.__main__:app"
 
 [tool.setuptools.packages.find]
 where = ["python"]
@@ -38,4 +38,4 @@ where = ["python"]
 "" = "python"
 
 [tool.setuptools.package-data]
-"orion_finance_sdk.js_sdk" = ["*"]
+"orion_finance_sdk_py.js_sdk" = ["*"]

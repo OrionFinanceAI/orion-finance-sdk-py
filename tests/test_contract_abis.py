@@ -1,12 +1,12 @@
 """Test module to verify ABI loading works in installed package."""
 
 import pytest
-from orion_finance_sdk.contracts import load_contract_abi
+from orion_finance_sdk_py.contracts import load_contract_abi
 
 
 def test_abi_import():
     """Test that the ABI loading function can be imported."""
-    from orion_finance_sdk.contracts import load_contract_abi
+    from orion_finance_sdk_py.contracts import load_contract_abi
 
     assert callable(load_contract_abi)
 

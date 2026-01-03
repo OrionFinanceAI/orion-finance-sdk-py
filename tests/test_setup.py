@@ -1,4 +1,4 @@
-import orion_finance_sdk as sdk
+import orion_finance_sdk_py as sdk
 
 
 def test_entry_points():

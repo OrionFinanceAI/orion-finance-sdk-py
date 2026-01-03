@@ -270,4 +270,4 @@ bundle/
 .DS_Store
 
 order_intent.json
-python/orion_finance_sdk/js_sdk/
+python/orion_finance_sdk_py/js_sdk/
