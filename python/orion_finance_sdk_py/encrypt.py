@@ -43,7 +43,7 @@ def encrypt_order_intent(order_intent: dict[str, int]) -> tuple[dict[str, bytes]
         "values": values,
     }
 
-    js_entry = files("orion_finance_sdk.js_sdk").joinpath("bundle.js")
+    js_entry = files("orion_finance_sdk_py.js_sdk").joinpath("bundle.js")
 
     result = subprocess.run(
         ["node", str(js_entry)],

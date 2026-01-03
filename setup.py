@@ -46,7 +46,7 @@ class CustomBuild(build_py):
 
     def copy_abis_to_package(self):
         """Copy ABI files into the package directory for distribution."""
-        package_dir = os.path.join(self.build_lib, "orion_finance_sdk")
+        package_dir = os.path.join(self.build_lib, "orion_finance_sdk_py")
         abis_dir = os.path.join(package_dir, "abis")
         os.makedirs(abis_dir, exist_ok=True)
 

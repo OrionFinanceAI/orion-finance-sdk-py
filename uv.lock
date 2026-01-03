@@ -793,7 +793,7 @@ wheels = [
 
 [[package]]
 name = "orion-finance-sdk-py"
-version = "0.4.3"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
