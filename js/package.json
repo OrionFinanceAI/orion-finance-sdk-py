@@ -10,10 +10,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OrionFinanceAI/orion-finance-sdk-js/"
+    "url": "git+https://github.com/OrionFinanceAI/orion-finance-sdk-py/tree/main/js"
   },
   "bugs": {
-    "url": "https://github.com/OrionFinanceAI/orion-finance-sdk-js/issues"
+    "url": "https://github.com/OrionFinanceAI/orion-finance-sdk-py/issues"
   },
   "scripts": {
     "start": "node src/index.js",
