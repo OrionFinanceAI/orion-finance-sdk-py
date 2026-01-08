@@ -48,7 +48,7 @@ STRATEGIST_PRIVATE_KEY=
             print(
                 "📝 Please update the .env file with your actual configuration values"
             )
-        except:
+        except Exception:
             pass
 
 
