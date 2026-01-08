@@ -10,8 +10,8 @@ import numpy as np
 random.seed(uuid.uuid4().int)  # uuid-based random seed for irreproducibility.
 
 # Validation constants matching smart contract requirements
-MAX_PERFORMANCE_FEE = 5000  # 50% in basis points
-MAX_MANAGEMENT_FEE = 500  # 5% in basis points
+MAX_PERFORMANCE_FEE = 3000  # 30% in basis points
+MAX_MANAGEMENT_FEE = 300  # 3% in basis points
 BASIS_POINTS_FACTOR = 100  # 100 to convert percentage to basis points
 
 

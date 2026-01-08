@@ -53,19 +53,17 @@ def test_validate_var():
 
 def test_validate_performance_fee():
     """Test performance fee validation."""
-    validate_performance_fee(5000)
-
+    validate_performance_fee(3000)
+    
     with pytest.raises(ValueError, match="exceeds maximum allowed value"):
-        validate_performance_fee(5001)
-
+        validate_performance_fee(3001)
 
 def test_validate_management_fee():
     """Test management fee validation."""
-    validate_management_fee(500)
-
+    validate_management_fee(300)
+    
     with pytest.raises(ValueError, match="exceeds maximum allowed value"):
-        validate_management_fee(501)
-
+        validate_management_fee(301)
 
 def test_round_with_fixed_sum():
     """Test rounding logic."""
