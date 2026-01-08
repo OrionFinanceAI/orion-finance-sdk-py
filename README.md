@@ -1,51 +1,71 @@
-# orion-finance-sdk-py [![Github Actions][gha-badge]][gha]
+# orion-finance-sdk-py
+
+<div align="center">
+
+[![codecov][codecov-badge]][codecov] [![Github Actions][gha-badge]][gha]
+
+
+</div>
 
 [gha]: https://github.com/OrionFinanceAI/orion-finance-sdk-py/actions
 [gha-badge]: https://github.com/OrionFinanceAI/orion-finance-sdk-py/actions/workflows/build.yml/badge.svg
 
+[codecov]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/graph/badge.svg?token=SJLL2VVQDS
+[codecov-badge]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/branch/main/graph/badge.svg
+
+[docs]: https://docs.orionfinance.ai/manager/intro
+[docs-badge]: https://img.shields.io/badge/Documentation-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white
+
 ## About
 
-A Python Software Development Kit (SDK) to ease interactions with the Orion Finance protocol and its Vaults. This repository provides tools and utilities for quants and developers to seamlessly integrate with Orion's [portfolio management on-chain infrastructure](https://github.com/OrionFinanceAI/protocol).
+A Python Software Development Kit (SDK) to facilitate interactions with the Orion Finance protocol. This repository provides tools and utilities for quants and developers to seamlessly integrate with Orion's [on-chain portfolio management infrastructure](https://github.com/OrionFinanceAI/protocol).
 
-For additional information, please refer to the [Orion documentation](https://docs.orionfinance.ai), and the manager section in particular.
+<div align="center">
+  
+[![Documentation][docs-badge]][docs]
 
-## Licence
+</div>
+
+For comprehensive documentation, including setup guides, API references, and developer resources, visit [docs.orionfinance.ai](https://docs.orionfinance.ai/).
+
+## License
 
 This software is distributed under the BSD-3-Clause license. See the [`LICENSE`](./LICENSE) file for the full text.
 
-## Installation
+## Setup for Development
 
-### From PyPI (Recommended)
-
-Install the latest stable version from PyPI:
-
-```bash
-pip install orion-finance-sdk-py
-```
-
-### From Source
-
-For development or to install the latest development version:
+If you're working on the SDK itself:
 
 ```bash
 # Clone the repository
 git clone https://github.com/OrionFinanceAI/orion-finance-sdk-py.git
 cd orion-finance-sdk-py
 
-# Using uv (recommended)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv
-source .venv/bin/activate
-uv pip install -e .
-```
-
-Or using make:
-
-```bash
+# Install dependencies
 make uv-download
 make venv
 source .venv/bin/activate
 make install
+
+# Run tests
+make test
+
+# Run tests with coverage
+make test  # Coverage is included automatically
+
+# Run code style checks
+make codestyle
+
+# Run docstring checks
+make docs
+```
+
+### Installation from PyPI
+
+For end users, install the latest stable version from PyPI:
+
+```bash
+pip install orion-finance-sdk-py
 ```
 
 ## Environment Variables Setup
