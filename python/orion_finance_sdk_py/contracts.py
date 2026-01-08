@@ -54,7 +54,7 @@ class OrionSmartContract:
             error_message=(
                 "RPC_URL environment variable is missing or invalid. "
                 "Please set RPC_URL in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
@@ -118,9 +118,9 @@ class OrionConfig(OrionSmartContract):
         )
 
     @property
-    def curator_intent_decimals(self) -> int:
-        """Fetch the curator intent decimals from the OrionConfig contract."""
-        return self.contract.functions.curatorIntentDecimals().call()
+    def strategist_intent_decimals(self) -> int:
+        """Fetch the strategist intent decimals from the OrionConfig contract."""
+        return self.contract.functions.strategistIntentDecimals().call()
 
     @property
     def whitelisted_assets(self) -> list[str]:
@@ -175,16 +175,16 @@ class VaultFactory(OrionSmartContract):
         performance_fee: int,
         management_fee: int,
     ) -> TransactionResult:
-        """Create an Orion vault for a given curator address."""
+        """Create an Orion vault for a given strategist address."""
         config = OrionConfig()
 
-        curator_address = os.getenv("CURATOR_ADDRESS")
+        strategist_address = os.getenv("STRATEGIST_ADDRESS")
         validate_var(
-            curator_address,
+            strategist_address,
             error_message=(
-                "CURATOR_ADDRESS environment variable is missing or invalid. "
-                "Please set CURATOR_ADDRESS in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+                "STRATEGIST_ADDRESS environment variable is missing or invalid. "
+                "Please set STRATEGIST_ADDRESS in your .env file or as an environment variable. "
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
@@ -194,7 +194,7 @@ class VaultFactory(OrionSmartContract):
             error_message=(
                 "VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set VAULT_DEPLOYER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
         account = self.w3.eth.account.from_key(deployer_private_key)
@@ -215,7 +215,7 @@ class VaultFactory(OrionSmartContract):
 
         # Estimate gas needed for the transaction
         gas_estimate = self.contract.functions.createVault(
-            curator_address, name, symbol, fee_type, performance_fee, management_fee
+            strategist_address, name, symbol, fee_type, performance_fee, management_fee
         ).estimate_gas({"from": account.address, "nonce": nonce})
 
         # Add 20% buffer to gas estimate
@@ -224,7 +224,7 @@ class VaultFactory(OrionSmartContract):
         # TODO: add check to measure deployer ETH balance and raise error if not enough before building tx.
 
         tx = self.contract.functions.createVault(
-            curator_address, name, symbol, fee_type, performance_fee, management_fee
+            strategist_address, name, symbol, fee_type, performance_fee, management_fee
         ).build_transaction(
             {
                 "from": account.address,
@@ -278,23 +278,23 @@ class OrionVault(OrionSmartContract):
         )
         super().__init__(contract_name, contract_address)
 
-    def update_curator(self, new_curator_address: str) -> TransactionResult:
-        """Update the curator address for the vault."""
+    def update_strategist(self, new_strategist_address: str) -> TransactionResult:
+        """Update the strategist address for the vault."""
         deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
         validate_var(
             deployer_private_key,
             error_message=(
                 "VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set VAULT_DEPLOYER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
         account = self.w3.eth.account.from_key(deployer_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
-        tx = self.contract.functions.updateCurator(
-            new_curator_address
+        tx = self.contract.functions.updateStrategist(
+            new_strategist_address
         ).build_transaction({"from": account.address, "nonce": nonce})
 
         signed = account.sign_transaction(tx)
@@ -322,7 +322,7 @@ class OrionVault(OrionSmartContract):
             error_message=(
                 "VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set VAULT_DEPLOYER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
@@ -368,17 +368,17 @@ class OrionTransparentVault(OrionVault):
         Returns:
             TransactionResult
         """
-        curator_private_key = os.getenv("CURATOR_PRIVATE_KEY")
+        strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY")
         validate_var(
-            curator_private_key,
+            strategist_private_key,
             error_message=(
-                "CURATOR_PRIVATE_KEY environment variable is missing or invalid. "
-                "Please set CURATOR_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+                "STRATEGIST_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set STRATEGIST_PRIVATE_KEY in your .env file or as an environment variable. "
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
-        account = self.w3.eth.account.from_key(curator_private_key)
+        account = self.w3.eth.account.from_key(strategist_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         items = [
@@ -447,7 +447,7 @@ class OrionEncryptedVault(OrionVault):
             error_message=(
                 "CURATOR_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set CURATOR_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
@@ -475,6 +475,40 @@ class OrionEncryptedVault(OrionVault):
                 "gasPrice": self.w3.eth.gas_price,
             }
         )
+
+        signed = account.sign_transaction(tx)
+        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        tx_hash_hex = tx_hash.hex()
+
+        receipt = self._wait_for_transaction_receipt(tx_hash_hex)
+
+        if receipt["status"] != 1:
+            raise Exception(f"Transaction failed with status: {receipt['status']}")
+
+        decoded_logs = self._decode_logs(receipt)
+
+        return TransactionResult(
+            tx_hash=tx_hash_hex, receipt=receipt, decoded_logs=decoded_logs
+        )
+
+    def update_strategist(self, new_strategist_address: str) -> TransactionResult:
+        """Update the strategist (curator) address for the vault."""
+        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
+        validate_var(
+            deployer_private_key,
+            error_message=(
+                "VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set VAULT_DEPLOYER_PRIVATE_KEY in your .env file or as an environment variable. "
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+            ),
+        )
+
+        account = self.w3.eth.account.from_key(deployer_private_key)
+        nonce = self.w3.eth.get_transaction_count(account.address)
+
+        tx = self.contract.functions.updateCurator(
+            new_strategist_address
+        ).build_transaction({"from": account.address, "nonce": nonce})
 
         signed = account.sign_transaction(tx)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)

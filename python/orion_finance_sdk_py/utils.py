@@ -28,14 +28,14 @@ def ensure_env_file(env_file_path: Path = Path.cwd() / ".env"):
 # RPC URL for blockchain connection
 RPC_URL=
 
-# Curator contract address
-CURATOR_ADDRESS=
+# Strategist contract address
+STRATEGIST_ADDRESS=
 
 # Private key for vault deployment
 VAULT_DEPLOYER_PRIVATE_KEY=
 
-# Private key for curator operations
-CURATOR_PRIVATE_KEY=
+# Private key for strategist operations
+STRATEGIST_PRIVATE_KEY=
 
 # Vault address
 # ORION_VAULT_ADDRESS=
@@ -97,7 +97,7 @@ def validate_order(order_intent: dict[str, int], fuzz: bool = False) -> dict[str
             "The sum of amounts is not 1 (within floating point tolerance)."
         )
 
-    curator_intent_decimals = orion_config.curator_intent_decimals
+    strategist_intent_decimals = orion_config.strategist_intent_decimals
 
     if fuzz:
         # Add remaining whitelisted assets with small random amounts
@@ -105,7 +105,7 @@ def validate_order(order_intent: dict[str, int], fuzz: bool = False) -> dict[str
         for asset in whitelisted_assets:
             if asset not in order_intent.keys():
                 order_intent[asset] = (
-                    random.randint(1, 10) / 10**curator_intent_decimals
+                    random.randint(1, 10) / 10**strategist_intent_decimals
                 )
 
         # Normalize again to sum to 1
@@ -120,11 +120,11 @@ def validate_order(order_intent: dict[str, int], fuzz: bool = False) -> dict[str
         order_intent = dict(items)
 
     order_intent = {
-        token: weight * 10**curator_intent_decimals
+        token: weight * 10**strategist_intent_decimals
         for token, weight in order_intent.items()
     }
     rounded_values = round_with_fixed_sum(
-        list(order_intent.values()), 10**curator_intent_decimals
+        list(order_intent.values()), 10**strategist_intent_decimals
     )
     order_intent = dict(zip(order_intent.keys(), rounded_values))
 
