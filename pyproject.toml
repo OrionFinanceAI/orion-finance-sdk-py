@@ -4,12 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orion-finance-sdk-py"
-version = "0.5.0"
+version = "0.5.1"
 requires-python = ">=3.11"
 readme = "README.md"
 authors = [
     { name = "Orion Finance" },
 ]
+license = { file = "LICENSE" }
+
 description = "A Python SDK for interacting with Orion Finance smart contracts"
 
 dependencies = [
@@ -22,9 +24,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pre-commit>=4.1.0,<4.2.0",
-    "ruff>=0.9.10, < 1.0.0",
+    "ruff>=0.9.10,<1.0.0",
     "pydocstyle>=6.3.0,<6.4.0",
     "pytest>=8.3.5,<8.4.0",
+    "pytest-cov>=6.0.0,<7.0.0",
     "pydeps>=3.0.0,<4.0.0"
 ]
 
@@ -39,3 +42,28 @@ where = ["python"]
 
 [tool.setuptools.package-data]
 "orion_finance_sdk_py.js_sdk" = ["*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["python/orion_finance_sdk_py"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == ['\"]__main__['\"]:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\b.*:",
+    "@(abc\\.)?abstractmethod",
+]

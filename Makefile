@@ -27,4 +27,4 @@ docs:
 
 .PHONY: test
 test:
-	uv run pytest -c pyproject.toml tests/
+	uv run pytest -c pyproject.toml --cov=orion_finance_sdk_py --cov-report=xml --cov-report=term tests/
