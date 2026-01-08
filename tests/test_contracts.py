@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from orion_finance_sdk_py.contracts import (
+    LiquidityOrchestrator,
     OrionConfig,
     OrionEncryptedVault,
     OrionSmartContract,
@@ -26,6 +27,8 @@ def mock_w3():
         # Setup the mock instance
         w3_instance = MagicMock()
         MockWeb3.return_value = w3_instance
+        # Mock chain ID
+        w3_instance.eth.chain_id = 11155111
 
         # Mock eth.contract
         contract_mock = MagicMock()
@@ -35,6 +38,9 @@ def mock_w3():
         w3_instance.eth.get_transaction_count.return_value = 0
         w3_instance.eth.gas_price = 1000000000
         w3_instance.eth.account.from_key.return_value = MagicMock(address="0xDeployer")
+
+        # Mock balance (default sufficient)
+        w3_instance.eth.get_balance.return_value = 10**18
 
         signed_tx = MagicMock()
         signed_tx.raw_transaction = b"raw_tx"
@@ -54,6 +60,9 @@ def mock_w3():
 
         w3_instance.eth.wait_for_transaction_receipt.return_value = receipt
 
+        # Mock to_checksum_address to return the input string
+        MockWeb3.to_checksum_address.side_effect = lambda x: x
+
         yield w3_instance
 
 
@@ -70,6 +79,7 @@ def mock_env():
     """Mock environment variables."""
     env_vars = {
         "RPC_URL": "http://localhost:8545",
+        "CHAIN_ID": "11155111",
         "STRATEGIST_ADDRESS": "0xStrategist",
         "CURATOR_ADDRESS": "0xCurator",
         "VAULT_DEPLOYER_PRIVATE_KEY": "0xPrivate",
@@ -83,10 +93,6 @@ def mock_env():
 
 def test_load_contract_abi_success():
     """Test successful ABI loading."""
-    # We can't easily mock resources.files without affecting other things,
-    # but we can rely on the fact that the package is installed in dev mode.
-    # The real load_contract_abi is tested in test_contract_abis.py.
-    # Here we just verify it returns a list if we mock the open.
     pass
 
 
@@ -152,6 +158,7 @@ class TestOrionConfig:
 
         # Setup mock returns
         config.contract.functions.strategistIntentDecimals().call.return_value = 18
+        config.contract.functions.riskFreeRate().call.return_value = 500
         config.contract.functions.getAllWhitelistedAssets().call.return_value = [
             "0xA",
             "0xB",
@@ -171,6 +178,7 @@ class TestOrionConfig:
         config.contract.functions.isSystemIdle().call.return_value = True
 
         assert config.strategist_intent_decimals == 18
+        assert config.risk_free_rate == 500
         assert config.whitelisted_assets == ["0xA", "0xB"]
         assert config.orion_transparent_vaults == ["0xV1"]
         assert config.orion_encrypted_vaults == ["0xV2"]
@@ -178,6 +186,34 @@ class TestOrionConfig:
 
         config.contract.functions.isWhitelisted("0xToken").call.return_value = True
         assert config.is_whitelisted("0xToken") is True
+
+        config.contract.functions.isWhitelistedManager(
+            "0xManager"
+        ).call.return_value = True
+        assert config.is_whitelisted_manager("0xManager") is True
+
+    def test_init_invalid_chain(self, mock_w3, mock_load_abi):
+        """Test init with invalid chain ID."""
+        with patch.dict(os.environ, {"CHAIN_ID": "1", "RPC_URL": "http://localhost"}):
+            with pytest.raises(ValueError, match="Unsupported CHAIN_ID"):
+                OrionConfig()
+
+
+class TestLiquidityOrchestrator:
+    """Tests for LiquidityOrchestrator."""
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_init_and_properties(self, MockConfig, mock_w3, mock_load_abi, mock_env):
+        MockConfig.return_value.contract.functions.liquidityOrchestrator().call.return_value = "0xLiquidity"
+
+        lo = LiquidityOrchestrator()
+        assert lo.contract_address == "0xLiquidity"
+
+        lo.contract.functions.targetBufferRatio().call.return_value = 1000
+        assert lo.target_buffer_ratio == 1000
+
+        lo.contract.functions.slippageTolerance().call.return_value = 50
+        assert lo.slippage_tolerance == 50
 
 
 class TestVaultFactory:
@@ -189,8 +225,10 @@ class TestVaultFactory:
         # Mock OrionConfig
         config_instance = MockConfig.return_value
         config_instance.is_system_idle.return_value = True
+        config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
 
         factory = VaultFactory(VaultType.TRANSPARENT)
+        assert factory.contract_address == "0xTVF"
 
         # Mock contract calls
         factory.contract.functions.createVault.return_value.estimate_gas.return_value = 100000
@@ -202,6 +240,7 @@ class TestVaultFactory:
             fee_type=0,
             performance_fee=1000,
             management_fee=100,
+            deposit_access_control="0x0000000000000000000000000000000000000000",
         )
 
         assert isinstance(result, TransactionResult)
@@ -211,11 +250,35 @@ class TestVaultFactory:
         factory.contract.functions.createVault.assert_called()
         args = factory.contract.functions.createVault.call_args[0]
         assert args[0] == "0xStrategist"  # First arg is strategist/curator
+        # Check deposit access control passed
+        assert args[6] == "0x0000000000000000000000000000000000000000"
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_create_orion_vault_insufficient_balance(
+        self, MockConfig, mock_w3, mock_load_abi, mock_env
+    ):
+        """Test vault creation fails with insufficient balance."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+
+        factory = VaultFactory(VaultType.TRANSPARENT)
+
+        factory.contract.functions.createVault.return_value.estimate_gas.return_value = 100000
+        mock_w3.eth.gas_price = 1000000000
+        # Cost ~ 1.2 * 10^14
+        mock_w3.eth.get_balance.return_value = 0  # Not enough
+
+        with pytest.raises(ValueError, match="Insufficient ETH balance"):
+            factory.create_orion_vault("N", "S", 0, 0, 0)
 
     def test_create_orion_vault_system_busy(self, mock_w3, mock_load_abi, mock_env):
         """Test system busy check."""
         with patch("orion_finance_sdk_py.contracts.OrionConfig") as MockConfig:
             MockConfig.return_value.is_system_idle.return_value = False
+            # Mock transparent factory address
+            MockConfig.return_value.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+
             factory = VaultFactory(VaultType.TRANSPARENT)
 
             with pytest.raises(SystemExit):
@@ -223,7 +286,9 @@ class TestVaultFactory:
 
     def test_get_vault_address(self, mock_w3, mock_load_abi, mock_env):
         """Test extracting address from logs."""
-        factory = VaultFactory(VaultType.TRANSPARENT)
+        with patch("orion_finance_sdk_py.contracts.OrionConfig") as MockConfig:
+            MockConfig.return_value.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+            factory = VaultFactory(VaultType.TRANSPARENT)
 
         result = TransactionResult(
             tx_hash="0x",
@@ -251,12 +316,30 @@ class TestOrionVaults:
         # Mock tx methods
         vault.contract.functions.updateStrategist.return_value.estimate_gas.return_value = 100
         vault.contract.functions.updateFeeModel.return_value.estimate_gas.return_value = 100
+        vault.contract.functions.setDepositAccessControl.return_value.estimate_gas.return_value = 100
 
         res = vault.update_strategist("0xNew")
         assert res.receipt["status"] == 1
 
         res = vault.update_fee_model(0, 0, 0)
         assert res.receipt["status"] == 1
+
+        res = vault.set_deposit_access_control("0xControl")
+        assert res.receipt["status"] == 1
+
+        # Mock view methods
+        vault.contract.functions.totalAssets().call.return_value = 1000
+        vault.contract.functions.convertToAssets(10).call.return_value = 100
+        vault.contract.functions.getPortfolio().call.return_value = (
+            ["0xA", "0xB"],
+            [100, 200],
+        )
+        vault.contract.functions.maxDeposit("0xReceiver").call.return_value = 5000
+
+        assert vault.total_assets == 1000
+        assert vault.convert_to_assets(10) == 100
+        assert vault.get_portfolio() == {"0xA": 100, "0xB": 200}
+        assert vault.max_deposit("0xReceiver") == 5000
 
     def test_transparent_vault_submit(self, mock_w3, mock_load_abi, mock_env):
         """Test transparent vault submit."""
@@ -272,6 +355,15 @@ class TestOrionVaults:
 
         # Verify it used the contract function
         vault.contract.functions.submitIntent.assert_called()
+
+    def test_transparent_vault_transfer_fees(self, mock_w3, mock_load_abi, mock_env):
+        """Test transparent vault transfer fees."""
+        vault = OrionTransparentVault()
+        vault.contract.functions.claimVaultFees.return_value.build_transaction.return_value = {}
+
+        res = vault.transfer_manager_fees(100)
+        assert res.receipt["status"] == 1
+        vault.contract.functions.claimVaultFees.assert_called_with(100)
 
     def test_encrypted_vault_submit(self, mock_w3, mock_load_abi, mock_env):
         """Test encrypted vault submit."""
@@ -300,3 +392,12 @@ class TestOrionVaults:
 
         # Verify it called updateCurator, NOT updateStrategist
         vault.contract.functions.updateCurator.assert_called_with("0xNew")
+
+    def test_encrypted_vault_transfer_fees(self, mock_w3, mock_load_abi, mock_env):
+        """Test encrypted vault transfer fees."""
+        vault = OrionEncryptedVault()
+        vault.contract.functions.claimCuratorFees.return_value.build_transaction.return_value = {}
+
+        res = vault.transfer_strategist_fees(100)
+        assert res.receipt["status"] == 1
+        vault.contract.functions.claimCuratorFees.assert_called_with(100)
