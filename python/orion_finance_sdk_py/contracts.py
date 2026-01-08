@@ -59,6 +59,14 @@ class OrionSmartContract:
         )
 
         self.w3 = Web3(Web3.HTTPProvider(rpc_url))
+        self.chain_id = self.w3.eth.chain_id
+
+        env_chain_id = os.getenv("CHAIN_ID")
+        if env_chain_id and int(env_chain_id) != self.chain_id:
+            print(
+                f"⚠️ Warning: CHAIN_ID in env ({env_chain_id}) does not match RPC chain ID ({self.chain_id})"
+            )
+
         self.contract_name = contract_name
         self.contract_address = contract_address
         self.contract = self.w3.eth.contract(
@@ -111,7 +119,16 @@ class OrionConfig(OrionSmartContract):
 
     def __init__(self):
         """Initialize the OrionConfig contract."""
-        contract_address = "0x8eD5Fb264A049b18B98e8403e01146Ee78C1e984"
+        # Default to Sepolia if not specified, but prefer env var
+        chain_id = int(os.getenv("CHAIN_ID", "11155111"))
+
+        if chain_id == 11155111:  # Sepolia
+            contract_address = "0xa3e0237838Ad04dA5659418FaB7b28a9b0B13dEB"
+        else:
+            raise ValueError(
+                f"Unsupported CHAIN_ID: {chain_id}. Only Sepolia (11155111) is currently supported with hardcoded config."
+            )
+
         super().__init__(
             contract_name="OrionConfig",
             contract_address=contract_address,
@@ -123,6 +140,11 @@ class OrionConfig(OrionSmartContract):
         return self.contract.functions.strategistIntentDecimals().call()
 
     @property
+    def risk_free_rate(self) -> int:
+        """Fetch the risk free rate from the OrionConfig contract."""
+        return self.contract.functions.riskFreeRate().call()
+
+    @property
     def whitelisted_assets(self) -> list[str]:
         """Fetch all whitelisted assets from the OrionConfig contract."""
         return self.contract.functions.getAllWhitelistedAssets().call()
@@ -131,6 +153,12 @@ class OrionConfig(OrionSmartContract):
         """Check if a token address is whitelisted."""
         return self.contract.functions.isWhitelisted(
             Web3.to_checksum_address(token_address)
+        ).call()
+
+    def is_whitelisted_manager(self, manager_address: str) -> bool:
+        """Check if a manager address is whitelisted."""
+        return self.contract.functions.isWhitelistedManager(
+            Web3.to_checksum_address(manager_address)
         ).call()
 
     @property
@@ -148,6 +176,29 @@ class OrionConfig(OrionSmartContract):
         return self.contract.functions.isSystemIdle().call()
 
 
+class LiquidityOrchestrator(OrionSmartContract):
+    """LiquidityOrchestrator contract."""
+
+    def __init__(self):
+        """Initialize the LiquidityOrchestrator contract."""
+        config = OrionConfig()
+        contract_address = config.contract.functions.liquidityOrchestrator().call()
+        super().__init__(
+            contract_name="LiquidityOrchestrator",
+            contract_address=contract_address,
+        )
+
+    @property
+    def target_buffer_ratio(self) -> int:
+        """Fetch the target buffer ratio."""
+        return self.contract.functions.targetBufferRatio().call()
+
+    @property
+    def slippage_tolerance(self) -> int:
+        """Fetch the slippage tolerance."""
+        return self.contract.functions.slippageTolerance().call()
+
+
 class VaultFactory(OrionSmartContract):
     """VaultFactory contract."""
 
@@ -157,10 +208,14 @@ class VaultFactory(OrionSmartContract):
         contract_address: str | None = None,
     ):
         """Initialize the VaultFactory contract."""
-        if vault_type == VaultType.TRANSPARENT:
-            contract_address = "0x5689219Aa5dC2766928d316E719AaE25047314e4"
-        elif vault_type == VaultType.ENCRYPTED:
-            contract_address = "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F"
+        if contract_address is None:
+            config = OrionConfig()
+            if vault_type == VaultType.TRANSPARENT:
+                contract_address = (
+                    config.contract.functions.transparentVaultFactory().call()
+                )
+            elif vault_type == VaultType.ENCRYPTED:
+                contract_address = "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F"
 
         super().__init__(
             contract_name=f"{vault_type.capitalize()}VaultFactory",
@@ -174,6 +229,7 @@ class VaultFactory(OrionSmartContract):
         fee_type: int,
         performance_fee: int,
         management_fee: int,
+        deposit_access_control: str = "0x0000000000000000000000000000000000000000",
     ) -> TransactionResult:
         """Create an Orion vault for a given strategist address."""
         config = OrionConfig()
@@ -215,16 +271,35 @@ class VaultFactory(OrionSmartContract):
 
         # Estimate gas needed for the transaction
         gas_estimate = self.contract.functions.createVault(
-            strategist_address, name, symbol, fee_type, performance_fee, management_fee
+            strategist_address,
+            name,
+            symbol,
+            fee_type,
+            performance_fee,
+            management_fee,
+            Web3.to_checksum_address(deposit_access_control),
         ).estimate_gas({"from": account.address, "nonce": nonce})
 
         # Add 20% buffer to gas estimate
         gas_limit = int(gas_estimate * 1.2)
 
-        # TODO: add check to measure deployer ETH balance and raise error if not enough before building tx.
+        gas_price = self.w3.eth.gas_price
+        estimated_cost = gas_limit * gas_price
+        balance = self.w3.eth.get_balance(account.address)
+
+        if balance < estimated_cost:
+            raise ValueError(
+                f"Insufficient ETH balance. Required: {estimated_cost}, Available: {balance}"
+            )
 
         tx = self.contract.functions.createVault(
-            strategist_address, name, symbol, fee_type, performance_fee, management_fee
+            strategist_address,
+            name,
+            symbol,
+            fee_type,
+            performance_fee,
+            management_fee,
+            Web3.to_checksum_address(deposit_access_control),
         ).build_transaction(
             {
                 "from": account.address,
@@ -348,6 +423,53 @@ class OrionVault(OrionSmartContract):
             tx_hash=tx_hash_hex, receipt=receipt, decoded_logs=decoded_logs
         )
 
+    @property
+    def total_assets(self) -> int:
+        """Fetch the total assets of the vault."""
+        return self.contract.functions.totalAssets().call()
+
+    def convert_to_assets(self, shares: int) -> int:
+        """Convert shares to assets."""
+        return self.contract.functions.convertToAssets(shares).call()
+
+    def get_portfolio(self) -> dict:
+        """Get the vault portfolio."""
+        # This returns a tuple (tokens, values)
+        tokens, values = self.contract.functions.getPortfolio().call()
+        return dict(zip(tokens, values))
+
+    def set_deposit_access_control(
+        self, access_control_address: str
+    ) -> TransactionResult:
+        """Set the deposit access control contract address."""
+        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
+        validate_var(
+            deployer_private_key,
+            error_message="VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid.",
+        )
+        account = self.w3.eth.account.from_key(deployer_private_key)
+        nonce = self.w3.eth.get_transaction_count(account.address)
+
+        tx = self.contract.functions.setDepositAccessControl(
+            Web3.to_checksum_address(access_control_address)
+        ).build_transaction({"from": account.address, "nonce": nonce})
+
+        signed = account.sign_transaction(tx)
+        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        tx_hash_hex = tx_hash.hex()
+        receipt = self._wait_for_transaction_receipt(tx_hash_hex)
+        return TransactionResult(
+            tx_hash=tx_hash_hex,
+            receipt=receipt,
+            decoded_logs=self._decode_logs(receipt),
+        )
+
+    def max_deposit(self, receiver: str) -> int:
+        """Fetch the maximum deposit amount for a receiver."""
+        return self.contract.functions.maxDeposit(
+            Web3.to_checksum_address(receiver)
+        ).call()
+
 
 class OrionTransparentVault(OrionVault):
     """OrionTransparentVault contract."""
@@ -355,6 +477,24 @@ class OrionTransparentVault(OrionVault):
     def __init__(self):
         """Initialize the OrionTransparentVault contract."""
         super().__init__("OrionTransparentVault")
+
+    def transfer_manager_fees(self, amount: int) -> TransactionResult:
+        """Transfer manager fees (claimVaultFees)."""
+        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
+        account = self.w3.eth.account.from_key(deployer_private_key)
+        nonce = self.w3.eth.get_transaction_count(account.address)
+
+        tx = self.contract.functions.claimVaultFees(amount).build_transaction(
+            {"from": account.address, "nonce": nonce}
+        )
+        signed = account.sign_transaction(tx)
+        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        receipt = self._wait_for_transaction_receipt(tx_hash.hex())
+        return TransactionResult(
+            tx_hash=tx_hash.hex(),
+            receipt=receipt,
+            decoded_logs=self._decode_logs(receipt),
+        )
 
     def submit_order_intent(
         self,
@@ -427,6 +567,30 @@ class OrionEncryptedVault(OrionVault):
         """Initialize the OrionEncryptedVault contract."""
         super().__init__("OrionEncryptedVault")
 
+    def transfer_strategist_fees(self, amount: int) -> TransactionResult:
+        """Transfer strategist fees (claimCuratorFees)."""
+        strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
+            "CURATOR_PRIVATE_KEY"
+        )
+
+        validate_var(strategist_private_key, "STRATEGIST_PRIVATE_KEY missing")
+
+        account = self.w3.eth.account.from_key(strategist_private_key)
+        nonce = self.w3.eth.get_transaction_count(account.address)
+
+        tx = self.contract.functions.claimCuratorFees(amount).build_transaction(
+            {"from": account.address, "nonce": nonce}
+        )
+        signed = account.sign_transaction(tx)
+        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        tx_hash_hex = tx_hash.hex()
+        receipt = self._wait_for_transaction_receipt(tx_hash_hex)
+        return TransactionResult(
+            tx_hash=tx_hash_hex,
+            receipt=receipt,
+            decoded_logs=self._decode_logs(receipt),
+        )
+
     def submit_order_intent(
         self,
         order_intent: dict[str, bytes],
@@ -441,17 +605,20 @@ class OrionEncryptedVault(OrionVault):
         Returns:
             TransactionResult
         """
-        curator_private_key = os.getenv("CURATOR_PRIVATE_KEY")
+        # Use STRATEGIST_PRIVATE_KEY preferrably, fallback to CURATOR
+        strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
+            "CURATOR_PRIVATE_KEY"
+        )
         validate_var(
-            curator_private_key,
+            strategist_private_key,
             error_message=(
-                "CURATOR_PRIVATE_KEY environment variable is missing or invalid. "
-                "Please set CURATOR_PRIVATE_KEY in your .env file or as an environment variable. "
+                "STRATEGIST_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set STRATEGIST_PRIVATE_KEY in your .env file or as an environment variable. "
                 "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
-        account = self.w3.eth.account.from_key(curator_private_key)
+        account = self.w3.eth.account.from_key(strategist_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         items = [
