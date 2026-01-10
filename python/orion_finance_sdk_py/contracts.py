@@ -485,6 +485,42 @@ class OrionVault(OrionSmartContract):
             Web3.to_checksum_address(receiver)
         ).call()
 
+    def can_request_deposit(self, user: str) -> bool:
+        """Check if a user is allowed to request a deposit.
+
+        This method queries the vault's depositAccessControl contract.
+        If no access control is set (zero address), it returns True.
+        """
+        try:
+            access_control_address = (
+                self.contract.functions.depositAccessControl().call()
+            )
+        except Exception:
+            # If the contract doesn't expose depositAccessControl, assume permissionless
+            return True
+
+        if access_control_address == ZERO_ADDRESS:
+            return True
+
+        # Minimal ABI for IOrionAccessControl to check permissions
+        access_control_abi = [
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "sender", "type": "address"}
+                ],
+                "name": "canRequestDeposit",
+                "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+                "stateMutability": "view",
+                "type": "function",
+            }
+        ]
+        access_control = self.w3.eth.contract(
+            address=access_control_address, abi=access_control_abi
+        )
+        return access_control.functions.canRequestDeposit(
+            Web3.to_checksum_address(user)
+        ).call()
+
 
 class OrionTransparentVault(OrionVault):
     """OrionTransparentVault contract."""

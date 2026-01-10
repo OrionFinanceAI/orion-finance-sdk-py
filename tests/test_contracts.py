@@ -353,6 +353,19 @@ class TestOrionVaults:
         assert vault.max_deposit("0xReceiver") == 5000
         assert vault.share_price == 10**18
 
+        # Test can_request_deposit (permissionless)
+        vault.contract.functions.depositAccessControl().call.return_value = ZERO_ADDRESS
+        assert vault.can_request_deposit("0xUser") is True
+
+        # Test can_request_deposit (with access control)
+        vault.contract.functions.depositAccessControl().call.return_value = "0xAC"
+        with patch.object(mock_w3.eth, "contract") as mock_ac_contract:
+            mock_ac_instance = mock_ac_contract.return_value
+            mock_ac_instance.functions.canRequestDeposit().call.return_value = True
+            assert vault.can_request_deposit("0xUser") is True
+            mock_ac_instance.functions.canRequestDeposit().call.return_value = False
+            assert vault.can_request_deposit("0xUser") is False
+
     def test_transparent_vault_submit(self, mock_w3, mock_load_abi, mock_env):
         """Test transparent vault submit."""
         vault = OrionTransparentVault()
