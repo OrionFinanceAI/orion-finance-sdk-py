@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from web3 import Web3
 from web3.types import TxReceipt
 
-from .types import VaultType
+from .types import CHAIN_CONFIG, ZERO_ADDRESS, VaultType
 from .utils import validate_management_fee, validate_performance_fee, validate_var
 
 load_dotenv()
@@ -122,11 +122,11 @@ class OrionConfig(OrionSmartContract):
         # Default to Sepolia if not specified, but prefer env var
         chain_id = int(os.getenv("CHAIN_ID", "11155111"))
 
-        if chain_id == 11155111:  # Sepolia
-            contract_address = "0xa3e0237838Ad04dA5659418FaB7b28a9b0B13dEB"
+        if chain_id in CHAIN_CONFIG:
+            contract_address = CHAIN_CONFIG[chain_id]["OrionConfig"]
         else:
             raise ValueError(
-                f"Unsupported CHAIN_ID: {chain_id}. Only Sepolia (11155111) is currently supported with hardcoded config."
+                f"Unsupported CHAIN_ID: {chain_id}. Please check CHAIN_CONFIG in types.py or set CHAIN_ID env var correctly."
             )
 
         super().__init__(
@@ -215,7 +215,16 @@ class VaultFactory(OrionSmartContract):
                     config.contract.functions.transparentVaultFactory().call()
                 )
             elif vault_type == VaultType.ENCRYPTED:
-                contract_address = "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F"
+                # Retrieve from config if possible (added to CHAIN_CONFIG)
+                chain_id = int(os.getenv("CHAIN_ID", "11155111"))
+                if (
+                    chain_id in CHAIN_CONFIG
+                    and "EncryptedVaultFactory" in CHAIN_CONFIG[chain_id]
+                ):
+                    contract_address = CHAIN_CONFIG[chain_id]["EncryptedVaultFactory"]
+                else:
+                    # Fallback or error
+                    contract_address = "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F"
 
         super().__init__(
             contract_name=f"{vault_type.capitalize()}VaultFactory",
@@ -229,7 +238,7 @@ class VaultFactory(OrionSmartContract):
         fee_type: int,
         performance_fee: int,
         management_fee: int,
-        deposit_access_control: str = "0x0000000000000000000000000000000000000000",
+        deposit_access_control: str = ZERO_ADDRESS,
     ) -> TransactionResult:
         """Create an Orion vault for a given strategist address."""
         config = OrionConfig()
@@ -427,6 +436,12 @@ class OrionVault(OrionSmartContract):
     def total_assets(self) -> int:
         """Fetch the total assets of the vault."""
         return self.contract.functions.totalAssets().call()
+
+    @property
+    def share_price(self) -> int:
+        """Fetch the current share price (value of 1 share unit)."""
+        decimals = self.contract.functions.decimals().call()
+        return self.contract.functions.convertToAssets(10**decimals).call()
 
     def convert_to_assets(self, shares: int) -> int:
         """Convert shares to assets."""

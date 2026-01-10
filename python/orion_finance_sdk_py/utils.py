@@ -7,6 +7,8 @@ from pathlib import Path
 
 import numpy as np
 
+from .types import ZERO_ADDRESS
+
 random.seed(uuid.uuid4().int)  # uuid-based random seed for irreproducibility.
 
 # Validation constants matching smart contract requirements
@@ -54,7 +56,7 @@ STRATEGIST_PRIVATE_KEY=
 
 def validate_var(var: str, error_message: str) -> None:
     """Validate that the environment variable is not zero."""
-    if not var or var == "0x0000000000000000000000000000000000000000":
+    if not var or var == ZERO_ADDRESS:
         print(error_message)
         sys.exit(1)
 

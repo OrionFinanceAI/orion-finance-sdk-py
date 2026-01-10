@@ -44,8 +44,10 @@ def test_validate_var():
     with pytest.raises(SystemExit):
         validate_var(None, "Error")
 
+    from orion_finance_sdk_py.types import ZERO_ADDRESS
+
     with pytest.raises(SystemExit):
-        validate_var("0x0000000000000000000000000000000000000000", "Error")
+        validate_var(ZERO_ADDRESS, "Error")
 
     # Should not raise
     validate_var("0x123", "Error")

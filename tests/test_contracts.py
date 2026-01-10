@@ -14,7 +14,7 @@ from orion_finance_sdk_py.contracts import (
     TransactionResult,
     VaultFactory,
 )
-from orion_finance_sdk_py.types import VaultType
+from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
 
 
 @pytest.fixture
@@ -240,7 +240,7 @@ class TestVaultFactory:
             fee_type=0,
             performance_fee=1000,
             management_fee=100,
-            deposit_access_control="0x0000000000000000000000000000000000000000",
+            deposit_access_control=ZERO_ADDRESS,
         )
 
         assert isinstance(result, TransactionResult)
@@ -251,7 +251,7 @@ class TestVaultFactory:
         args = factory.contract.functions.createVault.call_args[0]
         assert args[0] == "0xStrategist"  # First arg is strategist/curator
         # Check deposit access control passed
-        assert args[6] == "0x0000000000000000000000000000000000000000"
+        assert args[6] == ZERO_ADDRESS
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     def test_create_orion_vault_insufficient_balance(
@@ -329,17 +329,29 @@ class TestOrionVaults:
 
         # Mock view methods
         vault.contract.functions.totalAssets().call.return_value = 1000
-        vault.contract.functions.convertToAssets(10).call.return_value = 100
+
+        def convert_side_effect(shares):
+            mock_call = MagicMock()
+            if shares == 10:
+                mock_call.call.return_value = 100
+            elif shares == 10**18:
+                mock_call.call.return_value = 10**18
+            return mock_call
+
+        vault.contract.functions.convertToAssets.side_effect = convert_side_effect
+
         vault.contract.functions.getPortfolio().call.return_value = (
             ["0xA", "0xB"],
             [100, 200],
         )
         vault.contract.functions.maxDeposit("0xReceiver").call.return_value = 5000
+        vault.contract.functions.decimals().call.return_value = 18
 
         assert vault.total_assets == 1000
         assert vault.convert_to_assets(10) == 100
         assert vault.get_portfolio() == {"0xA": 100, "0xB": 200}
         assert vault.max_deposit("0xReceiver") == 5000
+        assert vault.share_price == 10**18
 
     def test_transparent_vault_submit(self, mock_w3, mock_load_abi, mock_env):
         """Test transparent vault submit."""
