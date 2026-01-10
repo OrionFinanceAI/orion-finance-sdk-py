@@ -34,11 +34,19 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 
 html_theme_options = {
+    "logo": {
+        "image_light": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",
+        "image_dark": "https://docs.orionfinance.ai/img/Orion_Logo_white_horizontal.svg",
+        "alt_text": "Orion Finance SDK",
+    },
     "github_url": "https://github.com/OrionFinanceAI/orion-finance-sdk-py",
     "show_prev_next": False,
+    "navbar_align": "right",
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "secondary_sidebar_items": ["page-toc"],
 }
 
 # -- Autodoc configuration ---------------------------------------------------
