@@ -181,6 +181,7 @@ class TestOrionConfig:
         assert config.manager_intent_decimals == 18
         assert config.risk_free_rate == 500
         assert config.whitelisted_assets == ["0xA", "0xB"]
+        assert config.get_investment_universe == ["0xA", "0xB"]
         assert config.orion_transparent_vaults == ["0xV1"]
         assert config.orion_encrypted_vaults == ["0xV2"]
         assert config.is_system_idle() is True

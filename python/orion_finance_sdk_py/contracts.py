@@ -154,6 +154,11 @@ class OrionConfig(OrionSmartContract):
         """Fetch all whitelisted assets from the OrionConfig contract."""
         return self.contract.functions.getAllWhitelistedAssets().call()
 
+    @property
+    def get_investment_universe(self) -> list[str]:
+        """Alias for whitelisted_assets (Investment Universe)."""
+        return self.whitelisted_assets
+
     def is_whitelisted(self, token_address: str) -> bool:
         """Check if a token address is whitelisted."""
         return self.contract.functions.isWhitelisted(
