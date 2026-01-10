@@ -178,6 +178,7 @@ class TestOrionConfig:
         config.contract.functions.isSystemIdle().call.return_value = True
 
         assert config.strategist_intent_decimals == 18
+        assert config.manager_intent_decimals == 18
         assert config.risk_free_rate == 500
         assert config.whitelisted_assets == ["0xA", "0xB"]
         assert config.orion_transparent_vaults == ["0xV1"]

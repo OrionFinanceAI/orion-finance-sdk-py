@@ -140,6 +140,11 @@ class OrionConfig(OrionSmartContract):
         return self.contract.functions.strategistIntentDecimals().call()
 
     @property
+    def manager_intent_decimals(self) -> int:
+        """Alias for strategist_intent_decimals."""
+        return self.strategist_intent_decimals
+
+    @property
     def risk_free_rate(self) -> int:
         """Fetch the risk free rate from the OrionConfig contract."""
         return self.contract.functions.riskFreeRate().call()
