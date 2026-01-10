@@ -24,10 +24,7 @@ repos:
         name: ruff-format
         args: [format, --diff]
 
-  - repo: local
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
     hooks:
       - id: pydocstyle
-        name: pydocstyle
-        entry: uv run pydocstyle
-        types: [python]
-        language: system

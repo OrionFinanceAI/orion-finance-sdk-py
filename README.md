@@ -73,9 +73,9 @@ pip install orion-finance-sdk-py
 The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://docs.orionfinance.ai/manager/orion_sdk/install) to get one.
 
 Based on the usage, additional environment variables may be required, e.g.:
-- `CURATOR_ADDRESS`: The address of the curator account.
+- `STRATEGIST_ADDRESS`: The address of the strategist account.
 - `VAULT_DEPLOYER_PRIVATE_KEY`: The private key of the vault deployer account.
-- `CURATOR_PRIVATE_KEY`: The private key of the curator account.
+- `STRATEGIST_PRIVATE_KEY`: The private key of the strategist account.
 - `ORION_VAULT_ADDRESS`: The address of the Orion vault.
 
 ## Examples of Usage
@@ -110,10 +110,10 @@ echo '{"0x3E15268AdE04Eb579EE490CA92736301C7D644Bb": 0.4, "0x4371227723a006e8ee3
 orion submit-order --order-intent-path order_intent.json
 ```
 
-### Update the curator address for a vault
+### Update the strategist address for a vault
 
 ```bash
-orion update-curator --new-curator-address 0x92Cc2706b5775e2E783D76F20dC7ccC59bB92E48
+orion update-strategist --new-strategist-address 0x92Cc2706b5775e2E783D76F20dC7ccC59bB92E48
 ```
 
 ### Update the fee model for a vault

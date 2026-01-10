@@ -2,6 +2,16 @@
 
 from enum import Enum
 
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
+# Configuration for supported chains
+CHAIN_CONFIG = {
+    11155111: {  # Sepolia
+        "OrionConfig": "0xa3e0237838Ad04dA5659418FaB7b28a9b0B13dEB",
+        "EncryptedVaultFactory": "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F",
+    }
+}
+
 
 class VaultType(str, Enum):
     """Type of the vault."""

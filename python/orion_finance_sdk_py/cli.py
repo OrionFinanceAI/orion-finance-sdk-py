@@ -118,12 +118,12 @@ def submit_order(
 
 
 @app.command()
-def update_curator(
-    new_curator_address: str = typer.Option(
-        ..., help="New curator address to set for the vault"
+def update_strategist(
+    new_strategist_address: str = typer.Option(
+        ..., help="New strategist address to set for the vault"
     ),
 ) -> None:
-    """Update the curator address for an Orion vault."""
+    """Update the strategist address for an Orion vault."""
     ensure_env_file()
 
     vault_address = os.getenv("ORION_VAULT_ADDRESS")
@@ -138,8 +138,8 @@ def update_curator(
     # Working for both vaults types
     vault = OrionTransparentVault()
 
-    tx_result = vault.update_curator(new_curator_address)
-    format_transaction_logs(tx_result, "Curator address updated successfully!")
+    tx_result = vault.update_strategist(new_strategist_address)
+    format_transaction_logs(tx_result, "Strategist address updated successfully!")
 
 
 @app.command()

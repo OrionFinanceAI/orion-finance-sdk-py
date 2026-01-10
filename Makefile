@@ -6,7 +6,7 @@ uv-download:
 venv:
 	rm -rf .venv build dist *.egg-info
 	rm -rf abis/
-	uv venv
+	uv venv --python 3.13
 
 .PHONY: install
 install:
