@@ -41,7 +41,7 @@ docs = [
 ]
 
 [project.scripts]
-orion = "orion_finance_sdk_py.__main__:app"
+orion = "orion_finance_sdk_py.cli:entry_point"
 
 [tool.setuptools.packages.find]
 where = ["python"]
