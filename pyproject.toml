@@ -23,7 +23,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit>=4.1.0,<4.2.0",
+    "pre-commit>=4.1.0,<4.6.0",
     "ruff>=0.9.10,<1.0.0",
     "pydocstyle>=6.3.0,<6.4.0",
     "pytest>=8.3.5,<9.1.0",
