@@ -91,11 +91,6 @@ def mock_env():
         yield
 
 
-def test_load_contract_abi_success():
-    """Test successful ABI loading."""
-    pass
-
-
 class TestOrionSmartContract:
     """Tests for OrionSmartContract base class."""
 
@@ -313,17 +308,14 @@ class TestVaultFactory:
             with pytest.raises(SystemExit):
                 factory.create_orion_vault("N", "S", 0, 0, 0)
 
-        @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_vault_factory_encrypted_fallback(
+        self, MockConfig, mock_w3, mock_load_abi, mock_env
+    ):
+        """Test VaultFactory encrypted address fallback."""
+        # Ensure we are in a context where config lookup fails/not in map
 
-        def test_vault_factory_encrypted_fallback(self, MockConfig, mock_w3, mock_load_abi, mock_env):
-
-            """Test VaultFactory encrypted address fallback."""
-
-            # Ensure we are in a context where config lookup fails/not in map
-
-            
-
-            # Use a chain ID that is NOT in CHAIN_CONFIG's encrypted map or force fallback path logic
+        # Use a chain ID that is NOT in CHAIN_CONFIG's encrypted map or force fallback path logic
         # Actually logic is: if chain_id in CONFIG and key in config...
         # Fallback triggers if NOT in config OR key missing.
 

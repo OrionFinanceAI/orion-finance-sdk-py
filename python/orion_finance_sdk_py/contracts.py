@@ -62,10 +62,15 @@ class OrionSmartContract:
         self.chain_id = self.w3.eth.chain_id
 
         env_chain_id = os.getenv("CHAIN_ID")
-        if env_chain_id and int(env_chain_id) != self.chain_id:
-            print(
-                f"⚠️ Warning: CHAIN_ID in env ({env_chain_id}) does not match RPC chain ID ({self.chain_id})"
-            )
+        if env_chain_id:
+            try:
+                env_chain_id_int = int(env_chain_id)
+                if env_chain_id_int != self.chain_id:
+                    print(
+                        f"⚠️ Warning: CHAIN_ID in env ({env_chain_id}) does not match RPC chain ID ({self.chain_id})"
+                    )
+            except ValueError:
+                print(f"⚠️ Warning: Invalid CHAIN_ID in env: {env_chain_id}")
 
         self.contract_name = contract_name
         self.contract_address = contract_address
@@ -505,8 +510,8 @@ class OrionVault(OrionSmartContract):
             access_control_address = (
                 self.contract.functions.depositAccessControl().call()
             )
-        except Exception:
-            # If the contract doesn't expose depositAccessControl, assume permissionless
+        except (AttributeError, ValueError):
+            # If function doesn't exist in ABI or call fails due to missing method
             return True
 
         if access_control_address == ZERO_ADDRESS:
@@ -542,6 +547,14 @@ class OrionTransparentVault(OrionVault):
     def transfer_manager_fees(self, amount: int) -> TransactionResult:
         """Transfer manager fees (claimVaultFees)."""
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
+        validate_var(
+            manager_private_key,
+            error_message=(
+                "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+            ),
+        )
         account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 

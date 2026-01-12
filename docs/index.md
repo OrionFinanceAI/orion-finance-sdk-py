@@ -14,7 +14,7 @@ pip install orion-finance-sdk-py
 from orion_finance_sdk_py import OrionConfig
 
 config = OrionConfig()
-print(f"Risk Free Rate: {config.risk_free_rate}")
+print(f"Risk-free Rate: {config.risk_free_rate}")
 ```
 
 ## API Reference
