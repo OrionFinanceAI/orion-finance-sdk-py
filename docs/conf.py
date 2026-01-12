@@ -34,12 +34,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
-html_css_files = ["custom.css"]
+pygments_style = "friendly"
 
 html_theme_options = {
+    "default_mode": "light",
     "logo": {
         "image_light": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",
-        "image_dark": "https://docs.orionfinance.ai/img/Orion_Logo_white_horizontal.svg",
+        "image_dark": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",  # Force blue logo even in dark mode just in case
         "alt_text": "Orion Finance SDK",
     },
     "github_url": "https://github.com/OrionFinanceAI/orion-finance-sdk-py",
@@ -48,6 +49,13 @@ html_theme_options = {
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "secondary_sidebar_items": ["page-toc"],
 }
+
+
+def setup(app):
+    """Add custom CSS and JS files."""
+    app.add_css_file("custom.css")
+    app.add_js_file("force_light.js")
+
 
 # -- Autodoc configuration ---------------------------------------------------
 autodoc_typehints = "description"

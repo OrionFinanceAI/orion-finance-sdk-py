@@ -45,6 +45,7 @@ def main():
 def entry_point():
     """Entry point for the CLI that prints the banner."""
     import sys
+
     print(ORION_BANNER, file=sys.stderr)
     app()
 

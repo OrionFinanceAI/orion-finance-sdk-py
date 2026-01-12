@@ -274,3 +274,4 @@ python/orion_finance_sdk_py/js_sdk/
 protocol/
 docs-config/
 docs/_static/custom.css
+docs/_static/force_light.js
