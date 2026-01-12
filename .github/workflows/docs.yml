@@ -50,6 +50,7 @@ jobs:
           path: docs/_build/html
 
   deploy:
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     environment:
       name: github-pages
     runs-on: ubuntu-latest
