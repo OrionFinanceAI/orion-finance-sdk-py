@@ -1059,7 +1059,7 @@ wheels = [
 
 [[package]]
 name = "orion-finance-sdk-py"
-version = "0.6.0"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
@@ -1090,7 +1090,7 @@ docs = [
 requires-dist = [
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.0,<5.0.0" },
     { name = "numpy", specifier = ">=2.2.0,<3.0.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1.0,<4.2.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1.0,<4.6.0" },
     { name = "pydata-sphinx-theme", marker = "extra == 'docs'", specifier = ">=0.16.0,<1.0.0" },
     { name = "pydeps", marker = "extra == 'dev'", specifier = ">=3.0.0,<4.0.0" },
     { name = "pydocstyle", marker = "extra == 'dev'", specifier = ">=6.3.0,<6.4.0" },
