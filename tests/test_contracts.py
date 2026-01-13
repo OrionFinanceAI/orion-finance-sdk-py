@@ -309,6 +309,20 @@ class TestVaultFactory:
                 factory.create_orion_vault("N", "S", 0, 0, 0)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_vault_factory_encrypted_fallback(
+        self, MockConfig, mock_w3, mock_load_abi, mock_env
+    ):
+        """Test VaultFactory encrypted address fallback."""
+        with patch.dict(
+            "orion_finance_sdk_py.contracts.CHAIN_CONFIG",
+            {11155111: {"OrionConfig": "0x..."}},
+        ):
+            # Missing EncryptedVaultFactory key
+            factory = VaultFactory(VaultType.ENCRYPTED)
+            assert (
+                factory.contract_address == "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F"
+            )  # Fallback hardcoded
+
     def test_get_vault_address(self, mock_w3, mock_load_abi, mock_env):
         """Test extracting address from logs."""
         with patch("orion_finance_sdk_py.contracts.OrionConfig") as MockConfig:
