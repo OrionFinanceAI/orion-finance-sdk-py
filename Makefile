@@ -15,6 +15,7 @@ install:
 	cd js && npm install && npm run build
 	./scripts/build_js.sh
 
+.PHONY: codestyle
 codestyle:
 	uv run ruff format
 	uv run ruff check --select I --fix

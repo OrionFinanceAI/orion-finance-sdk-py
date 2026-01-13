@@ -3,11 +3,6 @@ name: Documentation
 on:
   release:
     types: [published]
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-      - "dev-*"
 
 permissions:
   contents: read
@@ -38,9 +33,6 @@ jobs:
 
       - name: Build documentation
         run: |
-          # Build JS SDK first if needed by build scripts, but likely only Python needed here
-          # We need to install the package itself to import it for autodoc
-          uv pip install .[docs]
           cd docs
           uv run sphinx-build -b html . _build/html
 

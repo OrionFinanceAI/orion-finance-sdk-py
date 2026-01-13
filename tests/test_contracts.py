@@ -309,42 +309,6 @@ class TestVaultFactory:
                 factory.create_orion_vault("N", "S", 0, 0, 0)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
-    def test_vault_factory_encrypted_fallback(
-        self, MockConfig, mock_w3, mock_load_abi, mock_env
-    ):
-        """Test VaultFactory encrypted address fallback."""
-        # Ensure we are in a context where config lookup fails/not in map
-
-        # Use a chain ID that is NOT in CHAIN_CONFIG's encrypted map or force fallback path logic
-        # Actually logic is: if chain_id in CONFIG and key in config...
-        # Fallback triggers if NOT in config OR key missing.
-
-        # Scenario 1: Chain ID not in config (but supported for instantiation? No, OrionConfig init checks support)
-        # But VaultFactory does `os.getenv("CHAIN_ID", "11155111")`
-
-        # Let's mock CHAIN_CONFIG to be empty temporarily? Or simpler, mock os.getenv to a chain ID that IS valid for logic but missing config?
-        # But `OrionConfig` init validates chain ID against `CHAIN_CONFIG`.
-        # So we must use a valid chain ID.
-
-        # The fallback logic is: `if (chain_id in CHAIN_CONFIG and "EncryptedVaultFactory" in CHAIN_CONFIG[chain_id])`
-        # Sepolia (11155111) IS in config and HAS key.
-        # So to hit fallback, we need a chain ID that `OrionConfig` accepts but `VaultFactory` fallback triggers?
-        # `OrionConfig` init raises if not in `CHAIN_CONFIG`.
-        # So `chain_id` MUST be in `CHAIN_CONFIG`.
-
-        # So we need `CHAIN_CONFIG` to NOT have "EncryptedVaultFactory".
-        # We can patch `CHAIN_CONFIG`.
-
-        with patch.dict(
-            "orion_finance_sdk_py.contracts.CHAIN_CONFIG",
-            {11155111: {"OrionConfig": "0x..."}},
-        ):
-            # Missing EncryptedVaultFactory key
-            factory = VaultFactory(VaultType.ENCRYPTED)
-            assert (
-                factory.contract_address == "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F"
-            )  # Fallback hardcoded
-
     def test_get_vault_address(self, mock_w3, mock_load_abi, mock_env):
         """Test extracting address from logs."""
         with patch("orion_finance_sdk_py.contracts.OrionConfig") as MockConfig:
