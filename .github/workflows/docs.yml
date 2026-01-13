@@ -2,9 +2,11 @@ name: Documentation
 
 on:
   workflow_run:
-    workflows: ["release"]
+    workflows: ["build"]
     types:
       - completed
+    branches:
+      - main
 
 permissions:
   contents: read
