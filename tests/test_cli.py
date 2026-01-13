@@ -1,5 +1,6 @@
 """Tests for CLI."""
 
+import os
 from unittest.mock import MagicMock, patch
 
 from orion_finance_sdk_py.cli import app
@@ -139,3 +140,70 @@ def test_update_fee_model(mock_ensure, MockVault):
 
     assert result.exit_code == 0
     assert "Fee model updated successfully" in result.stdout
+
+    result = runner.invoke(app, ["deploy-vault", "--help"])
+    assert result.exit_code == 0
+    assert "Deploy an Orion vault" in result.stdout
+
+
+@patch("orion_finance_sdk_py.cli.VaultFactory")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_deploy_vault_no_address(mock_ensure_env, MockVaultFactory):
+    """Test deploy-vault command when address extraction fails."""
+    mock_factory = MockVaultFactory.return_value
+    mock_factory.create_orion_vault.return_value = MagicMock(
+        tx_hash="0x123", decoded_logs=[]
+    )
+    mock_factory.get_vault_address_from_result.return_value = None
+
+    result = runner.invoke(
+        app,
+        [
+            "deploy-vault",
+            "--vault-type",
+            "transparent",
+            "--name",
+            "Test Vault",
+            "--symbol",
+            "TV",
+            "--fee-type",
+            "absolute",
+            "--performance-fee",
+            "10",
+            "--management-fee",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Could not extract vault address" in result.stdout
+
+
+@patch("orion_finance_sdk_py.contracts.OrionConfig")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_submit_order_unknown_vault(mock_ensure_env, MockOrionConfig, tmp_path):
+    """Test submit-order with unknown vault address."""
+    mock_config = MockOrionConfig.return_value
+    mock_config.orion_transparent_vaults = ["0xTrans"]
+    mock_config.orion_encrypted_vaults = ["0xEnc"]
+
+    # Create dummy order file
+    order_file = tmp_path / "order.json"
+    order_file.write_text('{"0xToken": 1}')
+
+    with patch.dict(os.environ, {"ORION_VAULT_ADDRESS": "0xUnknown"}):
+        result = runner.invoke(
+            app, ["submit-order", "--order-intent-path", str(order_file)]
+        )
+
+    assert result.exit_code == 1
+    assert "Vault address 0xUnknown not in OrionConfig" in str(result.exception)
+
+
+def test_entry_point():
+    """Test the CLI entry point function."""
+    from orion_finance_sdk_py.cli import entry_point
+
+    with patch("orion_finance_sdk_py.cli.app") as mock_app:
+        entry_point()
+        mock_app.assert_called_once()

@@ -62,10 +62,15 @@ class OrionSmartContract:
         self.chain_id = self.w3.eth.chain_id
 
         env_chain_id = os.getenv("CHAIN_ID")
-        if env_chain_id and int(env_chain_id) != self.chain_id:
-            print(
-                f"⚠️ Warning: CHAIN_ID in env ({env_chain_id}) does not match RPC chain ID ({self.chain_id})"
-            )
+        if env_chain_id:
+            try:
+                env_chain_id_int = int(env_chain_id)
+                if env_chain_id_int != self.chain_id:
+                    print(
+                        f"⚠️ Warning: CHAIN_ID in env ({env_chain_id}) does not match RPC chain ID ({self.chain_id})"
+                    )
+            except ValueError:
+                print(f"⚠️ Warning: Invalid CHAIN_ID in env: {env_chain_id}")
 
         self.contract_name = contract_name
         self.contract_address = contract_address
@@ -263,19 +268,19 @@ class VaultFactory(OrionSmartContract):
             ),
         )
 
-        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
+        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
-            deployer_private_key,
+            manager_private_key,
             error_message=(
-                "VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid. "
-                "Please set VAULT_DEPLOYER_PRIVATE_KEY in your .env file or as an environment variable. "
+                "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
                 "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
-        account = self.w3.eth.account.from_key(deployer_private_key)
+        account = self.w3.eth.account.from_key(manager_private_key)
         validate_var(
             account.address,
-            error_message="Invalid VAULT_DEPLOYER_PRIVATE_KEY.",
+            error_message="Invalid MANAGER_PRIVATE_KEY.",
         )
 
         validate_performance_fee(performance_fee)
@@ -285,7 +290,7 @@ class VaultFactory(OrionSmartContract):
             print("System is not idle. Cannot deploy vault at this time.")
             sys.exit(1)
 
-        account = self.w3.eth.account.from_key(deployer_private_key)
+        account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         # Estimate gas needed for the transaction
@@ -374,17 +379,17 @@ class OrionVault(OrionSmartContract):
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist address for the vault."""
-        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
+        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
-            deployer_private_key,
+            manager_private_key,
             error_message=(
-                "VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid. "
-                "Please set VAULT_DEPLOYER_PRIVATE_KEY in your .env file or as an environment variable. "
+                "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
                 "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
-        account = self.w3.eth.account.from_key(deployer_private_key)
+        account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateStrategist(
@@ -410,17 +415,17 @@ class OrionVault(OrionSmartContract):
         self, fee_type: int, performance_fee: int, management_fee: int
     ) -> TransactionResult:
         """Update the fee model for the vault."""
-        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
+        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
-            deployer_private_key,
+            manager_private_key,
             error_message=(
-                "VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid. "
-                "Please set VAULT_DEPLOYER_PRIVATE_KEY in your .env file or as an environment variable. "
+                "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
                 "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
-        account = self.w3.eth.account.from_key(deployer_private_key)
+        account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateFeeModel(
@@ -461,18 +466,18 @@ class OrionVault(OrionSmartContract):
         """Get the vault portfolio."""
         # This returns a tuple (tokens, values)
         tokens, values = self.contract.functions.getPortfolio().call()
-        return dict(zip(tokens, values))
+        return dict(zip(tokens, values, strict=True))
 
     def set_deposit_access_control(
         self, access_control_address: str
     ) -> TransactionResult:
         """Set the deposit access control contract address."""
-        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
+        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
-            deployer_private_key,
-            error_message="VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid.",
+            manager_private_key,
+            error_message="MANAGER_PRIVATE_KEY environment variable is missing or invalid.",
         )
-        account = self.w3.eth.account.from_key(deployer_private_key)
+        account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.setDepositAccessControl(
@@ -505,8 +510,8 @@ class OrionVault(OrionSmartContract):
             access_control_address = (
                 self.contract.functions.depositAccessControl().call()
             )
-        except Exception:
-            # If the contract doesn't expose depositAccessControl, assume permissionless
+        except (AttributeError, ValueError):
+            # If function doesn't exist in ABI or call fails due to missing method
             return True
 
         if access_control_address == ZERO_ADDRESS:
@@ -541,8 +546,16 @@ class OrionTransparentVault(OrionVault):
 
     def transfer_manager_fees(self, amount: int) -> TransactionResult:
         """Transfer manager fees (claimVaultFees)."""
-        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
-        account = self.w3.eth.account.from_key(deployer_private_key)
+        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
+        validate_var(
+            manager_private_key,
+            error_message=(
+                "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
+                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+            ),
+        )
+        account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.claimVaultFees(amount).build_transaction(
@@ -721,17 +734,17 @@ class OrionEncryptedVault(OrionVault):
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist (curator) address for the vault."""
-        deployer_private_key = os.getenv("VAULT_DEPLOYER_PRIVATE_KEY")
+        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
-            deployer_private_key,
+            manager_private_key,
             error_message=(
-                "VAULT_DEPLOYER_PRIVATE_KEY environment variable is missing or invalid. "
-                "Please set VAULT_DEPLOYER_PRIVATE_KEY in your .env file or as an environment variable. "
+                "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
+                "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
                 "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
-        account = self.w3.eth.account.from_key(deployer_private_key)
+        account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateCurator(
