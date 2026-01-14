@@ -26,6 +26,10 @@ jobs:
       - name: Build Sphinx docs
         run: uv run sphinx-build -b html docs docs/_build/html
 
+      - name: Create CNAME file for custom domain
+        run: |
+            echo "sdk.orionfinance.ai" > docs/_build/html/CNAME
+
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
