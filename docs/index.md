@@ -20,7 +20,7 @@ The typical workflow for using the Orion Finance SDK:
 Install the latest stable version from PyPI:
 
 ```bash
-pip install orion-finance-sdk
+pip install "orion-finance-sdk-py>=1.0.0"
 ```
 
 Check available CLI commands any time:
