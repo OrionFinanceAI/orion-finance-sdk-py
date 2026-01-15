@@ -53,26 +53,23 @@ def entry_point():
 
 @app.command()
 def deploy_vault(
-    vault_type: VaultType = typer.Option(
-        ..., help="Type of the vault (encrypted or transparent)"
-    ),
     name: str = typer.Option(..., help="Name of the vault"),
     symbol: str = typer.Option(..., help="Symbol of the vault"),
-    fee_type: FeeType = typer.Option(
-        ...,
-        help="Type of the fee. Options: absolute, soft_hurdle, hard_hurdle, high_water_mark, hurdle_hwm",
-    ),
+    fee_type: FeeType = typer.Option(..., help="Type of the fee"),
     performance_fee: float = typer.Option(
         ..., help="Performance fee in percentage i.e. 10.2 (maximum 30%)"
     ),
     management_fee: float = typer.Option(
         ..., help="Management fee in percentage i.e. 2.1 (maximum 3%)"
     ),
+    vault_type: VaultType = typer.Option(
+        VaultType.TRANSPARENT, help="Type of the vault (default: transparent)"
+    ),
     deposit_access_control: str = typer.Option(
         ZERO_ADDRESS, help="Address of the deposit access control contract"
     ),
 ):
-    """Deploy an Orion vault with customizable fee structure, name, and symbol. The vault can be either transparent or encrypted."""
+    """Deploy an Orion vault with customizable fee structure, name, and symbol. The vault defaults to transparent."""
     ensure_env_file()
 
     fee_type = fee_type_to_int[fee_type.value]
