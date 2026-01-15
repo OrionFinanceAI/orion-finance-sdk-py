@@ -82,18 +82,13 @@ def mock_env():
         "CHAIN_ID": "11155111",
         "STRATEGIST_ADDRESS": "0xStrategist",
         "CURATOR_ADDRESS": "0xCurator",
-        "VAULT_DEPLOYER_PRIVATE_KEY": "0xPrivate",
+        "MANAGER_PRIVATE_KEY": "0xPrivate",
         "STRATEGIST_PRIVATE_KEY": "0xPrivate",
         "CURATOR_PRIVATE_KEY": "0xPrivate",
         "ORION_VAULT_ADDRESS": "0xVault",
     }
     with patch.dict(os.environ, env_vars):
         yield
-
-
-def test_load_contract_abi_success():
-    """Test successful ABI loading."""
-    pass
 
 
 class TestOrionSmartContract:
@@ -200,6 +195,33 @@ class TestOrionConfig:
             with pytest.raises(ValueError, match="Unsupported CHAIN_ID"):
                 OrionConfig()
 
+    def test_init_chain_mismatch(self, mock_w3, mock_load_abi):
+        """Test init with chain ID mismatch warning."""
+        # mock_w3 provides chain_id=11155111
+        with patch.dict(os.environ, {"CHAIN_ID": "1", "RPC_URL": "http://localhost"}):
+            with patch("builtins.print") as mock_print:
+                # We instantiate a base contract which does the check
+                OrionSmartContract("Test", "0xAddress")
+                mock_print.assert_called_with(
+                    "⚠️ Warning: CHAIN_ID in env (1) does not match RPC chain ID (11155111)"
+                )
+
+    def test_decode_logs_exception(self, mock_w3, mock_load_abi, mock_env):
+        """Test decoding logs with exception."""
+        contract = OrionSmartContract("TestContract", "0xAddress")
+
+        event_mock = MagicMock()
+        event_mock.process_log.side_effect = Exception("Decode error")
+        contract.contract.events = [event_mock]
+
+        receipt = MagicMock()
+        log_mock = MagicMock()
+        log_mock.address = "0xAddress"
+        receipt.logs = [log_mock]
+
+        logs = contract._decode_logs(receipt)
+        assert len(logs) == 0
+
 
 class TestLiquidityOrchestrator:
     """Tests for LiquidityOrchestrator."""
@@ -285,6 +307,21 @@ class TestVaultFactory:
 
             with pytest.raises(SystemExit):
                 factory.create_orion_vault("N", "S", 0, 0, 0)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_vault_factory_encrypted_fallback(
+        self, MockConfig, mock_w3, mock_load_abi, mock_env
+    ):
+        """Test VaultFactory encrypted address fallback."""
+        with patch.dict(
+            "orion_finance_sdk_py.contracts.CHAIN_CONFIG",
+            {11155111: {"OrionConfig": "0x..."}},
+        ):
+            # Missing EncryptedVaultFactory key
+            factory = VaultFactory(VaultType.ENCRYPTED)
+            assert (
+                factory.contract_address == "0xdD7900c4B6abfEB4D2Cb9F233d875071f6e1093F"
+            )  # Fallback hardcoded
 
     def test_get_vault_address(self, mock_w3, mock_load_abi, mock_env):
         """Test extracting address from logs."""

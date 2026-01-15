@@ -74,7 +74,7 @@ The SDK requires the user to specify an `RPC_URL` environment variable in the `.
 
 Based on the usage, additional environment variables may be required, e.g.:
 - `STRATEGIST_ADDRESS`: The address of the strategist account.
-- `VAULT_DEPLOYER_PRIVATE_KEY`: The private key of the vault deployer account.
+- `MANAGER_PRIVATE_KEY`: The private key of the vault manager account.
 - `STRATEGIST_PRIVATE_KEY`: The private key of the strategist account.
 - `ORION_VAULT_ADDRESS`: The address of the Orion vault.
 

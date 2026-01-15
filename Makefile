@@ -17,13 +17,22 @@ install:
 
 .PHONY: codestyle
 codestyle:
-	uv run ruff check --select I --fix ./
-	uv run ruff format ./
+	uv run ruff format
+	uv run ruff check --select I --fix
+
 	cd js && npm run prettier
+
+.PHONY: docstyle
+docstyle:
+	uv run pydocstyle
 
 .PHONY: docs
 docs:
-	uv run pydocstyle
+	uv run sphinx-build -b html docs docs/_build/html
+
+.PHONY: open-docs
+open-docs:
+	open docs/_build/html/index.html || xdg-open docs/_build/html/index.html
 
 .PHONY: test
 test:

@@ -42,10 +42,14 @@ jobs:
       - name: Install dependencies
         run: |
           make venv
-          uv sync --frozen --extra dev
+          uv sync --frozen --extra dev --extra docs
           make install
 
       - name: Run docstrings checks
+        run: |
+          make docstyle
+
+      - name: Build documentation (dry run)
         run: |
           make docs
 

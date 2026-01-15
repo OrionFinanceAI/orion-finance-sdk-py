@@ -1,0 +1,351 @@
+/* Orion Finance SDK Documentation Theme */
+/* Ported from Orion Docs Docusaurus Config */
+
+/* --- FONTS --- */
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&display=swap');
+
+:root {
+  /* Colors from Orion Docs */
+  --orion-cream: #FBF8EF;
+  --orion-blue: #0D3AA9;
+  --orion-blue-hover: #457ddd;
+  --orion-text: #2d3748;
+  --orion-gradient-footer: linear-gradient(158deg, #051743 3.03%, #0D3AA9 101.83%);
+  
+  /* PyData Theme Overrides */
+  --pst-color-primary: var(--orion-blue);
+  --pst-color-primary-light: var(--orion-blue-hover);
+  --pst-color-primary-dark: #082675; /* darker blue */
+  
+  --pst-color-text-base: var(--orion-text);
+  --pst-color-link: var(--orion-blue);
+  --pst-color-link-hover: var(--orion-blue-hover);
+  
+  /* Backgrounds */
+  --pst-color-background: var(--orion-cream);
+  --pst-color-on-background: var(--orion-text);
+  --pst-color-surface: var(--orion-cream); /* Sidebar etc */
+  --pst-color-sidebar-background: var(--orion-cream);
+  --pst-color-canvas: var(--orion-cream); /* Often used for content areas */
+  --pst-color-inline-code-background: rgba(13, 58, 169, 0.1);
+  
+  /* Fonts */
+  --pst-font-family-base: "Satoshi", "Roboto", system-ui, -apple-system, sans-serif;
+  --pst-font-family-heading: "EB Garamond", serif;
+  --pst-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Force Light Theme Logic (Orion Docs are forced light) */
+html {
+  color-scheme: light !important;
+}
+html[data-theme="dark"] {
+   /* Override ALL dark mode variables to match light mode */
+   --pst-color-background: var(--orion-cream) !important;
+   --pst-color-on-background: var(--orion-text) !important;
+   --pst-color-surface: var(--orion-cream) !important;
+   --pst-color-sidebar-background: var(--orion-cream) !important;
+   --pst-color-canvas: var(--orion-cream) !important;
+   --pst-color-text-base: var(--orion-text) !important;
+   --pst-color-text-muted: #666 !important;
+   --pst-color-primary: var(--orion-blue) !important;
+   --pst-color-link: var(--orion-blue) !important;
+   --pst-color-link-hover: var(--orion-blue-hover) !important;
+   --pst-color-border: rgba(0,0,0,0.1) !important;
+   color-scheme: light !important;
+}
+body {
+  background-color: var(--orion-cream) !important;
+  color: var(--orion-text) !important;
+}
+
+/* --- LAYOUT FIXES --- */
+/* Nuke white backgrounds on all major containers */
+.bd-main, 
+.bd-content, 
+.bd-article, 
+.bd-article-container, 
+.bd-sidebar-primary, 
+.bd-sidebar-secondary, 
+.bd-header, 
+.bd-footer,
+div.viewcode-block,
+div.highlight {
+    background-color: var(--orion-cream) !important;
+    color: var(--orion-text) !important;
+}
+
+/* Ensure links are always visible/blue even if theme tries to make them light */
+a {
+    color: var(--orion-blue) !important;
+}
+a:hover {
+    color: var(--orion-blue-hover) !important;
+}
+
+/* --- GLOBAL RESET --- */
+/* Sharp edges everywhere */
+*, :after, :before {
+    border-radius: 0 !important;
+}
+
+/* --- NAVBAR --- */
+.navbar {
+    height: 5rem;
+    background-color: var(--orion-cream) !important;
+    border-bottom: 0.5px solid rgba(13, 58, 169, 0.2) !important; /* Subtle blue border */
+    box-shadow: none !important;
+}
+
+/* Tighten spacing between Links and Search */
+.navbar-header-items__center {
+    margin-right: 0 !important;
+    display: flex;
+    justify-content: flex-end; /* Push links to right if in center container */
+}
+.navbar-header-items__end {
+    margin-left: 1rem !important; /* Small gap between Link and Search */
+    min-width: auto;
+}
+
+/* Navbar Links */
+.navbar-nav .nav-link {
+    font-family: "Satoshi", sans-serif;
+    color: var(--orion-blue) !important;
+    font-weight: 500;
+}
+.navbar-nav .nav-link:hover, .navbar-nav .nav-link.active {
+    color: var(--orion-blue-hover) !important;
+    text-decoration: none;
+}
+
+/* Navbar Logo Sizing */
+.navbar-brand img {
+    height: 32px !important;
+    max-height: 32px !important;
+    width: auto !important;
+    /* Intrinsic ratio is 15:2, so 32px height -> 240px width roughly */
+}
+
+/* --- SIDEBAR --- */
+/* Match Orion Docs Sidebar: Cream bg, 300px width */
+.bd-sidebar-primary, .bd-sidebar-secondary {
+    background-color: var(--orion-cream) !important;
+    border-right: 1px solid rgba(0,0,0,0.05); /* Primary */
+    border-left: 1px solid rgba(0,0,0,0.05); /* Secondary */
+}
+
+.bd-sidebar-primary {
+    min-width: 300px !important;
+    max-width: 300px !important;
+}
+
+/* Hide "Show Source" */
+.this-page-menu {
+    display: none !important;
+}
+
+/* Sidebar Links (Primary) */
+.bd-links .active > a {
+    color: var(--orion-blue) !important;
+    font-weight: 600;
+    border-left-color: var(--orion-blue);
+    background-color: transparent !important; /* Docusaurus style is transparent active */
+}
+
+/* Sidebar Links (Secondary / TOC) */
+.bd-toc-nav a {
+    color: var(--orion-text);
+    font-family: "Satoshi", sans-serif;
+}
+.bd-toc-nav a.active {
+    color: var(--orion-blue) !important;
+    border-left-color: var(--orion-blue);
+    font-weight: 600;
+}
+.bd-toc-nav a:hover {
+    color: var(--orion-blue-hover) !important;
+    text-decoration: none;
+}
+
+.bd-links a {
+    color: var(--orion-text);
+    font-family: "Satoshi", sans-serif;
+    font-size: 15px; /* Match menu__link font-size */
+}
+
+.bd-links a:hover {
+    color: var(--orion-blue-hover) !important;
+    background-color: rgba(0,0,0,0.02); /* Slight hover effect */
+}
+
+/* --- MAIN CONTENT --- */
+/* Headings in Garamond */
+h1, h2, h3, h4, h5, h6 {
+    font-family: "EB Garamond", serif;
+    color: var(--orion-text);
+    font-weight: 600;
+}
+
+/* Code Blocks (GitHub Light Theme style) */
+.highlight {
+    background-color: #e8eaed !important;
+    border: none !important;
+    margin: 1rem 0;
+}
+/* Inline code */
+p code, li code, td code {
+    background-color: rgba(13, 58, 169, 0.1);
+    color: var(--orion-blue);
+    border: 1px solid rgba(13, 58, 169, 0.2);
+    padding: 0.125rem 0.375rem;
+    font-family: var(--pst-font-family-monospace);
+    font-size: 0.9em;
+}
+
+/* --- ADMONITIONS --- */
+/* Mimic Orion Tip style */
+.admonition {
+    border: 1px solid var(--orion-blue);
+    background: linear-gradient(135deg, rgba(88, 20, 251, 0.05) 0%, rgba(250, 58, 167, 0.05) 100%);
+    padding: 16px;
+    margin: 16px 0;
+    box-shadow: none;
+}
+.admonition .admonition-title {
+    background-color: transparent;
+    color: var(--orion-blue);
+    font-family: "Satoshi", sans-serif;
+    font-weight: 600;
+    border-bottom: none;
+    padding: 0;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+/* Add logo icon before title if possible via CSS? Hard in pure CSS for sphinx admonition title */
+.admonition .admonition-title::before {
+    content: "💡"; /* Fallback icon */
+    margin-right: 8px;
+    color: var(--orion-blue);
+}
+
+/* --- FOOTER --- */
+.bd-footer {
+    display: none !important;
+}
+
+/* --- SEARCH --- */
+/* Style the search button/input to match Orion Docusaurus Look */
+.search-button__wrapper {
+    color: var(--orion-blue) !important;
+    border: 2px solid var(--orion-blue) !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    width: 160px; /* Specific width from Docusaurus CSS */
+    height: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Icon+Text on left, Shortcut on right */
+    padding: 0 0.5rem;
+}
+
+.search-button__wrapper:hover {
+    border-color: var(--orion-blue-hover) !important;
+}
+
+/* Container for Icon and Text */
+.search-button__wrapper > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.search-button__icon {
+    color: var(--orion-blue) !important;
+}
+
+.search-button__text {
+    color: var(--orion-blue) !important;
+    font-weight: 400;
+}
+
+.search-button__kbd-shortcut {
+    color: var(--orion-blue) !important;
+    border: none !important;
+    box-shadow: none !important;
+    opacity: 0.6;
+    font-family: inherit; /* Use main font, not code font for K */
+}
+
+/* Hide theme switcher (forced light) */
+.theme-switch-button {
+    display: none !important;
+}
+
+/* Hide site title text next to logo (as requested) */
+.navbar-brand-text {
+    display: none !important;
+}
+
+/* --- VIEWCODE / SOURCE PAGES --- */
+/* Ensure the source code view has the correct background */
+.viewcode-block {
+    margin-top: 2rem;
+}
+
+/* Force Cream Background on ALL main content containers to prevent white flashes/blocks */
+.bd-main, .bd-content, .bd-article, .bd-article-container, article, div.body, section, .section {
+    background-color: var(--orion-cream) !important;
+}
+
+/* API Reference / Autodoc Styling */
+dl.class, dl.method, dl.attribute, dl.property, dt, dd {
+    background-color: var(--orion-cream) !important;
+    color: var(--orion-text) !important;
+    border: none !important;
+}
+
+/* Definition signatures (e.g. class Foo(args)) */
+dt {
+    background-color: rgba(13, 58, 169, 0.05) !important; /* Slight tint for headers */
+    border-left: 3px solid var(--orion-blue) !important;
+    padding-left: 0.5rem;
+}
+
+/* Override any specific highligting background that forces white */
+html .viewcode-block .highlight, 
+html .highlight pre, 
+.viewcode-block pre, 
+div.highlight, 
+pre {
+    background-color: #e8eaed !important; /* Match standard code block */
+    color: var(--orion-text) !important;
+    border: none !important;
+}
+
+/* Ensure the container of the code block on viewcode pages is Cream */
+.viewcode-block {
+    background-color: var(--orion-cream) !important;
+    padding: 20px;
+}
+
+/* Line numbers */
+.linenos {
+    background-color: #e8eaed !important;
+    color: #aaa !important;
+    border-right: 1px solid #ddd;
+}
+
+/* Specific fix for Viewcode pages where the code block might be direct */
+body .viewcode-block {
+    background-color: var(--orion-cream) !important;
+    padding: 0;
+}
+
+/* Ensure the pre tag inside viewcode doesn't get a white bg from Pygments */
+body .viewcode-block .highlight pre {
+    background-color: #e8eaed !important;
+}

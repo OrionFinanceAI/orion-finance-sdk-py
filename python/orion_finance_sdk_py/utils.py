@@ -33,8 +33,8 @@ RPC_URL=
 # Strategist contract address
 STRATEGIST_ADDRESS=
 
-# Private key for vault deployment
-VAULT_DEPLOYER_PRIVATE_KEY=
+# Private key for manager operations
+MANAGER_PRIVATE_KEY=
 
 # Private key for strategist operations
 STRATEGIST_PRIVATE_KEY=
