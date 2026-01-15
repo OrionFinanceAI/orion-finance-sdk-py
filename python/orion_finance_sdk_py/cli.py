@@ -12,6 +12,7 @@ from .contracts import (
 )
 from .encrypt import encrypt_order_intent
 from .types import (
+    ZERO_ADDRESS,
     FeeType,
     VaultType,
     fee_type_to_int,
@@ -24,7 +25,30 @@ from .utils import (
     validate_var,
 )
 
+ORION_BANNER = r"""
+     ██████╗ ██████╗ ██╗ ██████╗ ███╗   ██╗    ███████╗██╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗
+    ██╔═══██╗██╔══██╗██║██╔═══██╗████╗  ██║    ██╔════╝██║████╗  ██║██╔══██╗████╗  ██║██╔════╝██╔════╝
+    ██║   ██║██████╔╝██║██║   ██║██╔██╗ ██║    █████╗  ██║██╔██╗ ██║███████║██╔██╗ ██║██║     █████╗
+    ██║   ██║██╔══██╗██║██║   ██║██║╚██╗██║    ██╔══╝  ██║██║╚██╗██║██╔══██║██║╚██╗██║██║     ██╔══╝
+    ╚██████╔╝██║  ██║██║╚██████╔╝██║ ╚████║    ██║     ██║██║ ╚████║██║  ██║██║ ╚████║╚██████╗███████╗
+     ╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚══════╝
+"""
+
 app = typer.Typer()
+
+
+@app.callback()
+def main():
+    """Orion Finance CLI."""
+    ensure_env_file()
+
+
+def entry_point():
+    """Entry point for the CLI that prints the banner."""
+    import sys
+
+    print(ORION_BANNER, file=sys.stderr)
+    app()
 
 
 @app.command()
@@ -34,12 +58,18 @@ def deploy_vault(
     ),
     name: str = typer.Option(..., help="Name of the vault"),
     symbol: str = typer.Option(..., help="Symbol of the vault"),
-    fee_type: FeeType = typer.Option(..., help="Type of the fee"),
+    fee_type: FeeType = typer.Option(
+        ...,
+        help="Type of the fee. Options: absolute, soft_hurdle, hard_hurdle, high_water_mark, hurdle_hwm",
+    ),
     performance_fee: float = typer.Option(
         ..., help="Performance fee in percentage i.e. 10.2 (maximum 30%)"
     ),
     management_fee: float = typer.Option(
         ..., help="Management fee in percentage i.e. 2.1 (maximum 3%)"
+    ),
+    deposit_access_control: str = typer.Option(
+        ZERO_ADDRESS, help="Address of the deposit access control contract"
     ),
 ):
     """Deploy an Orion vault with customizable fee structure, name, and symbol. The vault can be either transparent or encrypted."""
@@ -55,6 +85,7 @@ def deploy_vault(
         fee_type=fee_type,
         performance_fee=int(performance_fee * BASIS_POINTS_FACTOR),
         management_fee=int(management_fee * BASIS_POINTS_FACTOR),
+        deposit_access_control=deposit_access_control,
     )
 
     # Format transaction logs
@@ -144,7 +175,10 @@ def update_strategist(
 
 @app.command()
 def update_fee_model(
-    fee_type: FeeType = typer.Option(..., help="Type of the fee"),
+    fee_type: FeeType = typer.Option(
+        ...,
+        help="Type of the fee. Options: absolute, soft_hurdle, hard_hurdle, high_water_mark, hurdle_hwm",
+    ),
     performance_fee: float = typer.Option(
         ..., help="Performance fee in percentage i.e. 10.2 (maximum 30%)"
     ),
