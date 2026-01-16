@@ -54,7 +54,6 @@ class OrionSmartContract:
             error_message=(
                 "RPC_URL environment variable is missing or invalid. "
                 "Please set RPC_URL in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
