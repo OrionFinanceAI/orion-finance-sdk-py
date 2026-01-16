@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 
 import numpy as np
+from rich.console import Console
 
 from .types import ZERO_ADDRESS
 
@@ -165,28 +166,34 @@ def format_transaction_logs(
         tx_result: Transaction result object with tx_hash and decoded_logs attributes
         success_message: Custom success message to display at the end
     """
-    print(f"✅ https://sepolia.etherscan.io/tx/0x{tx_result.tx_hash}")
-    print("=" * 60)
+    console = Console()
+    output = []
+
+    output.append(f"✅ https://sepolia.etherscan.io/tx/0x{tx_result.tx_hash}")
+    output.append("=" * 60)
 
     if tx_result.decoded_logs:
-        print("📋 Transaction Events:")
+        output.append("📋 Transaction Events:")
         for i, log in enumerate(tx_result.decoded_logs, 1):
-            print(f"\n{i}. Event: {log.get('event', 'Unknown')}")
+            output.append(f"\n{i}. Event: {log.get('event', 'Unknown')}")
 
             if log.get("args"):
                 args = log["args"]
-                print("   Arguments:")
+                output.append("   Arguments:")
                 for key, value in args.items():
                     if key == "vaultType":
                         vault_type_name = "Transparent" if value == 0 else "Encrypted"
-                        print(f"     {key}: {value} ({vault_type_name})")
+                        output.append(f"     {key}: {value} ({vault_type_name})")
                     else:
-                        print(f"     {key}: {value}")
+                        output.append(f"     {key}: {value}")
 
-            print(f"   Contract: {log.get('address', 'Unknown')}")
-            print(f"   Block: {log.get('blockNumber', 'Unknown')}")
+            output.append(f"   Contract: {log.get('address', 'Unknown')}")
+            output.append(f"   Block: {log.get('blockNumber', 'Unknown')}")
     else:
-        print("⚠️  No events found in transaction logs")
+        output.append("⚠️  No events found in transaction logs")
 
-    print("=" * 60)
-    print(f"🎉 {success_message}")
+    output.append("=" * 60)
+    output.append(f"🎉 {success_message}")
+
+    with console.pager():
+        console.print("\n".join(output))
