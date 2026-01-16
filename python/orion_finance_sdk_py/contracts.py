@@ -373,12 +373,18 @@ class OrionVault(OrionSmartContract):
             error_message=(
                 "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
                 "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
+                "Please follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
         super().__init__(contract_name, contract_address)
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist address for the vault."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            print("System is not idle. Cannot update strategist at this time.")
+            sys.exit(1)
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
@@ -415,6 +421,11 @@ class OrionVault(OrionSmartContract):
         self, fee_type: int, performance_fee: int, management_fee: int
     ) -> TransactionResult:
         """Update the fee model for the vault."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            print("System is not idle. Cannot update fee model at this time.")
+            sys.exit(1)
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
@@ -472,6 +483,11 @@ class OrionVault(OrionSmartContract):
         self, access_control_address: str
     ) -> TransactionResult:
         """Set the deposit access control contract address."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            print("System is not idle. Cannot set deposit access control at this time.")
+            sys.exit(1)
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
@@ -546,6 +562,11 @@ class OrionTransparentVault(OrionVault):
 
     def transfer_manager_fees(self, amount: int) -> TransactionResult:
         """Transfer manager fees (claimVaultFees)."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            print("System is not idle. Cannot transfer manager fees at this time.")
+            sys.exit(1)
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
@@ -582,6 +603,11 @@ class OrionTransparentVault(OrionVault):
         Returns:
             TransactionResult
         """
+        config = OrionConfig()
+        if not config.is_system_idle():
+            print("System is not idle. Cannot submit order intent at this time.")
+            sys.exit(1)
+
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY")
         validate_var(
             strategist_private_key,
@@ -643,6 +669,11 @@ class OrionEncryptedVault(OrionVault):
 
     def transfer_strategist_fees(self, amount: int) -> TransactionResult:
         """Transfer strategist fees (claimCuratorFees)."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            print("System is not idle. Cannot transfer strategist fees at this time.")
+            sys.exit(1)
+
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
             "CURATOR_PRIVATE_KEY"
         )
@@ -658,7 +689,7 @@ class OrionEncryptedVault(OrionVault):
         signed = account.sign_transaction(tx)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         tx_hash_hex = tx_hash.hex()
-        receipt = self._wait_for_transaction_receipt(tx_hash_hex)
+        receipt = self._wait_for_transaction_receipt(tx_hash.hex())
         return TransactionResult(
             tx_hash=tx_hash_hex,
             receipt=receipt,
@@ -679,6 +710,11 @@ class OrionEncryptedVault(OrionVault):
         Returns:
             TransactionResult
         """
+        config = OrionConfig()
+        if not config.is_system_idle():
+            print("System is not idle. Cannot submit order intent at this time.")
+            sys.exit(1)
+
         # Use STRATEGIST_PRIVATE_KEY preferrably, fallback to CURATOR
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
             "CURATOR_PRIVATE_KEY"
@@ -734,6 +770,11 @@ class OrionEncryptedVault(OrionVault):
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist (curator) address for the vault."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            print("System is not idle. Cannot update strategist at this time.")
+            sys.exit(1)
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
