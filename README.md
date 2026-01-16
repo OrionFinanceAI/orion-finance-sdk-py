@@ -94,12 +94,6 @@ orion submit-order --help
 orion deploy-vault --vault-type transparent --name "Algorithmic Liquidity Provision & Hedging Agent" --symbol "ALPHA" --fee-type hard_hurdle --performance-fee 10 --management-fee 1
 ```
 
-### Deploy a new Encrypted Orion vault
-
-```bash
-orion deploy-vault --vault-type encrypted --name "Fully Homomorphic Encryption for Vault Management" --symbol "FHEVM" --fee-type high_water_mark --performance-fee 0 --management-fee 2
-```
-
 ### Submit an order intent to a vault
 
 ```bash
