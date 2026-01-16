@@ -2,10 +2,13 @@
 
 import json
 import os
+import sys
 
+import questionary
 import typer
 
 from .contracts import (
+    OrionConfig,
     OrionEncryptedVault,
     OrionTransparentVault,
     VaultFactory,
@@ -25,70 +28,41 @@ from .utils import (
     validate_var,
 )
 
-app = typer.Typer(help="Orion Finance SDK CLI")
-
 ORION_BANNER = r"""
      ██████╗ ██████╗ ██╗ ██████╗ ███╗   ██╗    ███████╗██╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗
     ██╔═══██╗██╔══██╗██║██╔═══██╗████╗  ██║    ██╔════╝██║████╗  ██║██╔══██╗████╗  ██║██╔════╝██╔════╝
     ██║   ██║██████╔╝██║██║   ██║██╔██╗ ██║    █████╗  ██║██╔██╗ ██║███████║██╔██╗ ██║██║     █████╗
     ██║   ██║██╔══██╗██║██║   ██║██║╚██╗██║    ██╔══╝  ██║██║╚██╗██║██╔══██║██║╚██╗██║██║     ██╔══╝
     ╚██████╔╝██║  ██║██║╚██████╔╝██║ ╚████║    ██║     ██║██║ ╚████║██║  ██║██║ ╚████║╚██████╗███████╗
-     ╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚══╝╚═╝  ╚══╝ ╚═════╝╚══════╝
+     ╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚══╝ ╚═════╝╚══════╝
 """
 
-
-@app.callback()
-def main():
-    """Orion Finance CLI."""
-    ensure_env_file()
+app = typer.Typer(help="Orion Finance SDK CLI")
 
 
-def entry_point():
-    """Entry point for the CLI that prints the banner."""
-    import sys
-
-    print(ORION_BANNER, file=sys.stderr)
-    app()
-
-
-@app.command()
-def deploy_vault(
-    name: str = typer.Option(..., help="Name of the vault"),
-    symbol: str = typer.Option(..., help="Symbol of the vault"),
-    fee_type: FeeType = typer.Option(..., help="Type of the fee"),
-    performance_fee: float = typer.Option(
-        ..., help="Performance fee in percentage i.e. 10.2 (maximum 30%)"
-    ),
-    management_fee: float = typer.Option(
-        ..., help="Management fee in percentage i.e. 2.1 (maximum 3%)"
-    ),
-    vault_type: VaultType = typer.Option(
-        VaultType.TRANSPARENT, help="Type of the vault (default: transparent)"
-    ),
-    deposit_access_control: str = typer.Option(
-        ZERO_ADDRESS, help="Address of the deposit access control contract"
-    ),
+def _deploy_vault_logic(
+    vault_type: str,
+    name: str,
+    symbol: str,
+    fee_type_value: int,
+    performance_fee_bp: int,
+    management_fee_bp: int,
+    deposit_access_control: str,
 ):
-    """Deploy an Orion vault with customizable fee structure, name, and symbol. The vault defaults to transparent."""
-    ensure_env_file()
-
-    fee_type = fee_type_to_int[fee_type.value]
-
-    vault_factory = VaultFactory(vault_type=vault_type.value)
+    """Logic for deploying a vault."""
+    vault_factory = VaultFactory(vault_type=vault_type)
 
     tx_result = vault_factory.create_orion_vault(
         name=name,
         symbol=symbol,
-        fee_type=fee_type,
-        performance_fee=int(performance_fee * BASIS_POINTS_FACTOR),
-        management_fee=int(management_fee * BASIS_POINTS_FACTOR),
+        fee_type=fee_type_value,
+        performance_fee=performance_fee_bp,
+        management_fee=management_fee_bp,
         deposit_access_control=deposit_access_control,
     )
 
-    # Format transaction logs
     format_transaction_logs(tx_result, "Vault deployment transaction completed!")
 
-    # Extract vault address if available
     vault_address = vault_factory.get_vault_address_from_result(tx_result)
     if vault_address:
         print(
@@ -98,16 +72,8 @@ def deploy_vault(
         print("\n❌ Could not extract vault address from transaction")
 
 
-@app.command()
-def submit_order(
-    order_intent_path: str = typer.Option(
-        ..., help="Path to JSON file containing order intent"
-    ),
-    fuzz: bool = typer.Option(False, help="Fuzz the order intent"),
-) -> None:
-    """Submit an order intent to an Orion vault. The order intent can be either transparent or encrypted."""
-    ensure_env_file()
-
+def _submit_order_logic(order_intent_path: str, fuzz: bool):
+    """Logic for submitting an order."""
     vault_address = os.getenv("ORION_VAULT_ADDRESS")
     validate_var(
         vault_address,
@@ -117,11 +83,8 @@ def submit_order(
         ),
     )
 
-    # JSON file input
     with open(order_intent_path, "r") as f:
         order_intent = json.load(f)
-
-    from .contracts import OrionConfig
 
     config = OrionConfig()
 
@@ -145,15 +108,8 @@ def submit_order(
     format_transaction_logs(tx_result, "Order intent submitted successfully!")
 
 
-@app.command()
-def update_strategist(
-    new_strategist_address: str = typer.Option(
-        ..., help="New strategist address to set for the vault"
-    ),
-) -> None:
-    """Update the strategist address for an Orion vault."""
-    ensure_env_file()
-
+def _update_strategist_logic(new_strategist_address: str):
+    """Logic for updating strategist."""
     vault_address = os.getenv("ORION_VAULT_ADDRESS")
     validate_var(
         vault_address,
@@ -170,6 +126,206 @@ def update_strategist(
     format_transaction_logs(tx_result, "Strategist address updated successfully!")
 
 
+def _update_fee_model_logic(
+    fee_type_value: int, performance_fee_bp: int, management_fee_bp: int
+):
+    """Logic for updating fee model."""
+    vault_address = os.getenv("ORION_VAULT_ADDRESS")
+    validate_var(
+        vault_address,
+        error_message=(
+            "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
+            "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
+        ),
+    )
+
+    # Working for both vaults types
+    vault = OrionTransparentVault()
+
+    tx_result = vault.update_fee_model(
+        fee_type=fee_type_value,
+        performance_fee=performance_fee_bp,
+        management_fee=management_fee_bp,
+    )
+    format_transaction_logs(tx_result, "Fee model updated successfully!")
+
+
+def ask_or_exit(question):
+    """Ask a questionary question and exit/return if cancelled."""
+    result = question.ask()
+    if result is None:
+        raise KeyboardInterrupt
+    return result
+
+
+def interactive_menu():
+    """Launch the interactive TUI menu."""
+    while True:
+        try:
+            choice = ask_or_exit(
+                questionary.select(
+                    "What would you like to do?",
+                    choices=[
+                        "Deploy Vault",
+                        "Submit Order",
+                        "Update Strategist",
+                        "Update Fee Model",
+                        "Exit",
+                    ],
+                    instruction="[ ↑↓ to scroll | Enter to select ]",
+                )
+            )
+
+            if choice == "Exit":
+                break
+
+            if choice == "Deploy Vault":
+                vault_type = ask_or_exit(
+                    questionary.select(
+                        "Vault Type:",
+                        choices=[t.value for t in VaultType],
+                        instruction="[ ↑↓ to scroll | Enter to select ]",
+                    )
+                )
+                name = ask_or_exit(questionary.text("Vault Name:"))
+                symbol = ask_or_exit(questionary.text("Vault Symbol:"))
+                fee_type_str = ask_or_exit(
+                    questionary.select(
+                        "Fee Type:",
+                        choices=[t.value for t in FeeType],
+                        instruction="[ ↑↓ to scroll | Enter to select ]",
+                    )
+                )
+                perf_fee = float(
+                    ask_or_exit(questionary.text("Performance Fee (%):", default="0"))
+                )
+                mgmt_fee = float(
+                    ask_or_exit(questionary.text("Management Fee (%):", default="0"))
+                )
+                dac = ask_or_exit(
+                    questionary.text(
+                        "Deposit Access Control (Address):", default=ZERO_ADDRESS
+                    )
+                )
+
+                _deploy_vault_logic(
+                    vault_type,
+                    name,
+                    symbol,
+                    fee_type_to_int[fee_type_str],
+                    int(perf_fee * BASIS_POINTS_FACTOR),
+                    int(mgmt_fee * BASIS_POINTS_FACTOR),
+                    dac,
+                )
+
+            elif choice == "Submit Order":
+                path = ask_or_exit(questionary.path("Path to Order Intent JSON:"))
+                fuzz = ask_or_exit(
+                    questionary.confirm("Fuzz order intent?", default=False)
+                )
+                _submit_order_logic(path, fuzz)
+
+            elif choice == "Update Strategist":
+                addr = ask_or_exit(questionary.text("New Strategist Address:"))
+                _update_strategist_logic(addr)
+
+            elif choice == "Update Fee Model":
+                fee_type_str = ask_or_exit(
+                    questionary.select(
+                        "Fee Type:",
+                        choices=[t.value for t in FeeType],
+                        instruction="[ ↑↓ to scroll | Enter to select ]",
+                    )
+                )
+                perf_fee = float(
+                    ask_or_exit(questionary.text("Performance Fee (%):", default="0"))
+                )
+                mgmt_fee = float(
+                    ask_or_exit(questionary.text("Management Fee (%):", default="0"))
+                )
+
+                _update_fee_model_logic(
+                    fee_type_to_int[fee_type_str],
+                    int(perf_fee * BASIS_POINTS_FACTOR),
+                    int(mgmt_fee * BASIS_POINTS_FACTOR),
+                )
+
+            input("\nPress Enter to continue...")
+
+        except KeyboardInterrupt:
+            print("\nOperation cancelled.")
+            continue  # Go back to main menu loop
+        except Exception as e:
+            print(f"\n❌ Error: {e}")
+            input("\nPress Enter to continue...")
+
+
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context):
+    """Orion Finance CLI."""
+    ensure_env_file()
+    if ctx.invoked_subcommand is None:
+        interactive_menu()
+
+
+def entry_point():
+    """Entry point for the CLI that prints the banner."""
+    print(ORION_BANNER, file=sys.stderr)
+    app()
+
+
+@app.command()
+def deploy_vault(
+    name: str = typer.Option(..., help="Name of the vault"),
+    symbol: str = typer.Option(..., help="Symbol of the vault"),
+    fee_type: FeeType = typer.Option(..., help="Type of the fee"),
+    performance_fee: float = typer.Option(
+        ..., help="Performance fee in percentage i.e. 10.2 (maximum 30%)"
+    ),
+    management_fee: float = typer.Option(
+        ..., help="Management fee in percentage i.e. 2.1 (maximum 3%)"
+    ),
+    vault_type: VaultType = typer.Option(
+        VaultType.TRANSPARENT, help="Type of the vault (default: transparent)"
+    ),
+    deposit_access_control: str = typer.Option(
+        ZERO_ADDRESS, help="Address of the deposit access control contract"
+    ),
+):
+    """Deploy an Orion vault with customizable fee structure, name, and symbol. The vault defaults to transparent."""
+    fee_type_int = fee_type_to_int[fee_type.value]
+    _deploy_vault_logic(
+        vault_type.value,
+        name,
+        symbol,
+        fee_type_int,
+        int(performance_fee * BASIS_POINTS_FACTOR),
+        int(management_fee * BASIS_POINTS_FACTOR),
+        deposit_access_control,
+    )
+
+
+@app.command()
+def submit_order(
+    order_intent_path: str = typer.Option(
+        ..., help="Path to JSON file containing order intent"
+    ),
+    fuzz: bool = typer.Option(False, help="Fuzz the order intent"),
+) -> None:
+    """Submit an order intent to an Orion vault. The order intent can be either transparent or encrypted."""
+    _submit_order_logic(order_intent_path, fuzz)
+
+
+@app.command()
+def update_strategist(
+    new_strategist_address: str = typer.Option(
+        ..., help="New strategist address to set for the vault"
+    ),
+) -> None:
+    """Update the strategist address for an Orion vault."""
+    _update_strategist_logic(new_strategist_address)
+
+
 @app.command()
 def update_fee_model(
     fee_type: FeeType = typer.Option(
@@ -184,25 +340,9 @@ def update_fee_model(
     ),
 ) -> None:
     """Update the fee model for an Orion vault."""
-    ensure_env_file()
-
-    fee_type = fee_type_to_int[fee_type.value]
-
-    vault_address = os.getenv("ORION_VAULT_ADDRESS")
-    validate_var(
-        vault_address,
-        error_message=(
-            "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
-            "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
-        ),
+    fee_type_int = fee_type_to_int[fee_type.value]
+    _update_fee_model_logic(
+        fee_type_int,
+        int(performance_fee * BASIS_POINTS_FACTOR),
+        int(management_fee * BASIS_POINTS_FACTOR),
     )
-
-    # Working for both vaults types
-    vault = OrionTransparentVault()
-
-    tx_result = vault.update_fee_model(
-        fee_type=fee_type,
-        performance_fee=int(performance_fee * BASIS_POINTS_FACTOR),
-        management_fee=int(management_fee * BASIS_POINTS_FACTOR),
-    )
-    format_transaction_logs(tx_result, "Fee model updated successfully!")

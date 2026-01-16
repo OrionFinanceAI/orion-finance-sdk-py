@@ -16,8 +16,8 @@ CHAIN_CONFIG = {
 class VaultType(str, Enum):
     """Type of the vault."""
 
-    ENCRYPTED = "encrypted"
     TRANSPARENT = "transparent"
+    ENCRYPTED = "encrypted"
 
 
 class FeeType(str, Enum):
