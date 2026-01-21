@@ -231,6 +231,16 @@ def ask_or_exit(question):
     return result
 
 
+def validate_int_input(val: str) -> bool | str:
+    """Validate integer input."""
+    try:
+        if int(val) > 0:
+            return True
+        return "Amount must be positive"
+    except ValueError:
+        return "Please enter a valid integer"
+
+
 def interactive_menu():
     """Launch the interactive TUI menu."""
     while True:
@@ -258,7 +268,7 @@ def interactive_menu():
                 break
 
             if choice == "Deploy Vault":
-                # Always deploy transparent vaults from CLI
+                # ... existing ...
                 vault_type = VaultType.TRANSPARENT.value
                 name = ask_or_exit(questionary.text("Vault Name:"))
                 symbol = ask_or_exit(questionary.text("Vault Symbol:"))
@@ -346,7 +356,13 @@ def interactive_menu():
                 _update_deposit_access_control_logic(addr)
 
             elif choice == "Claim Fees":
-                amount = int(ask_or_exit(questionary.text("Amount to Claim (units):")))
+                amount = int(
+                    ask_or_exit(
+                        questionary.text(
+                            "Amount to Claim (units):", validate=validate_int_input
+                        )
+                    )
+                )
                 _claim_fees_logic(amount)
 
             elif choice == "Get Pending Fees":

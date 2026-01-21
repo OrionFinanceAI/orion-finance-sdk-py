@@ -1,5 +1,6 @@
 """Utility functions for the Orion Finance Python SDK."""
 
+import os
 import random
 import sys
 import uuid
@@ -8,7 +9,7 @@ from pathlib import Path
 import numpy as np
 from rich.console import Console
 
-from .types import ZERO_ADDRESS
+from .types import CHAIN_CONFIG, ZERO_ADDRESS
 
 random.seed(uuid.uuid4().int)  # uuid-based random seed for irreproducibility.
 
@@ -168,6 +169,18 @@ def format_transaction_logs(
     """
     console = Console()
 
+    # Get chain ID and explorer URL
+    chain_id = int(os.getenv("CHAIN_ID", "11155111"))
+    explorer_url = "https://sepolia.etherscan.io"  # Default fallback
+
+    if chain_id in CHAIN_CONFIG and "Explorer" in CHAIN_CONFIG[chain_id]:
+        explorer_url = CHAIN_CONFIG[chain_id]["Explorer"]
+
+    # Normalize tx hash (ensure 0x prefix)
+    tx_hash = tx_result.tx_hash
+    if not tx_hash.startswith("0x"):
+        tx_hash = f"0x{tx_hash}"
+
     # Print success message and link immediately to console
     console.print(f"\n[bold green]✅ {success_message}[/bold green]")
-    console.print(f"🔗 https://sepolia.etherscan.io/tx/0x{tx_result.tx_hash}\n")
+    console.print(f"🔗 {explorer_url}/tx/{tx_hash}\n")
