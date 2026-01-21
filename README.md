@@ -98,7 +98,7 @@ orion deploy-vault --vault-type transparent --name "Algorithmic Liquidity Provis
 
 ```bash
 # Use off-chain stack to generate an order intent
-echo '{"0x3E15268AdE04Eb579EE490CA92736301C7D644Bb": 0.4, "0x4371227723a006e8ee3941AfF5018D084a06DB95": 0.2, "0x784C3AB4C7bdC2d219b902fA63e87b376F178d82": 0.15, "0xD06b768D498FFD3151e4Bc89e0dBdAA0d1413044": 0.15, "0x1904c298d44b6cd10003C843e29D51407fE1309f": 0.1}' > order_intent.json
+echo '{"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238": 0.4, "0x662DE589197f56aE9231Feb4CF591572339a47D9": 0.2, "0x473c1c81d480E8A0C53797ABcA282447319180d7": 0.15, "0x5C737d4EE9E8ab58a79adDF3764F94064ef7f8F9": 0.15, "0xF35E36Ba9ebA6c4Da1547ba2D8D5AC1dfC354B68": 0.1}' > order_intent.json
 
 # Submit the order intent to the Orion vault
 orion submit-order --order-intent-path order_intent.json
