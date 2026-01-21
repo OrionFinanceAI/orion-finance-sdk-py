@@ -19,14 +19,14 @@ def test_check_npm_available(mock_run):
     mock_run.side_effect = FileNotFoundError
     assert not check_npm_available()
 
-    @patch("orion_finance_sdk_py.encrypt.subprocess.run")
-    @patch.dict(
-        "os.environ",
-        {"STRATEGIST_ADDRESS": "0xStrategist", "ORION_VAULT_ADDRESS": "0xVault"},
-    )
-    def test_encrypt_order_intent(mock_run):
-        """Test encryption logic."""
 
+@patch("orion_finance_sdk_py.encrypt.subprocess.run")
+@patch.dict(
+    "os.environ",
+    {"CURATOR_ADDRESS": "0xCurator", "ORION_VAULT_ADDRESS": "0xVault"},
+)
+def test_encrypt_order_intent(mock_run):
+    """Test encryption logic."""
     # Mock npm check implicit via the first call in the function?
     # No, check_npm_available calls subprocess.run(["npm", ...])
     # The main logic calls subprocess.run(["node", ...])
