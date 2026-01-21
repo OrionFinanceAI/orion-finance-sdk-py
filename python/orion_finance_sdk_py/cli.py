@@ -220,7 +220,7 @@ def _get_pending_fees_logic():
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
     fees = vault.pending_vault_fees
-    print(f"\n💰 Pending Vault Fees: {fees}")
+    print(f"\n Pending Vault Fees: {fees}")
 
 
 def ask_or_exit(question):

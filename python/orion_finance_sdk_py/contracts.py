@@ -766,7 +766,6 @@ class OrionTransparentVault(OrionVault):
         )
 
 
-# TODO: Consider having a single class for both transparent and encrypted vaults.
 class OrionEncryptedVault(OrionVault):
     """OrionEncryptedVault contract."""
 
@@ -778,11 +777,13 @@ class OrionEncryptedVault(OrionVault):
     def manager_address(self) -> str:
         """Fetch the manager address (vaultOwner)."""
         return self.contract.functions.vaultOwner().call()
+        # TODO: uniformize contracts API, centralize implementation in parent class.
 
     @property
     def strategist_address(self) -> str:
         """Fetch the strategist address (curator)."""
         return self.contract.functions.curator().call()
+        # TODO: uniformize contracts API, centralize implementation in parent class.
 
     def transfer_strategist_fees(self, amount: int) -> TransactionResult:
         """Transfer strategist fees (claimCuratorFees)."""
