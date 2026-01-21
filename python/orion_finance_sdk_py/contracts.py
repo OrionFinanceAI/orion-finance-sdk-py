@@ -780,20 +780,18 @@ class OrionEncryptedVault(OrionVault):
 
     @property
     def strategist_address(self) -> str:
-        """Fetch the strategist address (curator)."""
-        return self.contract.functions.curator().call()
+        """Fetch the strategist address."""
+        return self.contract.functions.strategist().call()
 
     def transfer_strategist_fees(self, amount: int) -> TransactionResult:
-        """Transfer strategist fees (claimCuratorFees)."""
+        """Transfer strategist fees ."""
         config = OrionConfig()
         if not config.is_system_idle():
             raise SystemNotIdleError(
                 "System is not idle. Cannot transfer strategist fees at this time."
             )
 
-        strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
-            "CURATOR_PRIVATE_KEY"
-        )
+        strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY")
 
         validate_var(strategist_private_key, "STRATEGIST_PRIVATE_KEY missing")
 
@@ -801,12 +799,12 @@ class OrionEncryptedVault(OrionVault):
         # Validate that the signer is the strategist
         if account.address != self.strategist_address:
             raise ValueError(
-                f"Signer {account.address} is not the vault strategist (curator) {self.strategist_address}. Cannot claim fees."
+                f"Signer {account.address} is not the vault strategist {self.strategist_address}. Cannot claim fees."
             )
 
         nonce = self.w3.eth.get_transaction_count(account.address)
 
-        tx = self.contract.functions.claimCuratorFees(amount).build_transaction(
+        tx = self.contract.functions.claimStrategistFees(amount).build_transaction(
             {"from": account.address, "nonce": nonce}
         )
         signed = account.sign_transaction(tx)
@@ -839,10 +837,8 @@ class OrionEncryptedVault(OrionVault):
                 "System is not idle. Cannot submit order intent at this time."
             )
 
-        # Use STRATEGIST_PRIVATE_KEY preferrably, fallback to CURATOR
-        strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
-            "CURATOR_PRIVATE_KEY"
-        )
+        # Use STRATEGIST_PRIVATE_KEY
+        strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY")
         validate_var(
             strategist_private_key,
             error_message=(
@@ -856,7 +852,7 @@ class OrionEncryptedVault(OrionVault):
         # Validate that the signer is the strategist
         if account.address != self.strategist_address:
             raise ValueError(
-                f"Signer {account.address} is not the vault strategist (curator) {self.strategist_address}. Cannot submit order."
+                f"Signer {account.address} is not the vault strategist {self.strategist_address}. Cannot submit order."
             )
 
         nonce = self.w3.eth.get_transaction_count(account.address)
@@ -899,7 +895,7 @@ class OrionEncryptedVault(OrionVault):
         )
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
-        """Update the strategist (curator) address for the vault."""
+        """Update the strategist address for the vault."""
         config = OrionConfig()
         if not config.is_system_idle():
             raise SystemNotIdleError(
@@ -925,7 +921,7 @@ class OrionEncryptedVault(OrionVault):
 
         nonce = self.w3.eth.get_transaction_count(account.address)
 
-        tx = self.contract.functions.updateCurator(
+        tx = self.contract.functions.updateStrategist(
             new_strategist_address
         ).build_transaction({"from": account.address, "nonce": nonce})
 

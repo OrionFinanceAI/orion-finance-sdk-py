@@ -275,7 +275,7 @@ class TestVaultFactory:
         # Verify call arguments (checking if strategist address from env is used)
         factory.contract.functions.createVault.assert_called()
         args = factory.contract.functions.createVault.call_args[0]
-        assert args[0] == "0xStrategist"  # First arg is strategist/curator
+        assert args[0] == "0xStrategist"  # First arg is strategist
         # Check deposit access control passed
         assert args[6] == ZERO_ADDRESS
 
@@ -483,7 +483,9 @@ class TestOrionVaults:
         config_instance.is_system_idle.return_value = True
 
         vault = OrionEncryptedVault()
-        vault.contract.functions.curator.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.strategist.return_value.call.return_value = (
+            "0xDeployer"
+        )
 
         order = {"0xToken": b"encrypted"}
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
@@ -501,7 +503,7 @@ class TestOrionVaults:
     def test_encrypted_vault_update_strategist(
         self, MockConfig, mock_w3, mock_load_abi, mock_env
     ):
-        """Test encrypted vault update strategist (wrapper around updateCurator)."""
+        """Test encrypted vault update strategist."""
         # Mock config validation
         config_instance = MockConfig.return_value
         config_instance.orion_transparent_vaults = []
@@ -513,13 +515,13 @@ class TestOrionVaults:
             "0xDeployer"
         )
 
-        vault.contract.functions.updateCurator.return_value.estimate_gas.return_value = 100
+        vault.contract.functions.updateStrategist.return_value.estimate_gas.return_value = 100
 
         res = vault.update_strategist("0xNew")
         assert res.receipt["status"] == 1
 
-        # Verify it called updateCurator, NOT updateStrategist
-        vault.contract.functions.updateCurator.assert_called_with("0xNew")
+        # Verify it called updateStrategist
+        vault.contract.functions.updateStrategist.assert_called_with("0xNew")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     def test_encrypted_vault_transfer_fees(
@@ -533,9 +535,11 @@ class TestOrionVaults:
         config_instance.is_system_idle.return_value = True
 
         vault = OrionEncryptedVault()
-        vault.contract.functions.curator.return_value.call.return_value = "0xDeployer"
-        vault.contract.functions.claimCuratorFees.return_value.build_transaction.return_value = {}
+        vault.contract.functions.strategist.return_value.call.return_value = (
+            "0xDeployer"
+        )
+        vault.contract.functions.claimStrategistFees.return_value.build_transaction.return_value = {}
 
         res = vault.transfer_strategist_fees(100)
         assert res.receipt["status"] == 1
-        vault.contract.functions.claimCuratorFees.assert_called_with(100)
+        vault.contract.functions.claimStrategistFees.assert_called_with(100)
