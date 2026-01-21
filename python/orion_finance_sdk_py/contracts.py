@@ -2,7 +2,6 @@
 
 import json
 import os
-import sys
 from dataclasses import dataclass
 from importlib import resources
 
@@ -23,6 +22,10 @@ class TransactionResult:
     tx_hash: str
     receipt: TxReceipt
     decoded_logs: list[dict] | None = None
+
+
+class SystemNotIdleError(RuntimeError):
+    """Raised when the protocol is not idle for the requested operation."""
 
 
 def load_contract_abi(contract_name: str) -> list[dict]:
@@ -286,8 +289,9 @@ class VaultFactory(OrionSmartContract):
         validate_management_fee(management_fee)
 
         if not config.is_system_idle():
-            print("System is not idle. Cannot deploy vault at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot deploy vault at this time."
+            )
 
         account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
@@ -381,8 +385,9 @@ class OrionVault(OrionSmartContract):
         """Update the strategist address for the vault."""
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot update strategist at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot update strategist at this time."
+            )
 
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
@@ -422,8 +427,9 @@ class OrionVault(OrionSmartContract):
         """Update the fee model for the vault."""
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot update fee model at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot update fee model at this time."
+            )
 
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
@@ -484,8 +490,9 @@ class OrionVault(OrionSmartContract):
         """Set the deposit access control contract address."""
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot set deposit access control at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot set deposit access control at this time."
+            )
 
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
@@ -563,8 +570,9 @@ class OrionTransparentVault(OrionVault):
         """Transfer manager fees (claimVaultFees)."""
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot transfer manager fees at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot transfer manager fees at this time."
+            )
 
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
@@ -604,8 +612,9 @@ class OrionTransparentVault(OrionVault):
         """
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot submit order intent at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot submit order intent at this time."
+            )
 
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY")
         validate_var(
@@ -670,8 +679,9 @@ class OrionEncryptedVault(OrionVault):
         """Transfer strategist fees (claimCuratorFees)."""
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot transfer strategist fees at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot transfer strategist fees at this time."
+            )
 
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
             "CURATOR_PRIVATE_KEY"
@@ -711,8 +721,9 @@ class OrionEncryptedVault(OrionVault):
         """
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot submit order intent at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot submit order intent at this time."
+            )
 
         # Use STRATEGIST_PRIVATE_KEY preferrably, fallback to CURATOR
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
@@ -771,8 +782,9 @@ class OrionEncryptedVault(OrionVault):
         """Update the strategist (curator) address for the vault."""
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot update strategist at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot update strategist at this time."
+            )
 
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
