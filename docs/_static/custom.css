@@ -315,9 +315,13 @@ p code, li code, td code {
 }
 
 /* --- GLOBAL LINK OVERRIDES (Kill Purple) --- */
-a, a:visited, .pst-color-link {
+a, .pst-color-link {
     color: var(--orion-blue) !important;
     text-decoration-color: var(--orion-blue) !important;
+}
+a:visited, .pst-color-link:visited {
+    color: var(--orion-blue-hover) !important;
+    text-decoration-color: var(--orion-blue-hover) !important;
 }
 
 a:hover, a:focus {
