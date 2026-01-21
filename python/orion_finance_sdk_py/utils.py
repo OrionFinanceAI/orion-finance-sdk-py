@@ -1,13 +1,15 @@
 """Utility functions for the Orion Finance Python SDK."""
 
+import os
 import random
 import sys
 import uuid
 from pathlib import Path
 
 import numpy as np
+from rich.console import Console
 
-from .types import ZERO_ADDRESS
+from .types import CHAIN_CONFIG, ZERO_ADDRESS
 
 random.seed(uuid.uuid4().int)  # uuid-based random seed for irreproducibility.
 
@@ -165,28 +167,20 @@ def format_transaction_logs(
         tx_result: Transaction result object with tx_hash and decoded_logs attributes
         success_message: Custom success message to display at the end
     """
-    print(f"✅ https://sepolia.etherscan.io/tx/0x{tx_result.tx_hash}")
-    print("=" * 60)
+    console = Console()
 
-    if tx_result.decoded_logs:
-        print("📋 Transaction Events:")
-        for i, log in enumerate(tx_result.decoded_logs, 1):
-            print(f"\n{i}. Event: {log.get('event', 'Unknown')}")
+    # Get chain ID and explorer URL
+    chain_id = int(os.getenv("CHAIN_ID", "11155111"))
+    explorer_url = "https://sepolia.etherscan.io"  # Default fallback
 
-            if log.get("args"):
-                args = log["args"]
-                print("   Arguments:")
-                for key, value in args.items():
-                    if key == "vaultType":
-                        vault_type_name = "Transparent" if value == 0 else "Encrypted"
-                        print(f"     {key}: {value} ({vault_type_name})")
-                    else:
-                        print(f"     {key}: {value}")
+    if chain_id in CHAIN_CONFIG and "Explorer" in CHAIN_CONFIG[chain_id]:
+        explorer_url = CHAIN_CONFIG[chain_id]["Explorer"]
 
-            print(f"   Contract: {log.get('address', 'Unknown')}")
-            print(f"   Block: {log.get('blockNumber', 'Unknown')}")
-    else:
-        print("⚠️  No events found in transaction logs")
+    # Normalize tx hash (ensure 0x prefix)
+    tx_hash = tx_result.tx_hash
+    if not tx_hash.startswith("0x"):
+        tx_hash = f"0x{tx_hash}"
 
-    print("=" * 60)
-    print(f"🎉 {success_message}")
+    # Print success message and link immediately to console
+    console.print(f"\n[bold green]✅ {success_message}[/bold green]")
+    console.print(f"🔗 {explorer_url}/tx/{tx_hash}\n")

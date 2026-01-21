@@ -139,7 +139,10 @@ def test_format_transaction_logs(capsys):
     ]
 
     format_transaction_logs(tx_result)
+
+    # Check output
     captured = capsys.readouterr()
-    assert "TestEvent" in captured.out
-    assert "key: value" in captured.out
-    assert "https://sepolia.etherscan.io/tx/0xabc" in captured.out
+    assert "✅ Transaction completed successfully!" in captured.out
+    assert "🔗 https://sepolia.etherscan.io/tx/0xabc" in captured.out
+    # We no longer print logs in the console
+    assert "TestEvent" not in captured.out

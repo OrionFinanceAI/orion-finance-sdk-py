@@ -22,7 +22,8 @@ def test_check_npm_available(mock_run):
 
 @patch("orion_finance_sdk_py.encrypt.subprocess.run")
 @patch.dict(
-    "os.environ", {"CURATOR_ADDRESS": "0xCurator", "ORION_VAULT_ADDRESS": "0xVault"}
+    "os.environ",
+    {"CURATOR_ADDRESS": "0xCurator", "ORION_VAULT_ADDRESS": "0xVault"},
 )
 def test_encrypt_order_intent(mock_run):
     """Test encryption logic."""

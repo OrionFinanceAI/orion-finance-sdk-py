@@ -13,7 +13,7 @@
 [codecov]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/graph/badge.svg?token=SJLL2VVQDS
 [codecov-badge]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/branch/main/graph/badge.svg
 
-[docs]: https://docs.orionfinance.ai/manager/intro
+[docs]: https://sdk.orionfinance.ai/
 [docs-badge]: https://img.shields.io/badge/Documentation-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white
 
 ## About
@@ -26,7 +26,7 @@ A Python Software Development Kit (SDK) to facilitate interactions with the Orio
 
 </div>
 
-For comprehensive documentation, including setup guides, API references, and developer resources, visit [docs.orionfinance.ai](https://docs.orionfinance.ai/).
+For comprehensive documentation, including setup guides, API references, and developer resources, visit [sdk.orionfinance.ai](https://sdk.orionfinance.ai/).
 
 ## License
 
@@ -70,7 +70,7 @@ pip install orion-finance-sdk-py
 
 ## Environment Variables Setup
 
-The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://docs.orionfinance.ai/manager/orion_sdk/install) to get one.
+The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://sdk.orionfinance.ai/) to get one.
 
 Based on the usage, additional environment variables may be required, e.g.:
 - `STRATEGIST_ADDRESS`: The address of the strategist account.
@@ -94,17 +94,11 @@ orion submit-order --help
 orion deploy-vault --vault-type transparent --name "Algorithmic Liquidity Provision & Hedging Agent" --symbol "ALPHA" --fee-type hard_hurdle --performance-fee 10 --management-fee 1
 ```
 
-### Deploy a new Encrypted Orion vault
-
-```bash
-orion deploy-vault --vault-type encrypted --name "Fully Homomorphic Encryption for Vault Management" --symbol "FHEVM" --fee-type high_water_mark --performance-fee 0 --management-fee 2
-```
-
 ### Submit an order intent to a vault
 
 ```bash
 # Use off-chain stack to generate an order intent
-echo '{"0x3E15268AdE04Eb579EE490CA92736301C7D644Bb": 0.4, "0x4371227723a006e8ee3941AfF5018D084a06DB95": 0.2, "0x784C3AB4C7bdC2d219b902fA63e87b376F178d82": 0.15, "0xD06b768D498FFD3151e4Bc89e0dBdAA0d1413044": 0.15, "0x1904c298d44b6cd10003C843e29D51407fE1309f": 0.1}' > order_intent.json
+echo '{"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238": 0.4, "0x662DE589197f56aE9231Feb4CF591572339a47D9": 0.2, "0x473c1c81d480E8A0C53797ABcA282447319180d7": 0.15, "0x5C737d4EE9E8ab58a79adDF3764F94064ef7f8F9": 0.15, "0xF35E36Ba9ebA6c4Da1547ba2D8D5AC1dfC354B68": 0.1}' > order_intent.json
 
 # Submit the order intent to the Orion vault
 orion submit-order --order-intent-path order_intent.json

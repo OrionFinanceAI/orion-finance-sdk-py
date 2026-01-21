@@ -36,6 +36,12 @@
   --pst-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+/* Override Selection Color */
+::selection {
+  background: var(--orion-blue) !important;
+  color: var(--orion-cream) !important;
+}
+
 /* Force Light Theme Logic (Orion Docs are forced light) */
 html {
   color-scheme: light !important;
@@ -188,6 +194,12 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
 }
 
+/* Link Titles (API Reference etc) Hover Effect */
+h1:hover a.headerlink, h2:hover a.headerlink, h3:hover a.headerlink, h4:hover a.headerlink, h5:hover a.headerlink, h6:hover a.headerlink {
+    color: var(--orion-blue) !important;
+    text-decoration: none !important;
+}
+
 /* Code Blocks (GitHub Light Theme style) */
 .highlight {
     background-color: #e8eaed !important;
@@ -252,8 +264,9 @@ p code, li code, td code {
     padding: 0 0.5rem;
 }
 
-.search-button__wrapper:hover {
+.search-button__wrapper:hover, .search-button__wrapper:focus-within {
     border-color: var(--orion-blue-hover) !important;
+    box-shadow: 0 0 0 1px var(--orion-blue) !important;
 }
 
 /* Container for Icon and Text */
@@ -299,6 +312,37 @@ p code, li code, td code {
 /* Force Cream Background on ALL main content containers to prevent white flashes/blocks */
 .bd-main, .bd-content, .bd-article, .bd-article-container, article, div.body, section, .section {
     background-color: var(--orion-cream) !important;
+}
+
+/* --- GLOBAL LINK OVERRIDES (Kill Purple) --- */
+a, .pst-color-link {
+    color: var(--orion-blue) !important;
+    text-decoration-color: var(--orion-blue) !important;
+}
+a:visited, .pst-color-link:visited {
+    color: var(--orion-blue-hover) !important;
+    text-decoration-color: var(--orion-blue-hover) !important;
+}
+
+a:hover, a:focus {
+    color: var(--orion-blue-hover) !important;
+    text-decoration-color: var(--orion-blue-hover) !important;
+}
+
+/* Navbar Links specifically */
+.navbar-nav .nav-link.active, .navbar-nav .nav-link:hover {
+    color: var(--orion-blue) !important;
+    text-decoration-color: var(--orion-blue) !important;
+    border-bottom-color: var(--orion-blue) !important; /* Some themes use border */
+}
+
+/* Header Links (The Title itself if linked) */
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    color: var(--orion-text) !important; /* Title text usually black */
+}
+h1 a:hover, h2 a:hover, h3 a:hover {
+    color: var(--orion-blue) !important;
+    text-decoration-color: var(--orion-blue) !important;
 }
 
 /* API Reference / Autodoc Styling */

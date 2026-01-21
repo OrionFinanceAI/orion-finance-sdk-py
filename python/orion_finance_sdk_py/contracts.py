@@ -2,7 +2,6 @@
 
 import json
 import os
-import sys
 from dataclasses import dataclass
 from importlib import resources
 
@@ -11,7 +10,11 @@ from web3 import Web3
 from web3.types import TxReceipt
 
 from .types import CHAIN_CONFIG, ZERO_ADDRESS, VaultType
-from .utils import validate_management_fee, validate_performance_fee, validate_var
+from .utils import (
+    MAX_MANAGEMENT_FEE,
+    MAX_PERFORMANCE_FEE,
+    validate_var,
+)
 
 load_dotenv()
 
@@ -23,6 +26,10 @@ class TransactionResult:
     tx_hash: str
     receipt: TxReceipt
     decoded_logs: list[dict] | None = None
+
+
+class SystemNotIdleError(RuntimeError):
+    """Raised when the protocol is not idle for the requested operation."""
 
 
 def load_contract_abi(contract_name: str) -> list[dict]:
@@ -49,12 +56,16 @@ class OrionSmartContract:
     def __init__(self, contract_name: str, contract_address: str):
         """Initialize a smart contract."""
         rpc_url = os.getenv("RPC_URL")
+        if not rpc_url:
+            # Try loading from current directory explicitly
+            load_dotenv(os.getcwd() + "/.env")
+            rpc_url = os.getenv("RPC_URL")
+
         validate_var(
             rpc_url,
             error_message=(
                 "RPC_URL environment variable is missing or invalid. "
                 "Please set RPC_URL in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
 
@@ -83,10 +94,6 @@ class OrionSmartContract:
     ) -> TxReceipt:
         """Wait for a transaction to be processed and return the receipt."""
         return self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=timeout)
-
-    # TODO: verify contracts once deployed, potentially in the same cli command, as soon as deployed it,
-    # verify with the same input parameters.
-    # Skip verification if Etherscan API key is not provided without failing command.
 
     def _decode_logs(self, receipt: TxReceipt) -> list[dict]:
         """Decode logs from a transaction receipt."""
@@ -264,7 +271,7 @@ class VaultFactory(OrionSmartContract):
             error_message=(
                 "STRATEGIST_ADDRESS environment variable is missing or invalid. "
                 "Please set STRATEGIST_ADDRESS in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
@@ -274,7 +281,7 @@ class VaultFactory(OrionSmartContract):
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
         account = self.w3.eth.account.from_key(manager_private_key)
@@ -283,12 +290,20 @@ class VaultFactory(OrionSmartContract):
             error_message="Invalid MANAGER_PRIVATE_KEY.",
         )
 
-        validate_performance_fee(performance_fee)
-        validate_management_fee(management_fee)
+        if performance_fee > MAX_PERFORMANCE_FEE:
+            raise ValueError(
+                f"Performance fee {performance_fee} exceeds maximum {MAX_PERFORMANCE_FEE}"
+            )
+
+        if management_fee > MAX_MANAGEMENT_FEE:
+            raise ValueError(
+                f"Management fee {management_fee} exceeds maximum {MAX_MANAGEMENT_FEE}"
+            )
 
         if not config.is_system_idle():
-            print("System is not idle. Cannot deploy vault at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot deploy vault at this time."
+            )
 
         account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
@@ -373,23 +388,68 @@ class OrionVault(OrionSmartContract):
             error_message=(
                 "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
                 "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
+                "Please follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
+
+        # Validate that the address is a valid Orion Vault
+        config = OrionConfig()
+        is_transparent = contract_address in config.orion_transparent_vaults
+        is_encrypted = contract_address in config.orion_encrypted_vaults
+
+        if not (is_transparent or is_encrypted):
+            raise ValueError(
+                f"The address {contract_address} is NOT a valid Orion Vault registered in the OrionConfig contract. "
+                "Please check your ORION_VAULT_ADDRESS."
+            )
+
         super().__init__(contract_name, contract_address)
+
+    @property
+    def max_performance_fee(self) -> int:
+        """Fetch the maximum performance fee allowed from the vault contract."""
+        return self.contract.functions.MAX_PERFORMANCE_FEE().call()
+
+    @property
+    def max_management_fee(self) -> int:
+        """Fetch the maximum management fee allowed from the vault contract."""
+        return self.contract.functions.MAX_MANAGEMENT_FEE().call()
+
+    @property
+    def manager_address(self) -> str:
+        """Fetch the manager address. To be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement manager_address")
+
+    @property
+    def strategist_address(self) -> str:
+        """Fetch the strategist address. To be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement strategist_address")
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist address for the vault."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            raise SystemNotIdleError(
+                "System is not idle. Cannot update strategist at this time."
+            )
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot update strategist."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateStrategist(
@@ -415,17 +475,39 @@ class OrionVault(OrionSmartContract):
         self, fee_type: int, performance_fee: int, management_fee: int
     ) -> TransactionResult:
         """Update the fee model for the vault."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            raise SystemNotIdleError(
+                "System is not idle. Cannot update fee model at this time."
+            )
+
+        if performance_fee > self.max_performance_fee:
+            raise ValueError(
+                f"Performance fee {performance_fee} exceeds maximum {self.max_performance_fee}"
+            )
+
+        if management_fee > self.max_management_fee:
+            raise ValueError(
+                f"Management fee {management_fee} exceeds maximum {self.max_management_fee}"
+            )
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot update fee model."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateFeeModel(
@@ -453,6 +535,11 @@ class OrionVault(OrionSmartContract):
         return self.contract.functions.totalAssets().call()
 
     @property
+    def pending_vault_fees(self) -> int:
+        """Fetch the pending vault fees."""
+        return self.contract.functions.pendingVaultFees().call()
+
+    @property
     def share_price(self) -> int:
         """Fetch the current share price (value of 1 share unit)."""
         decimals = self.contract.functions.decimals().call()
@@ -472,12 +559,24 @@ class OrionVault(OrionSmartContract):
         self, access_control_address: str
     ) -> TransactionResult:
         """Set the deposit access control contract address."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            raise SystemNotIdleError(
+                "System is not idle. Cannot set deposit access control at this time."
+            )
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
             error_message="MANAGER_PRIVATE_KEY environment variable is missing or invalid.",
         )
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot set deposit access control."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.setDepositAccessControl(
@@ -544,18 +643,40 @@ class OrionTransparentVault(OrionVault):
         """Initialize the OrionTransparentVault contract."""
         super().__init__("OrionTransparentVault")
 
+    @property
+    def manager_address(self) -> str:
+        """Fetch the manager address."""
+        return self.contract.functions.manager().call()
+
+    @property
+    def strategist_address(self) -> str:
+        """Fetch the strategist address."""
+        return self.contract.functions.strategist().call()
+
     def transfer_manager_fees(self, amount: int) -> TransactionResult:
         """Transfer manager fees (claimVaultFees)."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            raise SystemNotIdleError(
+                "System is not idle. Cannot transfer manager fees at this time."
+            )
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot claim fees."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.claimVaultFees(amount).build_transaction(
@@ -582,21 +703,33 @@ class OrionTransparentVault(OrionVault):
         Returns:
             TransactionResult
         """
+        config = OrionConfig()
+        if not config.is_system_idle():
+            raise SystemNotIdleError(
+                "System is not idle. Cannot submit order intent at this time."
+            )
+
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY")
         validate_var(
             strategist_private_key,
             error_message=(
                 "STRATEGIST_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set STRATEGIST_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
         account = self.w3.eth.account.from_key(strategist_private_key)
+        # Validate that the signer is the strategist
+        if account.address != self.strategist_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault strategist {self.strategist_address}. Cannot submit order."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         items = [
-            {"token": Web3.to_checksum_address(token), "value": value}
+            {"token": Web3.to_checksum_address(token), "weight": value}
             for token, value in order_intent.items()
         ]
 
@@ -633,7 +766,6 @@ class OrionTransparentVault(OrionVault):
         )
 
 
-# TODO: Consider having a single class for both transparent and encrypted vaults.
 class OrionEncryptedVault(OrionVault):
     """OrionEncryptedVault contract."""
 
@@ -641,8 +773,26 @@ class OrionEncryptedVault(OrionVault):
         """Initialize the OrionEncryptedVault contract."""
         super().__init__("OrionEncryptedVault")
 
+    @property
+    def manager_address(self) -> str:
+        """Fetch the manager address (vaultOwner)."""
+        return self.contract.functions.vaultOwner().call()
+        # TODO: uniformize contracts API, centralize implementation in parent class.
+
+    @property
+    def strategist_address(self) -> str:
+        """Fetch the strategist address (curator)."""
+        return self.contract.functions.curator().call()
+        # TODO: uniformize contracts API, centralize implementation in parent class.
+
     def transfer_strategist_fees(self, amount: int) -> TransactionResult:
         """Transfer strategist fees (claimCuratorFees)."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            raise SystemNotIdleError(
+                "System is not idle. Cannot transfer strategist fees at this time."
+            )
+
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
             "CURATOR_PRIVATE_KEY"
         )
@@ -650,6 +800,12 @@ class OrionEncryptedVault(OrionVault):
         validate_var(strategist_private_key, "STRATEGIST_PRIVATE_KEY missing")
 
         account = self.w3.eth.account.from_key(strategist_private_key)
+        # Validate that the signer is the strategist
+        if account.address != self.strategist_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault strategist (curator) {self.strategist_address}. Cannot claim fees."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.claimCuratorFees(amount).build_transaction(
@@ -679,6 +835,12 @@ class OrionEncryptedVault(OrionVault):
         Returns:
             TransactionResult
         """
+        config = OrionConfig()
+        if not config.is_system_idle():
+            raise SystemNotIdleError(
+                "System is not idle. Cannot submit order intent at this time."
+            )
+
         # Use STRATEGIST_PRIVATE_KEY preferrably, fallback to CURATOR
         strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY") or os.getenv(
             "CURATOR_PRIVATE_KEY"
@@ -688,11 +850,17 @@ class OrionEncryptedVault(OrionVault):
             error_message=(
                 "STRATEGIST_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set STRATEGIST_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
         account = self.w3.eth.account.from_key(strategist_private_key)
+        # Validate that the signer is the strategist
+        if account.address != self.strategist_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault strategist (curator) {self.strategist_address}. Cannot submit order."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         items = [
@@ -734,17 +902,29 @@ class OrionEncryptedVault(OrionVault):
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist (curator) address for the vault."""
+        config = OrionConfig()
+        if not config.is_system_idle():
+            raise SystemNotIdleError(
+                "System is not idle. Cannot update strategist at this time."
+            )
+
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(
             manager_private_key,
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot update strategist."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateCurator(

@@ -21,7 +21,7 @@ def encrypt_order_intent(order_intent: dict[str, int]) -> tuple[dict[str, bytes]
         error_message=(
             "CURATOR_ADDRESS environment variable is missing or invalid. "
             "Please set CURATOR_ADDRESS in your .env file or as an environment variable. "
-            "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+            "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
         ),
     )
     vault_address = os.getenv("ORION_VAULT_ADDRESS")
@@ -30,7 +30,7 @@ def encrypt_order_intent(order_intent: dict[str, int]) -> tuple[dict[str, bytes]
         error_message=(
             "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
             "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
-            "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/curator/orion_sdk/install"
+            "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
         ),
     )
 
