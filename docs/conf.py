@@ -40,8 +40,8 @@ pygments_style = "friendly"
 html_theme_options = {
     "default_mode": "light",
     "logo": {
-        "image_light": "https://sdk.orionfinance.ai/.svg",
-        "image_dark": "https://sdk.orionfinance.ai/.svg",  # Force blue logo even in dark mode just in case
+        "image_light": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",
+        "image_dark": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",  # Force blue logo even in dark mode just in case
         "alt_text": "Orion Finance SDK",
     },
     "github_url": "https://github.com/OrionFinanceAI/orion-finance-sdk-py",
