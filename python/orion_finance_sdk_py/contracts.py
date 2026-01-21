@@ -728,7 +728,7 @@ class OrionTransparentVault(OrionVault):
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         items = [
-            {"token": Web3.to_checksum_address(token), "value": value}
+            {"token": Web3.to_checksum_address(token), "weight": value}
             for token, value in order_intent.items()
         ]
 
