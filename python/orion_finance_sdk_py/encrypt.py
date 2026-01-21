@@ -15,12 +15,12 @@ def encrypt_order_intent(order_intent: dict[str, int]) -> tuple[dict[str, bytes]
         print_installation_guide()
         sys.exit(1)
 
-    strategist_address = os.getenv("STRATEGIST_ADDRESS")
+    curator_address = os.getenv("CURATOR_ADDRESS")
     validate_var(
-        strategist_address,
+        curator_address,
         error_message=(
-            "STRATEGIST_ADDRESS environment variable is missing or invalid. "
-            "Please set STRATEGIST_ADDRESS in your .env file or as an environment variable. "
+            "CURATOR_ADDRESS environment variable is missing or invalid. "
+            "Please set CURATOR_ADDRESS in your .env file or as an environment variable. "
             "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
         ),
     )
@@ -39,7 +39,7 @@ def encrypt_order_intent(order_intent: dict[str, int]) -> tuple[dict[str, bytes]
 
     payload = {
         "vaultAddress": vault_address,
-        "curatorAddress": strategist_address,
+        "curatorAddress": curator_address,
         "values": values,
     }
 
@@ -69,7 +69,7 @@ def encrypt_order_intent(order_intent: dict[str, int]) -> tuple[dict[str, bytes]
 def print_installation_guide():
     """Print installation guide for npm."""
     print("=" * 80)
-    print("ERROR: Management of Encrypted Vaults requires npm to be installed.")
+    print("ERROR: Curation of Encrypted Vaults requires npm to be installed.")
     print("=" * 80)
     print()
     print("npm is not available on your system.")
