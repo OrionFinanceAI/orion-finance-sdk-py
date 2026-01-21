@@ -2,7 +2,6 @@
 
 import json
 import os
-import sys
 from dataclasses import dataclass
 from importlib import resources
 
@@ -292,16 +291,14 @@ class VaultFactory(OrionSmartContract):
         )
 
         if performance_fee > MAX_PERFORMANCE_FEE:
-            print(
-                f"Error: Performance fee {performance_fee} exceeds maximum {MAX_PERFORMANCE_FEE}"
+            raise ValueError(
+                f"Performance fee {performance_fee} exceeds maximum {MAX_PERFORMANCE_FEE}"
             )
-            sys.exit(1)
 
         if management_fee > MAX_MANAGEMENT_FEE:
-            print(
-                f"Error: Management fee {management_fee} exceeds maximum {MAX_MANAGEMENT_FEE}"
+            raise ValueError(
+                f"Management fee {management_fee} exceeds maximum {MAX_MANAGEMENT_FEE}"
             )
-            sys.exit(1)
 
         if not config.is_system_idle():
             raise SystemNotIdleError(
@@ -480,20 +477,19 @@ class OrionVault(OrionSmartContract):
         """Update the fee model for the vault."""
         config = OrionConfig()
         if not config.is_system_idle():
-            print("System is not idle. Cannot update fee model at this time.")
-            sys.exit(1)
+            raise SystemNotIdleError(
+                "System is not idle. Cannot update fee model at this time."
+            )
 
         if performance_fee > self.max_performance_fee:
-            print(
-                f"Error: Performance fee {performance_fee} exceeds maximum {self.max_performance_fee}"
+            raise ValueError(
+                f"Performance fee {performance_fee} exceeds maximum {self.max_performance_fee}"
             )
-            sys.exit(1)
 
         if management_fee > self.max_management_fee:
-            print(
-                f"Error: Management fee {management_fee} exceeds maximum {self.max_management_fee}"
+            raise ValueError(
+                f"Management fee {management_fee} exceeds maximum {self.max_management_fee}"
             )
-            sys.exit(1)
 
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(

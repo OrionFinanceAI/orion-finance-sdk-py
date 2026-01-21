@@ -23,8 +23,6 @@ from .types import (
 )
 from .utils import (
     BASIS_POINTS_FACTOR,
-    MAX_MANAGEMENT_FEE,
-    MAX_PERFORMANCE_FEE,
     ensure_env_file,
     format_transaction_logs,
     validate_order,
@@ -233,68 +231,6 @@ def ask_or_exit(question):
     return result
 
 
-def validate_perf_fee_input(val: str) -> bool | str:
-    """Validate performance fee input against on-chain limits if available."""
-    try:
-        val_float = float(val)
-        if val_float < 0:
-            return "Fee cannot be negative"
-
-        limit = MAX_PERFORMANCE_FEE
-        vault_address = os.getenv("ORION_VAULT_ADDRESS")
-        if vault_address and vault_address != ZERO_ADDRESS:
-            try:
-                # Try to fetch from current vault
-                config = OrionConfig()
-                if vault_address in config.orion_transparent_vaults:
-                    vault = OrionTransparentVault()
-                elif vault_address in config.orion_encrypted_vaults:
-                    vault = OrionEncryptedVault()
-                else:
-                    return True  # Fallback to constant if not found yet
-
-                limit = vault.max_performance_fee
-            except Exception:
-                pass  # Fallback to constant
-
-        if val_float * BASIS_POINTS_FACTOR > limit:
-            return f"Fee cannot exceed {limit / BASIS_POINTS_FACTOR}%"
-        return True
-    except ValueError:
-        return "Please enter a valid number"
-
-
-def validate_mgmt_fee_input(val: str) -> bool | str:
-    """Validate management fee input against on-chain limits if available."""
-    try:
-        val_float = float(val)
-        if val_float < 0:
-            return "Fee cannot be negative"
-
-        limit = MAX_MANAGEMENT_FEE
-        vault_address = os.getenv("ORION_VAULT_ADDRESS")
-        if vault_address and vault_address != ZERO_ADDRESS:
-            try:
-                # Try to fetch from current vault
-                config = OrionConfig()
-                if vault_address in config.orion_transparent_vaults:
-                    vault = OrionTransparentVault()
-                elif vault_address in config.orion_encrypted_vaults:
-                    vault = OrionEncryptedVault()
-                else:
-                    return True  # Fallback to constant if not found yet
-
-                limit = vault.max_management_fee
-            except Exception:
-                pass  # Fallback to constant
-
-        if val_float * BASIS_POINTS_FACTOR > limit:
-            return f"Fee cannot exceed {limit / BASIS_POINTS_FACTOR}%"
-        return True
-    except ValueError:
-        return "Please enter a valid number"
-
-
 def interactive_menu():
     """Launch the interactive TUI menu."""
     while True:
@@ -333,24 +269,21 @@ def interactive_menu():
                         instruction="[ ↑↓ to scroll | Enter to select ]",
                     )
                 )
-                perf_fee = float(
-                    ask_or_exit(
-                        questionary.text(
-                            "Performance Fee (%):",
-                            default="0",
-                            validate=validate_perf_fee_input,
-                        )
+                perf_fee_str = ask_or_exit(
+                    questionary.text(
+                        "Performance Fee (%):",
+                        default="",
                     )
                 )
-                mgmt_fee = float(
-                    ask_or_exit(
-                        questionary.text(
-                            "Management Fee (%):",
-                            default="0",
-                            validate=validate_mgmt_fee_input,
-                        )
+                perf_fee = float(perf_fee_str) if perf_fee_str else 0.0
+
+                mgmt_fee_str = ask_or_exit(
+                    questionary.text(
+                        "Management Fee (%):",
+                        default="",
                     )
                 )
+                mgmt_fee = float(mgmt_fee_str) if mgmt_fee_str else 0.0
                 dac = ask_or_exit(
                     questionary.text(
                         "Deposit Access Control (Address):", default=ZERO_ADDRESS
@@ -386,24 +319,21 @@ def interactive_menu():
                         instruction="[ ↑↓ to scroll | Enter to select ]",
                     )
                 )
-                perf_fee = float(
-                    ask_or_exit(
-                        questionary.text(
-                            "Performance Fee (%):",
-                            default="0",
-                            validate=validate_perf_fee_input,
-                        )
+                perf_fee_str = ask_or_exit(
+                    questionary.text(
+                        "Performance Fee (%):",
+                        default="",
                     )
                 )
-                mgmt_fee = float(
-                    ask_or_exit(
-                        questionary.text(
-                            "Management Fee (%):",
-                            default="0",
-                            validate=validate_mgmt_fee_input,
-                        )
+                perf_fee = float(perf_fee_str) if perf_fee_str else 0.0
+
+                mgmt_fee_str = ask_or_exit(
+                    questionary.text(
+                        "Management Fee (%):",
+                        default="",
                     )
                 )
+                mgmt_fee = float(mgmt_fee_str) if mgmt_fee_str else 0.0
 
                 _update_fee_model_logic(
                     fee_type_to_int[fee_type_str],
