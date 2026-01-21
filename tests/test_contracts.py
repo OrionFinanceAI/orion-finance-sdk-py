@@ -11,6 +11,7 @@ from orion_finance_sdk_py.contracts import (
     OrionSmartContract,
     OrionTransparentVault,
     OrionVault,
+    SystemNotIdleError,
     TransactionResult,
     VaultFactory,
 )
@@ -250,6 +251,8 @@ class TestVaultFactory:
         config_instance = MockConfig.return_value
         config_instance.is_system_idle.return_value = True
         config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+        config_instance.max_performance_fee = 3000
+        config_instance.max_management_fee = 300
 
         factory = VaultFactory(VaultType.TRANSPARENT)
         assert factory.contract_address == "0xTVF"
@@ -285,6 +288,8 @@ class TestVaultFactory:
         config_instance = MockConfig.return_value
         config_instance.is_system_idle.return_value = True
         config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+        config_instance.max_performance_fee = 3000
+        config_instance.max_management_fee = 300
 
         factory = VaultFactory(VaultType.TRANSPARENT)
 
@@ -302,10 +307,12 @@ class TestVaultFactory:
             MockConfig.return_value.is_system_idle.return_value = False
             # Mock transparent factory address
             MockConfig.return_value.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+            MockConfig.return_value.max_performance_fee = 3000
+            MockConfig.return_value.max_management_fee = 300
 
             factory = VaultFactory(VaultType.TRANSPARENT)
 
-            with pytest.raises(SystemExit):
+            with pytest.raises(SystemNotIdleError):
                 factory.create_orion_vault("N", "S", 0, 0, 0)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -348,9 +355,25 @@ class TestVaultFactory:
 class TestOrionVaults:
     """Tests for OrionVault and subclasses."""
 
-    def test_orion_vault_methods(self, mock_w3, mock_load_abi, mock_env):
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_orion_vault_methods(self, MockConfig, mock_w3, mock_load_abi, mock_env):
         """Test base methods."""
+        # Mock config for update_fee_model calls
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.max_performance_fee = 3000
+        config_instance.max_management_fee = 300
+        # Mock vault validation (assume it's in transparent list)
+        config_instance.orion_transparent_vaults = ["0xVault"]
+        config_instance.orion_encrypted_vaults = []
+
         vault = OrionVault("OrionVault")
+
+        # Mock fee limit calls
+        vault.contract.functions.MAX_PERFORMANCE_FEE.return_value.call.return_value = (
+            3000
+        )
+        vault.contract.functions.MAX_MANAGEMENT_FEE.return_value.call.return_value = 300
 
         # Mock tx methods
         vault.contract.functions.updateStrategist.return_value.estimate_gas.return_value = 100
@@ -405,8 +428,17 @@ class TestOrionVaults:
             mock_ac_instance.functions.canRequestDeposit().call.return_value = False
             assert vault.can_request_deposit("0xUser") is False
 
-    def test_transparent_vault_submit(self, mock_w3, mock_load_abi, mock_env):
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_transparent_vault_submit(
+        self, MockConfig, mock_w3, mock_load_abi, mock_env
+    ):
         """Test transparent vault submit."""
+        # Mock config validation
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = ["0xVault"]
+        config_instance.orion_encrypted_vaults = []
+        config_instance.is_system_idle.return_value = True
+
         vault = OrionTransparentVault()
 
         order = {"0xToken": 100}
@@ -420,8 +452,17 @@ class TestOrionVaults:
         # Verify it used the contract function
         vault.contract.functions.submitIntent.assert_called()
 
-    def test_transparent_vault_transfer_fees(self, mock_w3, mock_load_abi, mock_env):
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_transparent_vault_transfer_fees(
+        self, MockConfig, mock_w3, mock_load_abi, mock_env
+    ):
         """Test transparent vault transfer fees."""
+        # Mock config validation
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = ["0xVault"]
+        config_instance.orion_encrypted_vaults = []
+        config_instance.is_system_idle.return_value = True
+
         vault = OrionTransparentVault()
         vault.contract.functions.claimVaultFees.return_value.build_transaction.return_value = {}
 
@@ -429,8 +470,15 @@ class TestOrionVaults:
         assert res.receipt["status"] == 1
         vault.contract.functions.claimVaultFees.assert_called_with(100)
 
-    def test_encrypted_vault_submit(self, mock_w3, mock_load_abi, mock_env):
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_encrypted_vault_submit(self, MockConfig, mock_w3, mock_load_abi, mock_env):
         """Test encrypted vault submit."""
+        # Mock config validation
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = []
+        config_instance.orion_encrypted_vaults = ["0xVault"]
+        config_instance.is_system_idle.return_value = True
+
         vault = OrionEncryptedVault()
 
         order = {"0xToken": b"encrypted"}
@@ -445,8 +493,17 @@ class TestOrionVaults:
         args = vault.contract.functions.submitIntent.call_args[0]
         assert args[1] == "0xProof"
 
-    def test_encrypted_vault_update_strategist(self, mock_w3, mock_load_abi, mock_env):
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_encrypted_vault_update_strategist(
+        self, MockConfig, mock_w3, mock_load_abi, mock_env
+    ):
         """Test encrypted vault update strategist (wrapper around updateCurator)."""
+        # Mock config validation
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = []
+        config_instance.orion_encrypted_vaults = ["0xVault"]
+        config_instance.is_system_idle.return_value = True
+
         vault = OrionEncryptedVault()
 
         vault.contract.functions.updateCurator.return_value.estimate_gas.return_value = 100
@@ -457,8 +514,17 @@ class TestOrionVaults:
         # Verify it called updateCurator, NOT updateStrategist
         vault.contract.functions.updateCurator.assert_called_with("0xNew")
 
-    def test_encrypted_vault_transfer_fees(self, mock_w3, mock_load_abi, mock_env):
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    def test_encrypted_vault_transfer_fees(
+        self, MockConfig, mock_w3, mock_load_abi, mock_env
+    ):
         """Test encrypted vault transfer fees."""
+        # Mock config validation
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = []
+        config_instance.orion_encrypted_vaults = ["0xVault"]
+        config_instance.is_system_idle.return_value = True
+
         vault = OrionEncryptedVault()
         vault.contract.functions.claimCuratorFees.return_value.build_transaction.return_value = {}
 

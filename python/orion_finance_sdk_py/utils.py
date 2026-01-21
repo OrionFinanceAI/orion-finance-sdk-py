@@ -1,6 +1,5 @@
 """Utility functions for the Orion Finance Python SDK."""
 
-import os
 import random
 import sys
 import uuid
@@ -168,39 +167,7 @@ def format_transaction_logs(
         success_message: Custom success message to display at the end
     """
     console = Console()
-    # Only use pager when interactive; allow opt-out via ORION_USE_PAGER=0
-    should_use_pager = console.is_terminal and os.getenv("ORION_USE_PAGER", "1") != "0"
 
-    output = []
-
-    output.append(f"✅ https://sepolia.etherscan.io/tx/0x{tx_result.tx_hash}")
-    output.append("=" * 60)
-
-    if tx_result.decoded_logs:
-        output.append("📋 Transaction Events:")
-        for i, log in enumerate(tx_result.decoded_logs, 1):
-            output.append(f"\n{i}. Event: {log.get('event', 'Unknown')}")
-
-            if log.get("args"):
-                args = log["args"]
-                output.append("   Arguments:")
-                for key, value in args.items():
-                    if key == "vaultType":
-                        vault_type_name = "Transparent" if value == 0 else "Encrypted"
-                        output.append(f"     {key}: {value} ({vault_type_name})")
-                    else:
-                        output.append(f"     {key}: {value}")
-
-            output.append(f"   Contract: {log.get('address', 'Unknown')}")
-            output.append(f"   Block: {log.get('blockNumber', 'Unknown')}")
-    else:
-        output.append("⚠️  No events found in transaction logs")
-
-    output.append("=" * 60)
-    output.append(f"🎉 {success_message}")
-
-    text = "\n".join(output)
-    if should_use_pager:
-        console.pager(text)
-    else:
-        console.print(text)
+    # Print success message and link immediately to console
+    console.print(f"\n[bold green]✅ {success_message}[/bold green]")
+    console.print(f"🔗 https://sepolia.etherscan.io/tx/0x{tx_result.tx_hash}\n")

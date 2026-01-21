@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 from dataclasses import dataclass
 from importlib import resources
 
@@ -10,7 +11,11 @@ from web3 import Web3
 from web3.types import TxReceipt
 
 from .types import CHAIN_CONFIG, ZERO_ADDRESS, VaultType
-from .utils import validate_management_fee, validate_performance_fee, validate_var
+from .utils import (
+    MAX_MANAGEMENT_FEE,
+    MAX_PERFORMANCE_FEE,
+    validate_var,
+)
 
 load_dotenv()
 
@@ -52,6 +57,11 @@ class OrionSmartContract:
     def __init__(self, contract_name: str, contract_address: str):
         """Initialize a smart contract."""
         rpc_url = os.getenv("RPC_URL")
+        if not rpc_url:
+            # Try loading from current directory explicitly
+            load_dotenv(os.getcwd() + "/.env")
+            rpc_url = os.getenv("RPC_URL")
+
         validate_var(
             rpc_url,
             error_message=(
@@ -285,8 +295,17 @@ class VaultFactory(OrionSmartContract):
             error_message="Invalid MANAGER_PRIVATE_KEY.",
         )
 
-        validate_performance_fee(performance_fee)
-        validate_management_fee(management_fee)
+        if performance_fee > MAX_PERFORMANCE_FEE:
+            print(
+                f"Error: Performance fee {performance_fee} exceeds maximum {MAX_PERFORMANCE_FEE}"
+            )
+            sys.exit(1)
+
+        if management_fee > MAX_MANAGEMENT_FEE:
+            print(
+                f"Error: Management fee {management_fee} exceeds maximum {MAX_MANAGEMENT_FEE}"
+            )
+            sys.exit(1)
 
         if not config.is_system_idle():
             raise SystemNotIdleError(
@@ -379,7 +398,29 @@ class OrionVault(OrionSmartContract):
                 "Please follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
             ),
         )
+
+        # Validate that the address is a valid Orion Vault
+        config = OrionConfig()
+        is_transparent = contract_address in config.orion_transparent_vaults
+        is_encrypted = contract_address in config.orion_encrypted_vaults
+
+        if not (is_transparent or is_encrypted):
+            raise ValueError(
+                f"The address {contract_address} is NOT a valid Orion Vault registered in the OrionConfig contract. "
+                "Please check your ORION_VAULT_ADDRESS."
+            )
+
         super().__init__(contract_name, contract_address)
+
+    @property
+    def max_performance_fee(self) -> int:
+        """Fetch the maximum performance fee allowed from the vault contract."""
+        return self.contract.functions.MAX_PERFORMANCE_FEE().call()
+
+    @property
+    def max_management_fee(self) -> int:
+        """Fetch the maximum management fee allowed from the vault contract."""
+        return self.contract.functions.MAX_MANAGEMENT_FEE().call()
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist address for the vault."""
@@ -427,9 +468,20 @@ class OrionVault(OrionSmartContract):
         """Update the fee model for the vault."""
         config = OrionConfig()
         if not config.is_system_idle():
-            raise SystemNotIdleError(
-                "System is not idle. Cannot update fee model at this time."
+            print("System is not idle. Cannot update fee model at this time.")
+            sys.exit(1)
+
+        if performance_fee > self.max_performance_fee:
+            print(
+                f"Error: Performance fee {performance_fee} exceeds maximum {self.max_performance_fee}"
             )
+            sys.exit(1)
+
+        if management_fee > self.max_management_fee:
+            print(
+                f"Error: Management fee {management_fee} exceeds maximum {self.max_management_fee}"
+            )
+            sys.exit(1)
 
         manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
         validate_var(

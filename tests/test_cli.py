@@ -24,8 +24,6 @@ def test_deploy_vault(mock_ensure_env, MockVaultFactory):
         app,
         [
             "deploy-vault",
-            "--vault-type",
-            "transparent",
             "--name",
             "Test Vault",
             "--symbol",
@@ -169,8 +167,6 @@ def test_deploy_vault_no_address(mock_ensure_env, MockVaultFactory):
         app,
         [
             "deploy-vault",
-            "--vault-type",
-            "transparent",
             "--name",
             "Test Vault",
             "--symbol",

@@ -6,6 +6,7 @@ import sys
 
 import questionary
 import typer
+from dotenv import load_dotenv
 
 from .contracts import (
     OrionConfig,
@@ -22,6 +23,8 @@ from .types import (
 )
 from .utils import (
     BASIS_POINTS_FACTOR,
+    MAX_MANAGEMENT_FEE,
+    MAX_PERFORMANCE_FEE,
     ensure_env_file,
     format_transaction_logs,
     validate_order,
@@ -150,6 +153,41 @@ def _update_fee_model_logic(
     format_transaction_logs(tx_result, "Fee model updated successfully!")
 
 
+def _update_deposit_access_control_logic(new_dac_address: str):
+    """Logic for updating deposit access control."""
+    vault_address = os.getenv("ORION_VAULT_ADDRESS")
+    validate_var(
+        vault_address,
+        error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
+    )
+
+    vault = OrionTransparentVault()
+    tx_result = vault.set_deposit_access_control(new_dac_address)
+    format_transaction_logs(tx_result, "Deposit access control updated successfully!")
+
+
+def _claim_fees_logic(amount: int):
+    """Logic for claiming fees."""
+    vault_address = os.getenv("ORION_VAULT_ADDRESS")
+    validate_var(
+        vault_address,
+        error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
+    )
+
+    config = OrionConfig()
+
+    if vault_address in config.orion_transparent_vaults:
+        vault = OrionTransparentVault()
+        tx_result = vault.transfer_manager_fees(amount)
+        format_transaction_logs(tx_result, "Manager fees claimed successfully!")
+    elif vault_address in config.orion_encrypted_vaults:
+        vault = OrionEncryptedVault()
+        tx_result = vault.transfer_strategist_fees(amount)
+        format_transaction_logs(tx_result, "Strategist fees claimed successfully!")
+    else:
+        raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
+
+
 def ask_or_exit(question):
     """Ask a questionary question and exit/return if cancelled."""
     result = question.ask()
@@ -158,9 +196,59 @@ def ask_or_exit(question):
     return result
 
 
+def validate_perf_fee_input(val: str) -> bool | str:
+    """Validate performance fee input against on-chain limits if available."""
+    try:
+        val_float = float(val)
+        if val_float < 0:
+            return "Fee cannot be negative"
+
+        limit = MAX_PERFORMANCE_FEE
+        vault_address = os.getenv("ORION_VAULT_ADDRESS")
+        if vault_address and vault_address != ZERO_ADDRESS:
+            try:
+                # Try to fetch from current vault
+                vault = OrionTransparentVault()
+                limit = vault.max_performance_fee
+            except Exception:
+                pass  # Fallback to constant
+
+        if val_float * BASIS_POINTS_FACTOR > limit:
+            return f"Fee cannot exceed {limit / BASIS_POINTS_FACTOR}%"
+        return True
+    except ValueError:
+        return "Please enter a valid number"
+
+
+def validate_mgmt_fee_input(val: str) -> bool | str:
+    """Validate management fee input against on-chain limits if available."""
+    try:
+        val_float = float(val)
+        if val_float < 0:
+            return "Fee cannot be negative"
+
+        limit = MAX_MANAGEMENT_FEE
+        vault_address = os.getenv("ORION_VAULT_ADDRESS")
+        if vault_address and vault_address != ZERO_ADDRESS:
+            try:
+                # Try to fetch from current vault
+                vault = OrionTransparentVault()
+                limit = vault.max_management_fee
+            except Exception:
+                pass  # Fallback to constant
+
+        if val_float * BASIS_POINTS_FACTOR > limit:
+            return f"Fee cannot exceed {limit / BASIS_POINTS_FACTOR}%"
+        return True
+    except ValueError:
+        return "Please enter a valid number"
+
+
 def interactive_menu():
     """Launch the interactive TUI menu."""
     while True:
+        # Force reload environment variables to pick up changes (e.g. newly deployed vault address)
+        load_dotenv(override=True)
         try:
             choice = ask_or_exit(
                 questionary.select(
@@ -170,6 +258,8 @@ def interactive_menu():
                         "Submit Order",
                         "Update Strategist",
                         "Update Fee Model",
+                        "Update Deposit Access Control",
+                        "Claim Fees",
                         "Exit",
                     ],
                     instruction="[ ↑↓ to scroll | Enter to select ]",
@@ -180,13 +270,8 @@ def interactive_menu():
                 break
 
             if choice == "Deploy Vault":
-                vault_type = ask_or_exit(
-                    questionary.select(
-                        "Vault Type:",
-                        choices=[t.value for t in VaultType],
-                        instruction="[ ↑↓ to scroll | Enter to select ]",
-                    )
-                )
+                # Always deploy transparent vaults from CLI
+                vault_type = VaultType.TRANSPARENT.value
                 name = ask_or_exit(questionary.text("Vault Name:"))
                 symbol = ask_or_exit(questionary.text("Vault Symbol:"))
                 fee_type_str = ask_or_exit(
@@ -197,10 +282,22 @@ def interactive_menu():
                     )
                 )
                 perf_fee = float(
-                    ask_or_exit(questionary.text("Performance Fee (%):", default="0"))
+                    ask_or_exit(
+                        questionary.text(
+                            "Performance Fee (%):",
+                            default="0",
+                            validate=validate_perf_fee_input,
+                        )
+                    )
                 )
                 mgmt_fee = float(
-                    ask_or_exit(questionary.text("Management Fee (%):", default="0"))
+                    ask_or_exit(
+                        questionary.text(
+                            "Management Fee (%):",
+                            default="0",
+                            validate=validate_mgmt_fee_input,
+                        )
+                    )
                 )
                 dac = ask_or_exit(
                     questionary.text(
@@ -238,10 +335,22 @@ def interactive_menu():
                     )
                 )
                 perf_fee = float(
-                    ask_or_exit(questionary.text("Performance Fee (%):", default="0"))
+                    ask_or_exit(
+                        questionary.text(
+                            "Performance Fee (%):",
+                            default="0",
+                            validate=validate_perf_fee_input,
+                        )
+                    )
                 )
                 mgmt_fee = float(
-                    ask_or_exit(questionary.text("Management Fee (%):", default="0"))
+                    ask_or_exit(
+                        questionary.text(
+                            "Management Fee (%):",
+                            default="0",
+                            validate=validate_mgmt_fee_input,
+                        )
+                    )
                 )
 
                 _update_fee_model_logic(
@@ -249,6 +358,14 @@ def interactive_menu():
                     int(perf_fee * BASIS_POINTS_FACTOR),
                     int(mgmt_fee * BASIS_POINTS_FACTOR),
                 )
+
+            elif choice == "Update Deposit Access Control":
+                addr = ask_or_exit(questionary.text("New Access Control Address:"))
+                _update_deposit_access_control_logic(addr)
+
+            elif choice == "Claim Fees":
+                amount = int(ask_or_exit(questionary.text("Amount to Claim (units):")))
+                _claim_fees_logic(amount)
 
             input("\nPress Enter to continue...")
 
@@ -285,9 +402,6 @@ def deploy_vault(
     management_fee: float = typer.Option(
         ..., help="Management fee in percentage i.e. 2.1 (maximum 3%)"
     ),
-    vault_type: VaultType = typer.Option(
-        VaultType.TRANSPARENT, help="Type of the vault (default: transparent)"
-    ),
     deposit_access_control: str = typer.Option(
         ZERO_ADDRESS, help="Address of the deposit access control contract"
     ),
@@ -295,7 +409,7 @@ def deploy_vault(
     """Deploy an Orion vault with customizable fee structure, name, and symbol. The vault defaults to transparent."""
     fee_type_int = fee_type_to_int[fee_type.value]
     _deploy_vault_logic(
-        vault_type.value,
+        VaultType.TRANSPARENT.value,
         name,
         symbol,
         fee_type_int,

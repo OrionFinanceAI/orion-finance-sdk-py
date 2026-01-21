@@ -62,7 +62,6 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
     # This assumes a specific order of execution in the code
     ask_side_effect = [
         "Deploy Vault",  # Main menu
-        VaultType.TRANSPARENT.value,  # Vault Type
         "Test Vault",  # Name
         "TV",  # Symbol
         "absolute",  # Fee Type
@@ -200,7 +199,7 @@ def test_interactive_menu_cancel(mock_questionary, mock_input):
 
     ask_side_effect = [
         "Deploy Vault",
-        None,  # Simulates Ctrl+C inside sub-menu
+        None,  # Simulates Ctrl+C inside Name prompt
         "Exit",
     ]
     iterator = iter(ask_side_effect)
@@ -210,6 +209,7 @@ def test_interactive_menu_cancel(mock_questionary, mock_input):
         return val
 
     mock_questionary.select.return_value.ask.side_effect = next_answer
+    mock_questionary.text.return_value.ask.side_effect = next_answer
     # We need select().ask() to return None for the sub-menu call
 
     # However, "Deploy Vault" is a select call.
