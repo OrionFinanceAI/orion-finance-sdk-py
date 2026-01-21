@@ -539,6 +539,11 @@ class OrionVault(OrionSmartContract):
         return self.contract.functions.totalAssets().call()
 
     @property
+    def pending_vault_fees(self) -> int:
+        """Fetch the pending vault fees."""
+        return self.contract.functions.pendingVaultFees().call()
+
+    @property
     def share_price(self) -> int:
         """Fetch the current share price (value of 1 share unit)."""
         decimals = self.contract.functions.decimals().call()

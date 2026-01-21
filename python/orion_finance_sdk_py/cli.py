@@ -205,6 +205,26 @@ def _claim_fees_logic(amount: int):
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
 
+def _get_pending_fees_logic():
+    """Logic for fetching pending vault fees."""
+    vault_address = os.getenv("ORION_VAULT_ADDRESS")
+    validate_var(
+        vault_address,
+        error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
+    )
+
+    config = OrionConfig()
+    if vault_address in config.orion_transparent_vaults:
+        vault = OrionTransparentVault()
+    elif vault_address in config.orion_encrypted_vaults:
+        vault = OrionEncryptedVault()
+    else:
+        raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
+
+    fees = vault.pending_vault_fees
+    print(f"\n💰 Pending Vault Fees: {fees}")
+
+
 def ask_or_exit(question):
     """Ask a questionary question and exit/return if cancelled."""
     result = question.ask()
@@ -291,6 +311,7 @@ def interactive_menu():
                         "Update Fee Model",
                         "Update Deposit Access Control",
                         "Claim Fees",
+                        "Get Pending Fees",
                         "Exit",
                     ],
                     instruction="[ ↑↓ to scroll | Enter to select ]",
@@ -398,6 +419,9 @@ def interactive_menu():
                 amount = int(ask_or_exit(questionary.text("Amount to Claim (units):")))
                 _claim_fees_logic(amount)
 
+            elif choice == "Get Pending Fees":
+                _get_pending_fees_logic()
+
             input("\nPress Enter to continue...")
 
         except KeyboardInterrupt:
@@ -491,3 +515,9 @@ def update_fee_model(
         int(performance_fee * BASIS_POINTS_FACTOR),
         int(management_fee * BASIS_POINTS_FACTOR),
     )
+
+
+@app.command()
+def get_pending_fees() -> None:
+    """Get pending fees for the current vault."""
+    _get_pending_fees_logic()
