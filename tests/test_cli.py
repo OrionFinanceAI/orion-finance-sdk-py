@@ -112,9 +112,14 @@ def test_submit_order_encrypted(
 
 
 @patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
-def test_update_strategist(mock_ensure, MockVault):
+def test_update_strategist(mock_ensure, MockConfig, MockVault):
     """Test update strategist."""
+    mock_config = MockConfig.return_value
+    mock_config.orion_transparent_vaults = ["0xVault"]
+    mock_config.orion_encrypted_vaults = []
+
     mock_vault = MockVault.return_value
     mock_vault.update_strategist.return_value = MagicMock(decoded_logs=[])
 
@@ -129,9 +134,14 @@ def test_update_strategist(mock_ensure, MockVault):
 
 
 @patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
-def test_update_fee_model(mock_ensure, MockVault):
+def test_update_fee_model(mock_ensure, MockConfig, MockVault):
     """Test update fee model."""
+    mock_config = MockConfig.return_value
+    mock_config.orion_transparent_vaults = ["0xVault"]
+    mock_config.orion_encrypted_vaults = []
+
     mock_vault = MockVault.return_value
     mock_vault.update_fee_model.return_value = MagicMock(decoded_logs=[])
 

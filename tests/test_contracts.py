@@ -10,7 +10,6 @@ from orion_finance_sdk_py.contracts import (
     OrionEncryptedVault,
     OrionSmartContract,
     OrionTransparentVault,
-    OrionVault,
     SystemNotIdleError,
     TransactionResult,
     VaultFactory,
@@ -361,19 +360,19 @@ class TestOrionVaults:
         # Mock config for update_fee_model calls
         config_instance = MockConfig.return_value
         config_instance.is_system_idle.return_value = True
-        config_instance.max_performance_fee = 3000
-        config_instance.max_management_fee = 300
-        # Mock vault validation (assume it's in transparent list)
         config_instance.orion_transparent_vaults = ["0xVault"]
         config_instance.orion_encrypted_vaults = []
 
-        vault = OrionVault("OrionVault")
+        vault = OrionTransparentVault()
 
         # Mock fee limit calls
         vault.contract.functions.MAX_PERFORMANCE_FEE.return_value.call.return_value = (
             3000
         )
         vault.contract.functions.MAX_MANAGEMENT_FEE.return_value.call.return_value = 300
+
+        # Mock role calls
+        vault.contract.functions.manager.return_value.call.return_value = "0xDeployer"
 
         # Mock tx methods
         vault.contract.functions.updateStrategist.return_value.estimate_gas.return_value = 100
@@ -440,6 +439,9 @@ class TestOrionVaults:
         config_instance.is_system_idle.return_value = True
 
         vault = OrionTransparentVault()
+        vault.contract.functions.strategist.return_value.call.return_value = (
+            "0xDeployer"
+        )
 
         order = {"0xToken": 100}
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
@@ -464,6 +466,7 @@ class TestOrionVaults:
         config_instance.is_system_idle.return_value = True
 
         vault = OrionTransparentVault()
+        vault.contract.functions.manager.return_value.call.return_value = "0xDeployer"
         vault.contract.functions.claimVaultFees.return_value.build_transaction.return_value = {}
 
         res = vault.transfer_manager_fees(100)
@@ -480,6 +483,7 @@ class TestOrionVaults:
         config_instance.is_system_idle.return_value = True
 
         vault = OrionEncryptedVault()
+        vault.contract.functions.curator.return_value.call.return_value = "0xDeployer"
 
         order = {"0xToken": b"encrypted"}
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
@@ -505,6 +509,9 @@ class TestOrionVaults:
         config_instance.is_system_idle.return_value = True
 
         vault = OrionEncryptedVault()
+        vault.contract.functions.vaultOwner.return_value.call.return_value = (
+            "0xDeployer"
+        )
 
         vault.contract.functions.updateCurator.return_value.estimate_gas.return_value = 100
 
@@ -526,6 +533,7 @@ class TestOrionVaults:
         config_instance.is_system_idle.return_value = True
 
         vault = OrionEncryptedVault()
+        vault.contract.functions.curator.return_value.call.return_value = "0xDeployer"
         vault.contract.functions.claimCuratorFees.return_value.build_transaction.return_value = {}
 
         res = vault.transfer_strategist_fees(100)

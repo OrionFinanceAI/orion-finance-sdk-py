@@ -122,8 +122,13 @@ def _update_strategist_logic(new_strategist_address: str):
         ),
     )
 
-    # Working for both vaults types
-    vault = OrionTransparentVault()
+    config = OrionConfig()
+    if vault_address in config.orion_transparent_vaults:
+        vault = OrionTransparentVault()
+    elif vault_address in config.orion_encrypted_vaults:
+        vault = OrionEncryptedVault()
+    else:
+        raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
     tx_result = vault.update_strategist(new_strategist_address)
     format_transaction_logs(tx_result, "Strategist address updated successfully!")
@@ -142,8 +147,13 @@ def _update_fee_model_logic(
         ),
     )
 
-    # Working for both vaults types
-    vault = OrionTransparentVault()
+    config = OrionConfig()
+    if vault_address in config.orion_transparent_vaults:
+        vault = OrionTransparentVault()
+    elif vault_address in config.orion_encrypted_vaults:
+        vault = OrionEncryptedVault()
+    else:
+        raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
     tx_result = vault.update_fee_model(
         fee_type=fee_type_value,
@@ -161,7 +171,14 @@ def _update_deposit_access_control_logic(new_dac_address: str):
         error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
     )
 
-    vault = OrionTransparentVault()
+    config = OrionConfig()
+    if vault_address in config.orion_transparent_vaults:
+        vault = OrionTransparentVault()
+    elif vault_address in config.orion_encrypted_vaults:
+        vault = OrionEncryptedVault()
+    else:
+        raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
+
     tx_result = vault.set_deposit_access_control(new_dac_address)
     format_transaction_logs(tx_result, "Deposit access control updated successfully!")
 
@@ -208,7 +225,14 @@ def validate_perf_fee_input(val: str) -> bool | str:
         if vault_address and vault_address != ZERO_ADDRESS:
             try:
                 # Try to fetch from current vault
-                vault = OrionTransparentVault()
+                config = OrionConfig()
+                if vault_address in config.orion_transparent_vaults:
+                    vault = OrionTransparentVault()
+                elif vault_address in config.orion_encrypted_vaults:
+                    vault = OrionEncryptedVault()
+                else:
+                    return True  # Fallback to constant if not found yet
+
                 limit = vault.max_performance_fee
             except Exception:
                 pass  # Fallback to constant
@@ -232,7 +256,14 @@ def validate_mgmt_fee_input(val: str) -> bool | str:
         if vault_address and vault_address != ZERO_ADDRESS:
             try:
                 # Try to fetch from current vault
-                vault = OrionTransparentVault()
+                config = OrionConfig()
+                if vault_address in config.orion_transparent_vaults:
+                    vault = OrionTransparentVault()
+                elif vault_address in config.orion_encrypted_vaults:
+                    vault = OrionEncryptedVault()
+                else:
+                    return True  # Fallback to constant if not found yet
+
                 limit = vault.max_management_fee
             except Exception:
                 pass  # Fallback to constant

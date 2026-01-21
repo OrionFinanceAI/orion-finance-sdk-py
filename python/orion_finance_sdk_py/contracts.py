@@ -96,10 +96,6 @@ class OrionSmartContract:
         """Wait for a transaction to be processed and return the receipt."""
         return self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=timeout)
 
-    # TODO: verify contracts once deployed, potentially in the same cli command, as soon as deployed it,
-    # verify with the same input parameters.
-    # Skip verification if Etherscan API key is not provided without failing command.
-
     def _decode_logs(self, receipt: TxReceipt) -> list[dict]:
         """Decode logs from a transaction receipt."""
         decoded_logs = []
@@ -422,6 +418,16 @@ class OrionVault(OrionSmartContract):
         """Fetch the maximum management fee allowed from the vault contract."""
         return self.contract.functions.MAX_MANAGEMENT_FEE().call()
 
+    @property
+    def manager_address(self) -> str:
+        """Fetch the manager address. To be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement manager_address")
+
+    @property
+    def strategist_address(self) -> str:
+        """Fetch the strategist address. To be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement strategist_address")
+
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist address for the vault."""
         config = OrionConfig()
@@ -441,6 +447,12 @@ class OrionVault(OrionSmartContract):
         )
 
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot update strategist."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateStrategist(
@@ -494,6 +506,12 @@ class OrionVault(OrionSmartContract):
         )
 
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot update fee model."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateFeeModel(
@@ -552,6 +570,12 @@ class OrionVault(OrionSmartContract):
             error_message="MANAGER_PRIVATE_KEY environment variable is missing or invalid.",
         )
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot set deposit access control."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.setDepositAccessControl(
@@ -618,6 +642,16 @@ class OrionTransparentVault(OrionVault):
         """Initialize the OrionTransparentVault contract."""
         super().__init__("OrionTransparentVault")
 
+    @property
+    def manager_address(self) -> str:
+        """Fetch the manager address."""
+        return self.contract.functions.manager().call()
+
+    @property
+    def strategist_address(self) -> str:
+        """Fetch the strategist address."""
+        return self.contract.functions.strategist().call()
+
     def transfer_manager_fees(self, amount: int) -> TransactionResult:
         """Transfer manager fees (claimVaultFees)."""
         config = OrionConfig()
@@ -636,6 +670,12 @@ class OrionTransparentVault(OrionVault):
             ),
         )
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot claim fees."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.claimVaultFees(amount).build_transaction(
@@ -679,6 +719,12 @@ class OrionTransparentVault(OrionVault):
         )
 
         account = self.w3.eth.account.from_key(strategist_private_key)
+        # Validate that the signer is the strategist
+        if account.address != self.strategist_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault strategist {self.strategist_address}. Cannot submit order."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         items = [
@@ -727,6 +773,16 @@ class OrionEncryptedVault(OrionVault):
         """Initialize the OrionEncryptedVault contract."""
         super().__init__("OrionEncryptedVault")
 
+    @property
+    def manager_address(self) -> str:
+        """Fetch the manager address (vaultOwner)."""
+        return self.contract.functions.vaultOwner().call()
+
+    @property
+    def strategist_address(self) -> str:
+        """Fetch the strategist address (curator)."""
+        return self.contract.functions.curator().call()
+
     def transfer_strategist_fees(self, amount: int) -> TransactionResult:
         """Transfer strategist fees (claimCuratorFees)."""
         config = OrionConfig()
@@ -742,6 +798,12 @@ class OrionEncryptedVault(OrionVault):
         validate_var(strategist_private_key, "STRATEGIST_PRIVATE_KEY missing")
 
         account = self.w3.eth.account.from_key(strategist_private_key)
+        # Validate that the signer is the strategist
+        if account.address != self.strategist_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault strategist (curator) {self.strategist_address}. Cannot claim fees."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.claimCuratorFees(amount).build_transaction(
@@ -791,6 +853,12 @@ class OrionEncryptedVault(OrionVault):
         )
 
         account = self.w3.eth.account.from_key(strategist_private_key)
+        # Validate that the signer is the strategist
+        if account.address != self.strategist_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault strategist (curator) {self.strategist_address}. Cannot submit order."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         items = [
@@ -849,6 +917,12 @@ class OrionEncryptedVault(OrionVault):
         )
 
         account = self.w3.eth.account.from_key(manager_private_key)
+        # Validate that the signer is the manager
+        if account.address != self.manager_address:
+            raise ValueError(
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot update strategist."
+            )
+
         nonce = self.w3.eth.get_transaction_count(account.address)
 
         tx = self.contract.functions.updateCurator(
