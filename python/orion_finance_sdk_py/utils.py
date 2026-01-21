@@ -1,5 +1,6 @@
 """Utility functions for the Orion Finance Python SDK."""
 
+import os
 import random
 import sys
 import uuid
@@ -167,6 +168,9 @@ def format_transaction_logs(
         success_message: Custom success message to display at the end
     """
     console = Console()
+    # Only use pager when interactive; allow opt-out via ORION_USE_PAGER=0
+    should_use_pager = console.is_terminal and os.getenv("ORION_USE_PAGER", "1") != "0"
+
     output = []
 
     output.append(f"✅ https://sepolia.etherscan.io/tx/0x{tx_result.tx_hash}")
@@ -195,5 +199,8 @@ def format_transaction_logs(
     output.append("=" * 60)
     output.append(f"🎉 {success_message}")
 
-    with console.pager():
-        console.print("\n".join(output))
+    text = "\n".join(output)
+    if should_use_pager:
+        console.pager(text)
+    else:
+        console.print(text)
