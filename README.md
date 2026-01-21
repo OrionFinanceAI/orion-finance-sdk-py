@@ -13,7 +13,7 @@
 [codecov]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/graph/badge.svg?token=SJLL2VVQDS
 [codecov-badge]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/branch/main/graph/badge.svg
 
-[docs]: https://docs.orionfinance.ai/manager/intro
+[docs]: https://sdk.orionfinance.ai/
 [docs-badge]: https://img.shields.io/badge/Documentation-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white
 
 ## About
@@ -26,7 +26,7 @@ A Python Software Development Kit (SDK) to facilitate interactions with the Orio
 
 </div>
 
-For comprehensive documentation, including setup guides, API references, and developer resources, visit [docs.orionfinance.ai](https://docs.orionfinance.ai/).
+For comprehensive documentation, including setup guides, API references, and developer resources, visit [sdk.orionfinance.ai](https://sdk.orionfinance.ai/).
 
 ## License
 
@@ -70,7 +70,7 @@ pip install orion-finance-sdk-py
 
 ## Environment Variables Setup
 
-The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://docs.orionfinance.ai/manager/orion_sdk/install) to get one.
+The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://sdk.orionfinance.ai/) to get one.
 
 Based on the usage, additional environment variables may be required, e.g.:
 - `STRATEGIST_ADDRESS`: The address of the strategist account.

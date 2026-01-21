@@ -271,7 +271,7 @@ class VaultFactory(OrionSmartContract):
             error_message=(
                 "STRATEGIST_ADDRESS environment variable is missing or invalid. "
                 "Please set STRATEGIST_ADDRESS in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
@@ -281,7 +281,7 @@ class VaultFactory(OrionSmartContract):
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
         account = self.w3.eth.account.from_key(manager_private_key)
@@ -388,7 +388,7 @@ class OrionVault(OrionSmartContract):
             error_message=(
                 "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
                 "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
-                "Please follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Please follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
@@ -439,7 +439,7 @@ class OrionVault(OrionSmartContract):
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
@@ -497,7 +497,7 @@ class OrionVault(OrionSmartContract):
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
@@ -667,7 +667,7 @@ class OrionTransparentVault(OrionVault):
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
         account = self.w3.eth.account.from_key(manager_private_key)
@@ -715,7 +715,7 @@ class OrionTransparentVault(OrionVault):
             error_message=(
                 "STRATEGIST_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set STRATEGIST_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
@@ -845,7 +845,7 @@ class OrionEncryptedVault(OrionVault):
             error_message=(
                 "STRATEGIST_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set STRATEGIST_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
@@ -909,7 +909,7 @@ class OrionEncryptedVault(OrionVault):
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://docs.orionfinance.ai/manager/orion_sdk/install"
+                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
             ),
         )
 
