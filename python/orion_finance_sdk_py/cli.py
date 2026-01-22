@@ -260,6 +260,7 @@ def validate_int_input(val: str) -> bool | str:
 
 def interactive_menu():
     """Launch the interactive TUI menu."""
+    print(ORION_BANNER, file=sys.stderr)
     while True:
         # Force reload environment variables to pick up changes (e.g. newly deployed vault address)
         load_dotenv(override=True)
@@ -408,8 +409,7 @@ def main(ctx: typer.Context):
 
 
 def entry_point():
-    """Entry point for the CLI that prints the banner."""
-    print(ORION_BANNER, file=sys.stderr)
+    """Entry point for the CLI."""
     app()
 
 
