@@ -223,6 +223,23 @@ def _get_pending_fees_logic():
     print(f"\n Pending Vault Fees: {fees}")
 
 
+def _list_whitelisted_assets_logic():
+    """Logic for listing whitelisted assets from OrionConfig."""
+    config = OrionConfig()
+    
+    print("\n" + "=" * 60)
+    print("📋 Whitelisted Assets")
+    print("=" * 60)
+    
+    print("\n")
+    for asset_address in config.whitelisted_assets:
+        print(asset_address)
+    
+    print("\n" + "=" * 60)
+    print(f"Total: {len(config.whitelisted_assets)} whitelisted assets")
+    print("=" * 60 + "\n")
+
+
 def ask_or_exit(question):
     """Ask a questionary question and exit/return if cancelled."""
     result = question.ask()
@@ -258,6 +275,7 @@ def interactive_menu():
                         "Update Deposit Access Control",
                         "Claim Fees",
                         "Get Pending Fees",
+                        "List Whitelisted Assets",
                         "Exit",
                     ],
                     instruction="[ ↑↓ to scroll | Enter to select ]",
@@ -368,6 +386,9 @@ def interactive_menu():
             elif choice == "Get Pending Fees":
                 _get_pending_fees_logic()
 
+            elif choice == "List Whitelisted Assets":
+                _list_whitelisted_assets_logic()
+
             input("\nPress Enter to continue...")
 
         except KeyboardInterrupt:
@@ -467,3 +488,9 @@ def update_fee_model(
 def get_pending_fees() -> None:
     """Get pending fees for the current vault."""
     _get_pending_fees_logic()
+
+
+@app.command()
+def list_whitelisted_assets() -> None:
+    """List all whitelisted assets from OrionConfig."""
+    _list_whitelisted_assets_logic()
