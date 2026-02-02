@@ -290,6 +290,14 @@ class VaultFactory(OrionSmartContract):
             error_message="Invalid MANAGER_PRIVATE_KEY.",
         )
 
+        if len(name.encode("utf-8")) > 26:
+            raise ValueError(f"Vault name '{name}' exceeds maximum length of 26 bytes.")
+
+        if len(symbol.encode("utf-8")) > 4:
+            raise ValueError(
+                f"Vault symbol '{symbol}' exceeds maximum length of 4 bytes."
+            )
+
         if performance_fee > MAX_PERFORMANCE_FEE:
             raise ValueError(
                 f"Performance fee {performance_fee} exceeds maximum {MAX_PERFORMANCE_FEE}"

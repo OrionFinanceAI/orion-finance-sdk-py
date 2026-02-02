@@ -226,15 +226,15 @@ def _get_pending_fees_logic():
 def _list_whitelisted_assets_logic():
     """Logic for listing whitelisted assets from OrionConfig."""
     config = OrionConfig()
-    
+
     print("\n" + "=" * 60)
     print("📋 Whitelisted Assets")
     print("=" * 60)
-    
+
     print("\n")
     for asset_address in config.whitelisted_assets:
         print(asset_address)
-    
+
     print("\n" + "=" * 60)
     print(f"Total: {len(config.whitelisted_assets)} whitelisted assets")
     print("=" * 60 + "\n")
@@ -256,6 +256,24 @@ def validate_int_input(val: str) -> bool | str:
         return "Amount must be positive"
     except ValueError:
         return "Please enter a valid integer"
+
+
+def validate_name(val: str) -> bool | str:
+    """Validate vault name length (max 26 bytes)."""
+    if len(val.encode("utf-8")) > 26:
+        return "Name too long (max 26 bytes)"
+    if not val:
+        return "Name cannot be empty"
+    return True
+
+
+def validate_symbol(val: str) -> bool | str:
+    """Validate vault symbol length (max 4 bytes)."""
+    if len(val.encode("utf-8")) > 4:
+        return "Symbol too long (max 4 bytes)"
+    if not val:
+        return "Symbol cannot be empty"
+    return True
 
 
 def interactive_menu():
@@ -287,10 +305,14 @@ def interactive_menu():
                 break
 
             if choice == "Deploy Vault":
-                # ... existing ...
+                # Always deploy transparent vaults from CLI
                 vault_type = VaultType.TRANSPARENT.value
-                name = ask_or_exit(questionary.text("Vault Name:"))
-                symbol = ask_or_exit(questionary.text("Vault Symbol:"))
+                name = ask_or_exit(
+                    questionary.text("Vault Name:", validate=validate_name)
+                )
+                symbol = ask_or_exit(
+                    questionary.text("Vault Symbol:", validate=validate_symbol)
+                )
                 fee_type_str = ask_or_exit(
                     questionary.select(
                         "Fee Type:",

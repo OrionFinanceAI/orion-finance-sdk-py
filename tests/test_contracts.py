@@ -324,6 +324,19 @@ class TestVaultFactory:
             with pytest.raises(SystemNotIdleError):
                 factory.create_orion_vault("N", "S", 0, 0, 0)
 
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_create_orion_vault_invalid_name_symbol(self):
+        """Test vault creation fails with too long name or symbol."""
+        factory = VaultFactory(VaultType.TRANSPARENT)
+
+        # Name too long (> 26 bytes)
+        with pytest.raises(ValueError, match="exceeds maximum length of 26 bytes"):
+            factory.create_orion_vault("A" * 27, "SYM", 0, 0, 0)
+
+        # Symbol too long (> 4 bytes)
+        with pytest.raises(ValueError, match="exceeds maximum length of 4 bytes"):
+            factory.create_orion_vault("Name", "SYMB1", 0, 0, 0)
+
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_vault_factory_encrypted_fallback(self, MockConfig):

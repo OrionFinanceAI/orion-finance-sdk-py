@@ -3,7 +3,12 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from orion_finance_sdk_py.cli import ask_or_exit, interactive_menu
+from orion_finance_sdk_py.cli import (
+    ask_or_exit,
+    interactive_menu,
+    validate_name,
+    validate_symbol,
+)
 from orion_finance_sdk_py.types import VaultType
 
 
@@ -20,6 +25,26 @@ def test_ask_or_exit_cancel():
     mock_question.ask.return_value = None
     with pytest.raises(KeyboardInterrupt):
         ask_or_exit(mock_question)
+
+
+def test_validate_name():
+    """Test validate_name logic."""
+    assert validate_name("Valid Name") is True
+    assert validate_name("") == "Name cannot be empty"
+    assert validate_name("A" * 27) == "Name too long (max 26 bytes)"
+    # Multibyte char test
+    assert validate_name("🚀" * 6) is True  # 6 * 4 bytes = 24 bytes
+    assert validate_name("🚀" * 7) == "Name too long (max 26 bytes)"  # 28 bytes
+
+
+def test_validate_symbol():
+    """Test validate_symbol logic."""
+    assert validate_symbol("SYM") is True
+    assert validate_symbol("") == "Symbol cannot be empty"
+    assert validate_symbol("SYMB1") == "Symbol too long (max 4 bytes)"
+    # Multibyte char test
+    assert validate_symbol("🚀") is True  # 4 bytes
+    assert validate_symbol("🚀A") == "Symbol too long (max 4 bytes)"  # 5 bytes
 
 
 @patch("builtins.input")
