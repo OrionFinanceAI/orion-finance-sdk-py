@@ -44,7 +44,7 @@ Create a `.env` file in your project directory with the following variables:
 Example usage of the Orion Finance SDK:
 
 ```python
-from orion_finance_sdk_py import OrionConfig
+from orion_finance_sdk_py.contracts import OrionConfig
 
 config = OrionConfig()
 print(f"Risk-free Rate: {config.risk_free_rate}")
