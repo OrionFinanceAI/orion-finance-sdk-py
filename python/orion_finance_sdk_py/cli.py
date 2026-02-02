@@ -73,7 +73,7 @@ def _deploy_vault_logic(
         print("\n❌ Could not extract vault address from transaction")
 
 
-def _submit_order_logic(order_intent_path: str, fuzz: bool):
+def _submit_order_logic(order_intent_path: str):
     """Logic for submitting an order."""
     vault_address = os.getenv("ORION_VAULT_ADDRESS")
     validate_var(
@@ -94,7 +94,7 @@ def _submit_order_logic(order_intent_path: str, fuzz: bool):
         vault = OrionTransparentVault()
         tx_result = vault.submit_order_intent(order_intent=output_order_intent)
     elif vault_address in config.orion_encrypted_vaults:
-        validated_order_intent = validate_order(order_intent=order_intent, fuzz=fuzz)
+        validated_order_intent = validate_order(order_intent=order_intent)
         output_order_intent, input_proof = encrypt_order_intent(
             order_intent=validated_order_intent
         )
@@ -353,10 +353,7 @@ def interactive_menu():
 
             elif choice == "Submit Order":
                 path = ask_or_exit(questionary.path("Path to Order Intent JSON:"))
-                fuzz = ask_or_exit(
-                    questionary.confirm("Fuzz order intent?", default=False)
-                )
-                _submit_order_logic(path, fuzz)
+                _submit_order_logic(path)
 
             elif choice == "Update Strategist":
                 addr = ask_or_exit(questionary.text("New Strategist Address:"))
@@ -468,10 +465,9 @@ def submit_order(
     order_intent_path: str = typer.Option(
         ..., help="Path to JSON file containing order intent"
     ),
-    fuzz: bool = typer.Option(False, help="Fuzz the order intent"),
 ) -> None:
     """Submit an order intent to an Orion vault. The order intent can be either transparent or encrypted."""
-    _submit_order_logic(order_intent_path, fuzz)
+    _submit_order_logic(order_intent_path)
 
 
 @app.command()

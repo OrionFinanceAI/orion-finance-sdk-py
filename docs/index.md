@@ -147,11 +147,8 @@ Submit portfolio allocation intents that the protocol executes on the next rebal
 
 ```bash
 orion submit-order \
-  --order-intent-path order_intent.json \
-  --fuzz
+  --order-intent-path order_intent.json
 ```
-
-**Encrypts allocation details**; the optional `--fuzz` flag provides additional obfuscation to the intent without meaningfully modifying the underlying strategy.
 
 ### Notes
 

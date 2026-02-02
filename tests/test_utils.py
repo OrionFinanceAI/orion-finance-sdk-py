@@ -117,13 +117,6 @@ def test_validate_order(MockOrionConfig):
     with pytest.raises(ValueError, match="sum of amounts is not 1"):
         validate_order({"0xA": 0.5, "0xB": 0.4})
 
-    # Fuzzing
-    mock_config.whitelisted_assets = ["0xC"]
-    # Should add 0xC
-    result = validate_order({"0xA": 0.5, "0xB": 0.5}, fuzz=True)
-    assert "0xC" in result
-    assert len(result) == 3
-
 
 def test_format_transaction_logs(capsys):
     """Test log formatting."""

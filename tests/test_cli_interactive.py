@@ -94,24 +94,21 @@ def test_interactive_menu_submit_order(mock_submit_logic, mock_questionary, mock
     # Sequence:
     # 1. Main menu -> "Submit Order"
     # 2. Path -> "order.json"
-    # 3. Fuzz -> True
-    # 4. Main menu -> "Exit"
+    # 3. Main menu -> "Exit"
 
     ask_side_effect = [
         "Submit Order",
         "order.json",
-        True,
         "Exit",
     ]
     iterator = iter(ask_side_effect)
 
     mock_questionary.select.return_value.ask.side_effect = lambda: next(iterator)
     mock_questionary.path.return_value.ask.side_effect = lambda: next(iterator)
-    mock_questionary.confirm.return_value.ask.side_effect = lambda: next(iterator)
 
     interactive_menu()
 
-    mock_submit_logic.assert_called_once_with("order.json", True)
+    mock_submit_logic.assert_called_once_with("order.json")
 
 
 @patch("builtins.input")

@@ -79,7 +79,7 @@ def validate_management_fee(management_fee: int) -> None:
         )
 
 
-def validate_order(order_intent: dict[str, int], fuzz: bool = False) -> dict[str, int]:
+def validate_order(order_intent: dict[str, int]) -> dict[str, int]:
     """Validate an order intent."""
     from .contracts import OrionConfig
 
@@ -102,26 +102,6 @@ def validate_order(order_intent: dict[str, int], fuzz: bool = False) -> dict[str
         )
 
     strategist_intent_decimals = orion_config.strategist_intent_decimals
-
-    if fuzz:
-        # Add remaining whitelisted assets with small random amounts
-        whitelisted_assets = orion_config.whitelisted_assets
-        for asset in whitelisted_assets:
-            if asset not in order_intent.keys():
-                order_intent[asset] = (
-                    random.randint(1, 10) / 10**strategist_intent_decimals
-                )
-
-        # Normalize again to sum to 1
-        order_intent = {
-            token: weight / sum(order_intent.values())
-            for token, weight in order_intent.items()
-        }
-
-        # Shuffle the order_intent to avoid dust amounts always being last
-        items = list(order_intent.items())
-        random.shuffle(items)
-        order_intent = dict(items)
 
     order_intent = {
         token: weight * 10**strategist_intent_decimals
