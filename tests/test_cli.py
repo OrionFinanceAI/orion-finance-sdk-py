@@ -35,6 +35,8 @@ def test_deploy_vault(mock_ensure_env, MockVaultFactory):
             "10",
             "--management-fee",
             "1",
+            "--strategist-address",
+            "0xStrategist",
         ],
     )
 
@@ -49,6 +51,7 @@ def test_deploy_vault(mock_ensure_env, MockVaultFactory):
         performance_fee=1000,
         management_fee=100,
         deposit_access_control=ZERO_ADDRESS,
+        strategist_address="0xStrategist",
     )
 
 
@@ -188,6 +191,8 @@ def test_deploy_vault_no_address(mock_ensure_env, MockVaultFactory):
             "10",
             "--management-fee",
             "1",
+            "--strategist-address",
+            "0xStrategist",
         ],
     )
 

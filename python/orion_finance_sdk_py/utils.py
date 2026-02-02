@@ -32,9 +32,6 @@ def ensure_env_file(env_file_path: Path = Path.cwd() / ".env"):
 # RPC URL for blockchain connection
 RPC_URL=
 
-# Strategist contract address
-STRATEGIST_ADDRESS=
-
 # Private key for manager operations
 MANAGER_PRIVATE_KEY=
 

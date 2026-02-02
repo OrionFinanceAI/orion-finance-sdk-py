@@ -276,6 +276,7 @@ class TestVaultFactory:
             performance_fee=1000,
             management_fee=100,
             deposit_access_control=ZERO_ADDRESS,
+            strategist_address="0xStrategist",
         )
 
         assert isinstance(result, TransactionResult)
@@ -307,7 +308,7 @@ class TestVaultFactory:
         mock_w3.eth.get_balance.return_value = 0  # Not enough
 
         with pytest.raises(ValueError, match="Insufficient ETH balance"):
-            factory.create_orion_vault("N", "S", 0, 0, 0)
+            factory.create_orion_vault("0xStrategist", "N", "S", 0, 0, 0)
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_create_orion_vault_system_busy(self):
@@ -322,7 +323,7 @@ class TestVaultFactory:
             factory = VaultFactory(VaultType.TRANSPARENT)
 
             with pytest.raises(SystemNotIdleError):
-                factory.create_orion_vault("N", "S", 0, 0, 0)
+                factory.create_orion_vault("0xStrategist", "N", "S", 0, 0, 0)
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_create_orion_vault_invalid_name_symbol(self):
@@ -331,11 +332,11 @@ class TestVaultFactory:
 
         # Name too long (> 26 bytes)
         with pytest.raises(ValueError, match="exceeds maximum length of 26 bytes"):
-            factory.create_orion_vault("A" * 27, "SYM", 0, 0, 0)
+            factory.create_orion_vault("0xStrategist", "A" * 27, "SYM", 0, 0, 0)
 
         # Symbol too long (> 4 bytes)
         with pytest.raises(ValueError, match="exceeds maximum length of 4 bytes"):
-            factory.create_orion_vault("Name", "SYMB1", 0, 0, 0)
+            factory.create_orion_vault("0xStrategist", "Name", "SYMB1", 0, 0, 0)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")

@@ -110,7 +110,8 @@ orion deploy-vault \
   --symbol "ALPHA" \
   --fee-type hard_hurdle \
   --performance-fee 100 \
-  --management-fee 10
+  --management-fee 10 \
+  --strategist-address 0x...
 ```
 
 **What this does:**

@@ -255,6 +255,7 @@ class VaultFactory(OrionSmartContract):
 
     def create_orion_vault(
         self,
+        strategist_address: str,
         name: str,
         symbol: str,
         fee_type: int,
@@ -265,13 +266,11 @@ class VaultFactory(OrionSmartContract):
         """Create an Orion vault for a given strategist address."""
         config = OrionConfig()
 
-        strategist_address = os.getenv("STRATEGIST_ADDRESS")
         validate_var(
             strategist_address,
             error_message=(
-                "STRATEGIST_ADDRESS environment variable is missing or invalid. "
-                "Please set STRATEGIST_ADDRESS in your .env file or as an environment variable. "
-                "Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
+                "STRATEGIST_ADDRESS is invalid. "
+                "Please provide a valid strategist address."
             ),
         )
 

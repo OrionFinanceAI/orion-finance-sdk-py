@@ -49,11 +49,13 @@ def _deploy_vault_logic(
     performance_fee_bp: int,
     management_fee_bp: int,
     deposit_access_control: str,
+    strategist_address: str,
 ):
     """Logic for deploying a vault."""
     vault_factory = VaultFactory(vault_type=vault_type)
 
     tx_result = vault_factory.create_orion_vault(
+        strategist_address=strategist_address,
         name=name,
         symbol=symbol,
         fee_type=fee_type_value,
@@ -307,6 +309,9 @@ def interactive_menu():
             if choice == "Deploy Vault":
                 # Always deploy transparent vaults from CLI
                 vault_type = VaultType.TRANSPARENT.value
+                strategist_address = ask_or_exit(
+                    questionary.text("Strategist Address:")
+                )
                 name = ask_or_exit(
                     questionary.text("Vault Name:", validate=validate_name)
                 )
@@ -349,6 +354,7 @@ def interactive_menu():
                     int(perf_fee * BASIS_POINTS_FACTOR),
                     int(mgmt_fee * BASIS_POINTS_FACTOR),
                     dac,
+                    strategist_address,
                 )
 
             elif choice == "Submit Order":
@@ -446,6 +452,7 @@ def deploy_vault(
     deposit_access_control: str = typer.Option(
         ZERO_ADDRESS, help="Address of the deposit access control contract"
     ),
+    strategist_address: str = typer.Option(..., help="Address of the strategist"),
 ):
     """Deploy an Orion vault with customizable fee structure, name, and symbol. The vault defaults to transparent."""
     fee_type_int = fee_type_to_int[fee_type.value]
@@ -457,6 +464,7 @@ def deploy_vault(
         int(performance_fee * BASIS_POINTS_FACTOR),
         int(management_fee * BASIS_POINTS_FACTOR),
         deposit_access_control,
+        strategist_address,
     )
 
 

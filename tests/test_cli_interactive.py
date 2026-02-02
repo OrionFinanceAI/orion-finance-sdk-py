@@ -55,6 +55,7 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
     # Sequence of return values for ask() calls across all widgets
     ask_side_effect = [
         "Deploy Vault",  # Main menu
+        "0xStrategist",  # Strategist Address
         "Test Vault",  # Name
         "TV",  # Symbol
         "absolute",  # Fee Type
@@ -84,6 +85,7 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
     assert args[4] == 0  # 0.0 * 100
     assert args[5] == 0  # 0.0 * 100
     assert args[6] == "0x0"
+    assert args[7] == "0xStrategist"
 
 
 @patch("builtins.input")
@@ -267,6 +269,7 @@ def test_interactive_menu_error_handling(
 
     ask_side_effect = [
         "Deploy Vault",
+        "0xStrategist",
         "Name",
         "Symbol",
         "absolute",
