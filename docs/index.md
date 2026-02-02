@@ -1,4 +1,4 @@
-# Orion Finance SDK
+# Orion | SDK
 
 This guide shows how to install the [Orion SDK](https://pypi.org/project/orion-finance-sdk-py/) locally. The source code is publicly available on [GitHub](https://github.com/OrionFinanceAI/orion-finance-sdk-py).
 
