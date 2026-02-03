@@ -258,6 +258,7 @@ class TestVaultFactory:
         # Mock OrionConfig
         config_instance = MockConfig.return_value
         config_instance.is_system_idle.return_value = True
+        config_instance.is_whitelisted_manager.return_value = True  # Whitelisted
         config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
         config_instance.max_performance_fee = 3000
         config_instance.max_management_fee = 300
@@ -292,10 +293,25 @@ class TestVaultFactory:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_load_abi", "mock_env")
+    def test_create_orion_vault_manager_not_whitelisted(self, MockConfig, mock_w3):
+        """Test vault creation fails when manager is not whitelisted."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.is_whitelisted_manager.return_value = False  # Not whitelisted
+        config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+
+        factory = VaultFactory(VaultType.TRANSPARENT)
+
+        with pytest.raises(ValueError, match="is not whitelisted to create vaults"):
+            factory.create_orion_vault("0xStrategist", "N", "S", 0, 0, 0)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_load_abi", "mock_env")
     def test_create_orion_vault_insufficient_balance(self, MockConfig, mock_w3):
         """Test vault creation fails with insufficient balance."""
         config_instance = MockConfig.return_value
         config_instance.is_system_idle.return_value = True
+        config_instance.is_whitelisted_manager.return_value = True
         config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
         config_instance.max_performance_fee = 3000
         config_instance.max_management_fee = 300
@@ -315,6 +331,7 @@ class TestVaultFactory:
         """Test system busy check."""
         with patch("orion_finance_sdk_py.contracts.OrionConfig") as MockConfig:
             MockConfig.return_value.is_system_idle.return_value = False
+            MockConfig.return_value.is_whitelisted_manager.return_value = True
             # Mock transparent factory address
             MockConfig.return_value.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
             MockConfig.return_value.max_performance_fee = 3000

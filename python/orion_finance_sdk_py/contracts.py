@@ -289,6 +289,12 @@ class VaultFactory(OrionSmartContract):
             error_message="Invalid MANAGER_PRIVATE_KEY.",
         )
 
+        if not config.is_whitelisted_manager(account.address):
+            raise ValueError(
+                f"Manager {account.address} is not whitelisted to create vaults. "
+                "Please contact the Orion Finance team to get whitelisted."
+            )
+
         if len(name.encode("utf-8")) > 26:
             raise ValueError(f"Vault name '{name}' exceeds maximum length of 26 bytes.")
 
