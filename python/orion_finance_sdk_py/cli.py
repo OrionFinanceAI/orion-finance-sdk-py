@@ -7,6 +7,7 @@ import sys
 import questionary
 import typer
 from dotenv import load_dotenv
+from rich.console import Console
 
 from .contracts import (
     OrionConfig,
@@ -203,22 +204,24 @@ def _get_pending_fees_logic():
 
 def _list_whitelisted_assets_logic():
     """Logic for listing whitelisted assets from OrionConfig."""
+    console = Console()
     config = OrionConfig()
 
-    print("\n" + "=" * 60)
-    print("📋 Whitelisted Assets")
-    print("=" * 60)
+    with console.status("[bold green]Fetching whitelisted assets from chain...") as status:
+        assets = config.whitelisted_assets
+        try:
+            names = [n.strip() for n in config.whitelisted_asset_names]
+        except Exception:
+            # Fallback if the contract doesn't support names yet
+            names = ["Unknown"] * len(assets)
 
-    print("\n")
-    assets = config.whitelisted_assets
-    try:
-        names = config.whitelisted_asset_names
-    except Exception:
-        # Fallback if the contract doesn't support names yet
-        names = ["Unknown"] * len(assets)
+    print("\n" + "=" * 60)
+
+    # Calculate alignment based on longest name
+    max_name_len = max((len(name) for name in names), default=10)
 
     for name, address in zip(names, assets, strict=True):
-        print(f"{name: <10} | {address}")
+        print(f"{name: <{max_name_len}} | {address}")
 
     print("\n" + "=" * 60)
     print(f"Total: {len(assets)} whitelisted assets")
