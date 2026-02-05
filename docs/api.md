@@ -21,11 +21,6 @@
    :members:
    :undoc-members:
    :show-inheritance:
-
-.. autoclass:: orion_finance_sdk_py.contracts.OrionEncryptedVault
-   :members:
-   :undoc-members:
-   :show-inheritance:
 ```
 
 ## Factory

@@ -10,11 +10,9 @@ from dotenv import load_dotenv
 
 from .contracts import (
     OrionConfig,
-    OrionEncryptedVault,
     OrionTransparentVault,
     VaultFactory,
 )
-from .encrypt import encrypt_order_intent
 from .types import (
     ZERO_ADDRESS,
     FeeType,
@@ -95,16 +93,6 @@ def _submit_order_logic(order_intent_path: str):
         output_order_intent = validate_order(order_intent=order_intent)
         vault = OrionTransparentVault()
         tx_result = vault.submit_order_intent(order_intent=output_order_intent)
-    elif vault_address in config.orion_encrypted_vaults:
-        validated_order_intent = validate_order(order_intent=order_intent)
-        output_order_intent, input_proof = encrypt_order_intent(
-            order_intent=validated_order_intent
-        )
-
-        vault = OrionEncryptedVault()
-        tx_result = vault.submit_order_intent(
-            order_intent=output_order_intent, input_proof=input_proof
-        )
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -125,8 +113,6 @@ def _update_strategist_logic(new_strategist_address: str):
     config = OrionConfig()
     if vault_address in config.orion_transparent_vaults:
         vault = OrionTransparentVault()
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -150,8 +136,6 @@ def _update_fee_model_logic(
     config = OrionConfig()
     if vault_address in config.orion_transparent_vaults:
         vault = OrionTransparentVault()
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -174,8 +158,6 @@ def _update_deposit_access_control_logic(new_dac_address: str):
     config = OrionConfig()
     if vault_address in config.orion_transparent_vaults:
         vault = OrionTransparentVault()
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -197,10 +179,6 @@ def _claim_fees_logic(amount: int):
         vault = OrionTransparentVault()
         tx_result = vault.transfer_manager_fees(amount)
         format_transaction_logs(tx_result, "Manager fees claimed successfully!")
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
-        tx_result = vault.transfer_strategist_fees(amount)
-        format_transaction_logs(tx_result, "Strategist fees claimed successfully!")
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -216,8 +194,6 @@ def _get_pending_fees_logic():
     config = OrionConfig()
     if vault_address in config.orion_transparent_vaults:
         vault = OrionTransparentVault()
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -234,11 +210,18 @@ def _list_whitelisted_assets_logic():
     print("=" * 60)
 
     print("\n")
-    for asset_address in config.whitelisted_assets:
-        print(asset_address)
+    assets = config.whitelisted_assets
+    try:
+        names = config.whitelisted_asset_names
+    except Exception:
+        # Fallback if the contract doesn't support names yet
+        names = ["Unknown"] * len(assets)
+
+    for name, address in zip(names, assets, strict=True):
+        print(f"{name: <10} | {address}")
 
     print("\n" + "=" * 60)
-    print(f"Total: {len(config.whitelisted_assets)} whitelisted assets")
+    print(f"Total: {len(assets)} whitelisted assets")
     print("=" * 60 + "\n")
 
 
@@ -341,10 +324,10 @@ def interactive_menu():
                 )
                 mgmt_fee = float(mgmt_fee_str) if mgmt_fee_str else 0.0
                 dac = ask_or_exit(
-                    questionary.text(
-                        "Deposit Access Control (Address):", default=ZERO_ADDRESS
-                    )
+                    questionary.text("Deposit Access Control (Address):", default="")
                 )
+                if not dac:
+                    dac = ZERO_ADDRESS
 
                 _deploy_vault_logic(
                     vault_type,
