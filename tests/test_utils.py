@@ -24,7 +24,6 @@ def test_ensure_env_file(tmp_path):
 
     assert env_file.exists()
     content = env_file.read_text()
-    assert "STRATEGIST_ADDRESS=" in content
     assert "STRATEGIST_PRIVATE_KEY=" in content
 
 
@@ -116,13 +115,6 @@ def test_validate_order(MockOrionConfig):
     # Sum not 1
     with pytest.raises(ValueError, match="sum of amounts is not 1"):
         validate_order({"0xA": 0.5, "0xB": 0.4})
-
-    # Fuzzing
-    mock_config.whitelisted_assets = ["0xC"]
-    # Should add 0xC
-    result = validate_order({"0xA": 0.5, "0xB": 0.5}, fuzz=True)
-    assert "0xC" in result
-    assert len(result) == 3
 
 
 def test_format_transaction_logs(capsys):

@@ -22,7 +22,7 @@
     "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\""
   },
   "dependencies": {
-    "@zama-fhe/relayer-sdk": "^0.2.0",
+    "@zama-fhe/relayer-sdk": "^0.4.0",
     "ethers": "^6.15.0"
   },
   "devDependencies": {

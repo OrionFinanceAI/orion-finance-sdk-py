@@ -1,4 +1,4 @@
-# Orion Finance SDK
+# Orion | SDK
 
 This guide shows how to install the [Orion SDK](https://pypi.org/project/orion-finance-sdk-py/) locally. The source code is publicly available on [GitHub](https://github.com/OrionFinanceAI/orion-finance-sdk-py).
 
@@ -110,7 +110,8 @@ orion deploy-vault \
   --symbol "ALPHA" \
   --fee-type hard_hurdle \
   --performance-fee 100 \
-  --management-fee 10
+  --management-fee 10 \
+  --strategist-address 0x...
 ```
 
 **What this does:**
@@ -147,11 +148,8 @@ Submit portfolio allocation intents that the protocol executes on the next rebal
 
 ```bash
 orion submit-order \
-  --order-intent-path order_intent.json \
-  --fuzz
+  --order-intent-path order_intent.json
 ```
-
-**Encrypts allocation details**; the optional `--fuzz` flag provides additional obfuscation to the intent without meaningfully modifying the underlying strategy.
 
 ### Notes
 
