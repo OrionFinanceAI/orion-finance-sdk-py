@@ -98,7 +98,7 @@ orion deploy-vault --vault-type transparent --name "Algorithmic Liquidity Provis
 
 ```bash
 # Use off-chain stack to generate an order intent
-echo '{"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238": 0.4, "0x662DE589197f56aE9231Feb4CF591572339a47D9": 0.2, "0x473c1c81d480E8A0C53797ABcA282447319180d7": 0.15, "0x5C737d4EE9E8ab58a79adDF3764F94064ef7f8F9": 0.15, "0xF35E36Ba9ebA6c4Da1547ba2D8D5AC1dfC354B68": 0.1}' > order_intent.json
+echo '{"0x...": 0.4, "0x...": 0.2, "0x...": 0.15, "0x...": 0.15, "0x...": 0.1}' > order_intent.json
 
 # Submit the order intent to the Orion vault
 orion submit-order --order-intent-path order_intent.json
@@ -107,7 +107,7 @@ orion submit-order --order-intent-path order_intent.json
 ### Update the strategist address for a vault
 
 ```bash
-orion update-strategist --new-strategist-address 0x92Cc2706b5775e2E783D76F20dC7ccC59bB92E48
+orion update-strategist --new-strategist-address 0x...
 ```
 
 ### Update the fee model for a vault

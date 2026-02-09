@@ -147,6 +147,11 @@ class OrionConfig(OrionSmartContract):
         )
 
     @property
+    def underlying_asset(self) -> str:
+        """Fetch the underlying asset address."""
+        return self.contract.functions.underlyingAsset().call()
+
+    @property
     def strategist_intent_decimals(self) -> int:
         """Fetch the strategist intent decimals from the OrionConfig contract."""
         return self.contract.functions.strategistIntentDecimals().call()
@@ -155,6 +160,10 @@ class OrionConfig(OrionSmartContract):
     def manager_intent_decimals(self) -> int:
         """Alias for strategist_intent_decimals."""
         return self.strategist_intent_decimals
+
+    def token_decimals(self, token_address: str) -> int:
+        """Fetch the decimals of a token address."""
+        return self.contract.functions.getTokenDecimals(token_address).call()
 
     @property
     def risk_free_rate(self) -> int:
@@ -715,7 +724,7 @@ class OrionVault(OrionSmartContract):
     @property
     def pending_vault_fees(self) -> int:
         """Fetch the pending vault fees."""
-        return self.contract.functions.pendingVaultFees().call()
+        return self.contract.functions.pendingVaultFees().call() / 10**OrionConfig().token_decimals(OrionConfig().underlying_asset)
 
     @property
     def share_price(self) -> int:
