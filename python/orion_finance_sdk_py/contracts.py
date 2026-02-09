@@ -177,7 +177,7 @@ class OrionConfig(OrionSmartContract):
 
     @property
     def whitelisted_asset_names(self) -> list[str]:
-        """Fetch all whitelisted asset names from the OrionConfig contract with manual fallback."""
+        """Fetch all whitelisted asset names from the OrionConfig contract."""
         return self.contract.functions.getAllWhitelistedAssetNames().call()
 
     @property
@@ -538,10 +538,16 @@ class OrionVault(OrionSmartContract):
         signed = account.sign_transaction(tx)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())
+
+        if receipt["status"] != 1:
+            raise Exception(f"Transaction failed with status: {receipt['status']}")
+
+        decoded_logs = self._decode_logs(receipt)
+
         return TransactionResult(
             tx_hash=tx_hash.hex(),
             receipt=receipt,
-            decoded_logs=self._decode_logs(receipt),
+            decoded_logs=decoded_logs,
         )
 
     def request_deposit(self, assets: int) -> TransactionResult:
