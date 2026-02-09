@@ -79,13 +79,13 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
     mock_deploy_logic.assert_called_once()
     args = mock_deploy_logic.call_args[0]
     assert args[0] == VaultType.TRANSPARENT.value
-    assert args[1] == "Test Vault"
-    assert args[2] == "TV"
-    assert args[3] == 0  # absolute fee int
-    assert args[4] == 0  # 0.0 * 100
+    assert args[1] == "0xStrategist"
+    assert args[2] == "Test Vault"
+    assert args[3] == "TV"
+    assert args[4] == 0  # absolute fee int
     assert args[5] == 0  # 0.0 * 100
-    assert args[6] == "0x0"
-    assert args[7] == "0xStrategist"
+    assert args[6] == 0  # 0.0 * 100
+    assert args[7] == "0x0"
 
 
 @patch("builtins.input")

@@ -538,15 +538,27 @@ class OrionVault(OrionSmartContract):
             fulfill_batch_size = config.max_fulfill_batch_size
         return self.contract.functions.pendingRedeem(fulfill_batch_size).call()
 
-    def request_deposit(self, assets: int) -> TransactionResult:
-        """Submit an asynchronous deposit request."""
-        private_key = os.getenv(
-            "MANAGER_PRIVATE_KEY"
-        )  # Default to manager for testing/CLI
-        validate_var(private_key, "Private key missing for deposit request.")
+    def _execute_vault_tx(
+        self,
+        contract_fn_call,
+        key_env: str = "MANAGER_PRIVATE_KEY",
+        error_msg: str = "Private key missing for transaction.",
+    ) -> TransactionResult:
+        """Execute a vault transaction with the given contract function call.
+
+        Args:
+            contract_fn_call: The contract function call (e.g., self.contract.functions.requestDeposit(assets))
+            key_env: Environment variable name for the private key (default: "MANAGER_PRIVATE_KEY")
+            error_msg: Error message for validation
+
+        Returns:
+            TransactionResult with transaction hash, receipt, and decoded logs
+        """
+        private_key = os.getenv(key_env)
+        validate_var(private_key, error_msg)
         account = self.w3.eth.account.from_key(private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
-        tx = self.contract.functions.requestDeposit(assets).build_transaction(
+        tx = contract_fn_call.build_transaction(
             {"from": account.address, "nonce": nonce}
         )
         signed = account.sign_transaction(tx)
@@ -556,60 +568,34 @@ class OrionVault(OrionSmartContract):
             tx_hash=tx_hash.hex(),
             receipt=receipt,
             decoded_logs=self._decode_logs(receipt),
+        )
+
+    def request_deposit(self, assets: int) -> TransactionResult:
+        """Submit an asynchronous deposit request."""
+        return self._execute_vault_tx(
+            self.contract.functions.requestDeposit(assets),
+            error_msg="Private key missing for deposit request.",
         )
 
     def cancel_deposit_request(self, amount: int) -> TransactionResult:
         """Cancel a previously submitted deposit request."""
-        private_key = os.getenv("MANAGER_PRIVATE_KEY")
-        validate_var(private_key, "Private key missing for cancellation.")
-        account = self.w3.eth.account.from_key(private_key)
-        nonce = self.w3.eth.get_transaction_count(account.address)
-        tx = self.contract.functions.cancelDepositRequest(amount).build_transaction(
-            {"from": account.address, "nonce": nonce}
-        )
-        signed = account.sign_transaction(tx)
-        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
-        receipt = self._wait_for_transaction_receipt(tx_hash.hex())
-        return TransactionResult(
-            tx_hash=tx_hash.hex(),
-            receipt=receipt,
-            decoded_logs=self._decode_logs(receipt),
+        return self._execute_vault_tx(
+            self.contract.functions.cancelDepositRequest(amount),
+            error_msg="Private key missing for cancellation.",
         )
 
     def request_redeem(self, shares: int) -> TransactionResult:
         """Submit a redemption request."""
-        private_key = os.getenv("MANAGER_PRIVATE_KEY")
-        validate_var(private_key, "Private key missing for redeem request.")
-        account = self.w3.eth.account.from_key(private_key)
-        nonce = self.w3.eth.get_transaction_count(account.address)
-        tx = self.contract.functions.requestRedeem(shares).build_transaction(
-            {"from": account.address, "nonce": nonce}
-        )
-        signed = account.sign_transaction(tx)
-        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
-        receipt = self._wait_for_transaction_receipt(tx_hash.hex())
-        return TransactionResult(
-            tx_hash=tx_hash.hex(),
-            receipt=receipt,
-            decoded_logs=self._decode_logs(receipt),
+        return self._execute_vault_tx(
+            self.contract.functions.requestRedeem(shares),
+            error_msg="Private key missing for redeem request.",
         )
 
     def cancel_redeem_request(self, shares: int) -> TransactionResult:
         """Cancel a previously submitted redemption request."""
-        private_key = os.getenv("MANAGER_PRIVATE_KEY")
-        validate_var(private_key, "Private key missing for cancellation.")
-        account = self.w3.eth.account.from_key(private_key)
-        nonce = self.w3.eth.get_transaction_count(account.address)
-        tx = self.contract.functions.cancelRedeemRequest(shares).build_transaction(
-            {"from": account.address, "nonce": nonce}
-        )
-        signed = account.sign_transaction(tx)
-        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
-        receipt = self._wait_for_transaction_receipt(tx_hash.hex())
-        return TransactionResult(
-            tx_hash=tx_hash.hex(),
-            receipt=receipt,
-            decoded_logs=self._decode_logs(receipt),
+        return self._execute_vault_tx(
+            self.contract.functions.cancelRedeemRequest(shares),
+            error_msg="Private key missing for cancellation.",
         )
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
