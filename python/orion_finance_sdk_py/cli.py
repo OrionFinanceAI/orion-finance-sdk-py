@@ -42,13 +42,13 @@ app = typer.Typer(help="Orion Finance SDK CLI")
 
 def _deploy_vault_logic(
     vault_type: str,
+    strategist_address: str,
     name: str,
     symbol: str,
     fee_type_value: int,
     performance_fee_bp: int,
     management_fee_bp: int,
     deposit_access_control: str,
-    strategist_address: str,
 ):
     """Logic for deploying a vault."""
     vault_factory = VaultFactory(vault_type=vault_type)
@@ -207,7 +207,9 @@ def _list_whitelisted_assets_logic():
     console = Console()
     config = OrionConfig()
 
-    with console.status("[bold green]Fetching whitelisted assets from chain...") as status:
+    with console.status(
+        "[bold green]Fetching whitelisted assets from chain..."
+    ) as status:
         assets = config.whitelisted_assets
         try:
             names = [n.strip() for n in config.whitelisted_asset_names]
@@ -334,13 +336,13 @@ def interactive_menu():
 
                 _deploy_vault_logic(
                     vault_type,
+                    strategist_address,
                     name,
                     symbol,
                     fee_type_to_int[fee_type_str],
                     int(perf_fee * BASIS_POINTS_FACTOR),
                     int(mgmt_fee * BASIS_POINTS_FACTOR),
                     dac,
-                    strategist_address,
                 )
 
             elif choice == "Submit Order":
@@ -426,6 +428,9 @@ def entry_point():
 
 @app.command()
 def deploy_vault(
+    strategist_address: str = typer.Option(
+        ..., help="Strategist address to set for the vault"
+    ),
     name: str = typer.Option(..., help="Name of the vault"),
     symbol: str = typer.Option(..., help="Symbol of the vault"),
     fee_type: FeeType = typer.Option(..., help="Type of the fee"),
@@ -438,19 +443,18 @@ def deploy_vault(
     deposit_access_control: str = typer.Option(
         ZERO_ADDRESS, help="Address of the deposit access control contract"
     ),
-    strategist_address: str = typer.Option(..., help="Address of the strategist"),
 ):
     """Deploy an Orion vault with customizable fee structure, name, and symbol. The vault defaults to transparent."""
     fee_type_int = fee_type_to_int[fee_type.value]
     _deploy_vault_logic(
         VaultType.TRANSPARENT.value,
+        strategist_address,
         name,
         symbol,
         fee_type_int,
         int(performance_fee * BASIS_POINTS_FACTOR),
         int(management_fee * BASIS_POINTS_FACTOR),
         deposit_access_control,
-        strategist_address,
     )
 
 

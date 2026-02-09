@@ -1,4 +1,4 @@
-# Orion | SDK
+# Orion Finance SDK
 
 This guide shows how to install the [Orion SDK](https://pypi.org/project/orion-finance-sdk-py/) locally. The source code is publicly available on [GitHub](https://github.com/OrionFinanceAI/orion-finance-sdk-py).
 
@@ -20,7 +20,7 @@ The typical workflow for using the Orion Finance SDK:
 Install the latest stable version from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=1.1.0"
+pip install "orion-finance-sdk-py>=1.2.0"
 ```
 
 Check available CLI commands any time:
@@ -84,7 +84,7 @@ You can get an RPC URL from multiple providers. Below are two popular options:
 4. Once created, click your app and copy the **HTTP URL** — this is your RPC URL.
 5. Paste it into your `.env` file:
 
-```env
+```bash
 RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 ```
 
@@ -95,7 +95,7 @@ RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 3. Select the Sepolia network.
 4. Copy the HTTPS endpoint and paste it into your `.env` file:
 
-```env
+```bash
 RPC_URL=https://sepolia.infura.io/v3/YOUR_API_KEY
 ```
 

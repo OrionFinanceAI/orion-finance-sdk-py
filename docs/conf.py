@@ -40,10 +40,9 @@ html_title = "Orion | SDK"
 html_short_title = "Orion | SDK"
 
 html_theme_options = {
-    "default_mode": "light",
     "logo": {
         "image_light": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",
-        "image_dark": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",  # Force blue logo even in dark mode just in case
+        "image_dark": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",
         "alt_text": "Orion | SDK",
     },
     "github_url": "https://github.com/OrionFinanceAI/orion-finance-sdk-py",
