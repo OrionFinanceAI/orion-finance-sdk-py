@@ -178,33 +178,7 @@ class OrionConfig(OrionSmartContract):
     @property
     def whitelisted_asset_names(self) -> list[str]:
         """Fetch all whitelisted asset names from the OrionConfig contract with manual fallback."""
-        try:
-            return self.contract.functions.getAllWhitelistedAssetNames().call()
-        except Exception:
-            # Manual fallback: fetch names from each token individually
-            assets = self.whitelisted_assets
-            names = []
-            # Minimal ERC20 ABI for name()
-            name_abi = [
-                {
-                    "constant": True,
-                    "inputs": [],
-                    "name": "name",
-                    "outputs": [{"name": "", "type": "string"}],
-                    "payable": False,
-                    "stateMutability": "view",
-                    "type": "function",
-                }
-            ]
-            for addr in assets:
-                try:
-                    token_contract = self.w3.eth.contract(
-                        address=Web3.to_checksum_address(addr), abi=name_abi
-                    )
-                    names.append(token_contract.functions.name().call())
-                except Exception:
-                    names.append("Unknown")
-            return names
+        return self.contract.functions.getAllWhitelistedAssetNames().call()
 
     @property
     def get_investment_universe(self) -> list[str]:
