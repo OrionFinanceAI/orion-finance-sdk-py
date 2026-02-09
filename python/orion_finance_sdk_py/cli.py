@@ -7,14 +7,13 @@ import sys
 import questionary
 import typer
 from dotenv import load_dotenv
+from rich.console import Console
 
 from .contracts import (
     OrionConfig,
-    OrionEncryptedVault,
     OrionTransparentVault,
     VaultFactory,
 )
-from .encrypt import encrypt_order_intent
 from .types import (
     ZERO_ADDRESS,
     FeeType,
@@ -43,6 +42,7 @@ app = typer.Typer(help="Orion Finance SDK CLI")
 
 def _deploy_vault_logic(
     vault_type: str,
+    strategist_address: str,
     name: str,
     symbol: str,
     fee_type_value: int,
@@ -54,6 +54,7 @@ def _deploy_vault_logic(
     vault_factory = VaultFactory(vault_type=vault_type)
 
     tx_result = vault_factory.create_orion_vault(
+        strategist_address=strategist_address,
         name=name,
         symbol=symbol,
         fee_type=fee_type_value,
@@ -73,7 +74,7 @@ def _deploy_vault_logic(
         print("\n❌ Could not extract vault address from transaction")
 
 
-def _submit_order_logic(order_intent_path: str, fuzz: bool):
+def _submit_order_logic(order_intent_path: str):
     """Logic for submitting an order."""
     vault_address = os.getenv("ORION_VAULT_ADDRESS")
     validate_var(
@@ -93,16 +94,6 @@ def _submit_order_logic(order_intent_path: str, fuzz: bool):
         output_order_intent = validate_order(order_intent=order_intent)
         vault = OrionTransparentVault()
         tx_result = vault.submit_order_intent(order_intent=output_order_intent)
-    elif vault_address in config.orion_encrypted_vaults:
-        validated_order_intent = validate_order(order_intent=order_intent, fuzz=fuzz)
-        output_order_intent, input_proof = encrypt_order_intent(
-            order_intent=validated_order_intent
-        )
-
-        vault = OrionEncryptedVault()
-        tx_result = vault.submit_order_intent(
-            order_intent=output_order_intent, input_proof=input_proof
-        )
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -123,8 +114,6 @@ def _update_strategist_logic(new_strategist_address: str):
     config = OrionConfig()
     if vault_address in config.orion_transparent_vaults:
         vault = OrionTransparentVault()
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -148,8 +137,6 @@ def _update_fee_model_logic(
     config = OrionConfig()
     if vault_address in config.orion_transparent_vaults:
         vault = OrionTransparentVault()
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -172,8 +159,6 @@ def _update_deposit_access_control_logic(new_dac_address: str):
     config = OrionConfig()
     if vault_address in config.orion_transparent_vaults:
         vault = OrionTransparentVault()
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -195,10 +180,6 @@ def _claim_fees_logic(amount: int):
         vault = OrionTransparentVault()
         tx_result = vault.transfer_manager_fees(amount)
         format_transaction_logs(tx_result, "Manager fees claimed successfully!")
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
-        tx_result = vault.transfer_strategist_fees(amount)
-        format_transaction_logs(tx_result, "Strategist fees claimed successfully!")
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -214,13 +195,39 @@ def _get_pending_fees_logic():
     config = OrionConfig()
     if vault_address in config.orion_transparent_vaults:
         vault = OrionTransparentVault()
-    elif vault_address in config.orion_encrypted_vaults:
-        vault = OrionEncryptedVault()
     else:
         raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
     fees = vault.pending_vault_fees
     print(f"\n Pending Vault Fees: {fees}")
+
+
+def _list_whitelisted_assets_logic():
+    """Logic for listing whitelisted assets from OrionConfig."""
+    console = Console()
+    config = OrionConfig()
+
+    with console.status(
+        "[bold green]Fetching whitelisted assets from chain..."
+    ) as status:
+        assets = config.whitelisted_assets
+        try:
+            names = [n.strip() for n in config.whitelisted_asset_names]
+        except Exception:
+            # Fallback if the contract doesn't support names yet
+            names = ["Unknown"] * len(assets)
+
+    print("\n" + "=" * 60)
+
+    # Calculate alignment based on longest name
+    max_name_len = max((len(name) for name in names), default=10)
+
+    for name, address in zip(names, assets, strict=True):
+        print(f"{name: <{max_name_len}} | {address}")
+
+    print("\n" + "=" * 60)
+    print(f"Total: {len(assets)} whitelisted assets")
+    print("=" * 60 + "\n")
 
 
 def ask_or_exit(question):
@@ -241,8 +248,27 @@ def validate_int_input(val: str) -> bool | str:
         return "Please enter a valid integer"
 
 
+def validate_name(val: str) -> bool | str:
+    """Validate vault name length (max 26 bytes)."""
+    if len(val.encode("utf-8")) > 26:
+        return "Name too long (max 26 bytes)"
+    if not val:
+        return "Name cannot be empty"
+    return True
+
+
+def validate_symbol(val: str) -> bool | str:
+    """Validate vault symbol length (max 4 bytes)."""
+    if len(val.encode("utf-8")) > 4:
+        return "Symbol too long (max 4 bytes)"
+    if not val:
+        return "Symbol cannot be empty"
+    return True
+
+
 def interactive_menu():
     """Launch the interactive TUI menu."""
+    print(ORION_BANNER, file=sys.stderr)
     while True:
         # Force reload environment variables to pick up changes (e.g. newly deployed vault address)
         load_dotenv(override=True)
@@ -258,6 +284,7 @@ def interactive_menu():
                         "Update Deposit Access Control",
                         "Claim Fees",
                         "Get Pending Fees",
+                        "List Whitelisted Assets",
                         "Exit",
                     ],
                     instruction="[ ↑↓ to scroll | Enter to select ]",
@@ -268,10 +295,17 @@ def interactive_menu():
                 break
 
             if choice == "Deploy Vault":
-                # ... existing ...
+                # Always deploy transparent vaults from CLI
                 vault_type = VaultType.TRANSPARENT.value
-                name = ask_or_exit(questionary.text("Vault Name:"))
-                symbol = ask_or_exit(questionary.text("Vault Symbol:"))
+                strategist_address = ask_or_exit(
+                    questionary.text("Strategist Address:")
+                )
+                name = ask_or_exit(
+                    questionary.text("Vault Name:", validate=validate_name)
+                )
+                symbol = ask_or_exit(
+                    questionary.text("Vault Symbol:", validate=validate_symbol)
+                )
                 fee_type_str = ask_or_exit(
                     questionary.select(
                         "Fee Type:",
@@ -295,13 +329,14 @@ def interactive_menu():
                 )
                 mgmt_fee = float(mgmt_fee_str) if mgmt_fee_str else 0.0
                 dac = ask_or_exit(
-                    questionary.text(
-                        "Deposit Access Control (Address):", default=ZERO_ADDRESS
-                    )
+                    questionary.text("Deposit Access Control (Address):", default="")
                 )
+                if not dac:
+                    dac = ZERO_ADDRESS
 
                 _deploy_vault_logic(
                     vault_type,
+                    strategist_address,
                     name,
                     symbol,
                     fee_type_to_int[fee_type_str],
@@ -312,10 +347,7 @@ def interactive_menu():
 
             elif choice == "Submit Order":
                 path = ask_or_exit(questionary.path("Path to Order Intent JSON:"))
-                fuzz = ask_or_exit(
-                    questionary.confirm("Fuzz order intent?", default=False)
-                )
-                _submit_order_logic(path, fuzz)
+                _submit_order_logic(path)
 
             elif choice == "Update Strategist":
                 addr = ask_or_exit(questionary.text("New Strategist Address:"))
@@ -368,6 +400,9 @@ def interactive_menu():
             elif choice == "Get Pending Fees":
                 _get_pending_fees_logic()
 
+            elif choice == "List Whitelisted Assets":
+                _list_whitelisted_assets_logic()
+
             input("\nPress Enter to continue...")
 
         except KeyboardInterrupt:
@@ -387,13 +422,15 @@ def main(ctx: typer.Context):
 
 
 def entry_point():
-    """Entry point for the CLI that prints the banner."""
-    print(ORION_BANNER, file=sys.stderr)
+    """Entry point for the CLI."""
     app()
 
 
 @app.command()
 def deploy_vault(
+    strategist_address: str = typer.Option(
+        ..., help="Strategist address to set for the vault"
+    ),
     name: str = typer.Option(..., help="Name of the vault"),
     symbol: str = typer.Option(..., help="Symbol of the vault"),
     fee_type: FeeType = typer.Option(..., help="Type of the fee"),
@@ -411,6 +448,7 @@ def deploy_vault(
     fee_type_int = fee_type_to_int[fee_type.value]
     _deploy_vault_logic(
         VaultType.TRANSPARENT.value,
+        strategist_address,
         name,
         symbol,
         fee_type_int,
@@ -425,10 +463,9 @@ def submit_order(
     order_intent_path: str = typer.Option(
         ..., help="Path to JSON file containing order intent"
     ),
-    fuzz: bool = typer.Option(False, help="Fuzz the order intent"),
 ) -> None:
     """Submit an order intent to an Orion vault. The order intent can be either transparent or encrypted."""
-    _submit_order_logic(order_intent_path, fuzz)
+    _submit_order_logic(order_intent_path)
 
 
 @app.command()
@@ -467,3 +504,9 @@ def update_fee_model(
 def get_pending_fees() -> None:
     """Get pending fees for the current vault."""
     _get_pending_fees_logic()
+
+
+@app.command()
+def list_whitelisted_assets() -> None:
+    """List all whitelisted assets from OrionConfig."""
+    _list_whitelisted_assets_logic()

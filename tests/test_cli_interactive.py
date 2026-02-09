@@ -3,7 +3,12 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from orion_finance_sdk_py.cli import ask_or_exit, interactive_menu
+from orion_finance_sdk_py.cli import (
+    ask_or_exit,
+    interactive_menu,
+    validate_name,
+    validate_symbol,
+)
 from orion_finance_sdk_py.types import VaultType
 
 
@@ -22,6 +27,26 @@ def test_ask_or_exit_cancel():
         ask_or_exit(mock_question)
 
 
+def test_validate_name():
+    """Test validate_name logic."""
+    assert validate_name("Valid Name") is True
+    assert validate_name("") == "Name cannot be empty"
+    assert validate_name("A" * 27) == "Name too long (max 26 bytes)"
+    # Multibyte char test
+    assert validate_name("🚀" * 6) is True  # 6 * 4 bytes = 24 bytes
+    assert validate_name("🚀" * 7) == "Name too long (max 26 bytes)"  # 28 bytes
+
+
+def test_validate_symbol():
+    """Test validate_symbol logic."""
+    assert validate_symbol("SYM") is True
+    assert validate_symbol("") == "Symbol cannot be empty"
+    assert validate_symbol("SYMB1") == "Symbol too long (max 4 bytes)"
+    # Multibyte char test
+    assert validate_symbol("🚀") is True  # 4 bytes
+    assert validate_symbol("🚀A") == "Symbol too long (max 4 bytes)"  # 5 bytes
+
+
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
 @patch("orion_finance_sdk_py.cli._deploy_vault_logic")
@@ -30,6 +55,7 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
     # Sequence of return values for ask() calls across all widgets
     ask_side_effect = [
         "Deploy Vault",  # Main menu
+        "0xStrategist",  # Strategist Address
         "Test Vault",  # Name
         "TV",  # Symbol
         "absolute",  # Fee Type
@@ -53,12 +79,13 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
     mock_deploy_logic.assert_called_once()
     args = mock_deploy_logic.call_args[0]
     assert args[0] == VaultType.TRANSPARENT.value
-    assert args[1] == "Test Vault"
-    assert args[2] == "TV"
-    assert args[3] == 0  # absolute fee int
-    assert args[4] == 0  # 0.0 * 100
+    assert args[1] == "0xStrategist"
+    assert args[2] == "Test Vault"
+    assert args[3] == "TV"
+    assert args[4] == 0  # absolute fee int
     assert args[5] == 0  # 0.0 * 100
-    assert args[6] == "0x0"
+    assert args[6] == 0  # 0.0 * 100
+    assert args[7] == "0x0"
 
 
 @patch("builtins.input")
@@ -69,24 +96,21 @@ def test_interactive_menu_submit_order(mock_submit_logic, mock_questionary, mock
     # Sequence:
     # 1. Main menu -> "Submit Order"
     # 2. Path -> "order.json"
-    # 3. Fuzz -> True
-    # 4. Main menu -> "Exit"
+    # 3. Main menu -> "Exit"
 
     ask_side_effect = [
         "Submit Order",
         "order.json",
-        True,
         "Exit",
     ]
     iterator = iter(ask_side_effect)
 
     mock_questionary.select.return_value.ask.side_effect = lambda: next(iterator)
     mock_questionary.path.return_value.ask.side_effect = lambda: next(iterator)
-    mock_questionary.confirm.return_value.ask.side_effect = lambda: next(iterator)
 
     interactive_menu()
 
-    mock_submit_logic.assert_called_once_with("order.json", True)
+    mock_submit_logic.assert_called_once_with("order.json")
 
 
 @patch("builtins.input")
@@ -245,6 +269,7 @@ def test_interactive_menu_error_handling(
 
     ask_side_effect = [
         "Deploy Vault",
+        "0xStrategist",
         "Name",
         "Symbol",
         "absolute",

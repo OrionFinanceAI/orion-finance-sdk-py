@@ -8,7 +8,7 @@ from datetime import date
 sys.path.insert(0, os.path.abspath("../python"))
 
 # -- Project information -----------------------------------------------------
-project = "Orion Finance SDK"
+project = "Orion | SDK"
 copyright = f"{date.today().year}, Orion Finance"
 author = "Orion Finance"
 
@@ -36,13 +36,14 @@ html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_favicon = "_static/favicon.ico"
 pygments_style = "friendly"
+html_title = "Orion | SDK"
+html_short_title = "Orion | SDK"
 
 html_theme_options = {
-    "default_mode": "light",
     "logo": {
         "image_light": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",
-        "image_dark": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",  # Force blue logo even in dark mode just in case
-        "alt_text": "Orion Finance SDK",
+        "image_dark": "https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg",
+        "alt_text": "Orion | SDK",
     },
     "github_url": "https://github.com/OrionFinanceAI/orion-finance-sdk-py",
     "show_prev_next": False,

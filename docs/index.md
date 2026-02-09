@@ -20,7 +20,7 @@ The typical workflow for using the Orion Finance SDK:
 Install the latest stable version from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=1.1.0"
+pip install "orion-finance-sdk-py>=1.2.0"
 ```
 
 Check available CLI commands any time:
@@ -84,7 +84,7 @@ You can get an RPC URL from multiple providers. Below are two popular options:
 4. Once created, click your app and copy the **HTTP URL** — this is your RPC URL.
 5. Paste it into your `.env` file:
 
-```env
+```bash
 RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 ```
 
@@ -95,7 +95,7 @@ RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 3. Select the Sepolia network.
 4. Copy the HTTPS endpoint and paste it into your `.env` file:
 
-```env
+```bash
 RPC_URL=https://sepolia.infura.io/v3/YOUR_API_KEY
 ```
 
@@ -110,7 +110,8 @@ orion deploy-vault \
   --symbol "ALPHA" \
   --fee-type hard_hurdle \
   --performance-fee 100 \
-  --management-fee 10
+  --management-fee 10 \
+  --strategist-address 0x...
 ```
 
 **What this does:**
@@ -147,11 +148,8 @@ Submit portfolio allocation intents that the protocol executes on the next rebal
 
 ```bash
 orion submit-order \
-  --order-intent-path order_intent.json \
-  --fuzz
+  --order-intent-path order_intent.json
 ```
-
-**Encrypts allocation details**; the optional `--fuzz` flag provides additional obfuscation to the intent without meaningfully modifying the underlying strategy.
 
 ### Notes
 
@@ -167,14 +165,14 @@ orion submit-order \
 
 ```json
 {
-  "0x5BA134aBc8BA11Cf7868F4Dfb02497A3f1544Eb5": 0.25,
-  "0x490a81a1939762E6AA87C68C346A0be5E21B466c": 0.02,
-  "0x8A359aAfbf0DF440B34bb97445d981C1944CD053": 0.015,
-  "0xbD39EeAd46c3f28EB8309A74641ab9Ef947FFc83": 0.0255,
-  "0x6b2741F97Ea3EA9C5bFeEa33575d1E73c4481010": 0.06,
-  "0x58f7aaE7B2c017F74B7403C9e89537f43B13bE87": 0.4,
-  "0x28345814d210f2FE11C8de03236f0Ba7b603D282": 0.22,
-  "0x484fF4FB5Ca053b47e5e0490C363b5ea38bB2adF": 0.0095
+  "0x...": 0.25,
+  "0x...": 0.02,
+  "0x...": 0.015,
+  "0x...": 0.0255,
+  "0x...": 0.06,
+  "0x...": 0.4,
+  "0x...": 0.22,
+  "0x...": 0.0095
 }
 ```
 

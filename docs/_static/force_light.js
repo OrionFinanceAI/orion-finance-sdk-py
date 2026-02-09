@@ -24,4 +24,6 @@
         attributes: true,
         attributeFilter: ['data-theme', 'class']
     });
+    
+    document.title = "Orion | SDK";
 })();

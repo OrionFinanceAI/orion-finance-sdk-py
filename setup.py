@@ -28,7 +28,7 @@ class CustomBuild(build_py):
         os.makedirs("python/abis", exist_ok=True)
 
         base_url = (
-            "https://github.com/OrionFinanceAI/protocol/releases/download/abis-v1.2.1"
+            "https://github.com/OrionFinanceAI/protocol/releases/download/abis-v2.0.0"
         )
 
         for contract in abis:
