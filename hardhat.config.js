@@ -3,12 +3,13 @@ require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  solidity: "0.8.28",
+  solidity: "0.8.24",
   networks: {
     hardhat: {
       hardfork: "shanghai",
       initialBaseFeePerGas: 0,
       blockGasLimit: 15000000,
+      gasLimit: 15000000,
       accounts: {
         mnemonic: "test test test test test test test test test test test junk",
         path: "m/44'/60'/0'/0",

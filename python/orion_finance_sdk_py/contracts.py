@@ -292,6 +292,10 @@ class LiquidityOrchestrator(OrionSmartContract):
         """Fetch the epoch duration in seconds."""
         return self.contract.functions.epochDuration().call()
 
+    def is_system_idle(self) -> bool:
+        """Check if the liquidity orchestrator system is idle."""
+        return self.contract.functions.isSystemIdle().call()
+
 
 class VaultFactory(OrionSmartContract):
     """VaultFactory contract."""
@@ -545,6 +549,7 @@ class OrionVault(OrionSmartContract):
         contract_fn_call,
         key_env: str = "MANAGER_PRIVATE_KEY",
         error_msg: str = "Private key missing for transaction.",
+        gas_limit: int | None = None,
     ) -> TransactionResult:
         """Execute a vault transaction with the given contract function call.
 
@@ -552,6 +557,7 @@ class OrionVault(OrionSmartContract):
             contract_fn_call: The contract function call (e.g., self.contract.functions.requestDeposit(assets))
             key_env: Environment variable name for the private key (default: "MANAGER_PRIVATE_KEY")
             error_msg: Error message for validation
+            gas_limit: Optional gas limit for the transaction
 
         Returns:
             TransactionResult with transaction hash, receipt, and decoded logs
@@ -560,9 +566,15 @@ class OrionVault(OrionSmartContract):
         validate_var(private_key, error_msg)
         account = self.w3.eth.account.from_key(private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
-        tx = contract_fn_call.build_transaction(
-            {"from": account.address, "nonce": nonce}
-        )
+
+        tx_params = {
+            "from": account.address,
+            "nonce": nonce,
+        }
+        if gas_limit:
+            tx_params["gas"] = gas_limit
+
+        tx = contract_fn_call.build_transaction(tx_params)
         signed = account.sign_transaction(tx)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())

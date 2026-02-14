@@ -37,3 +37,6 @@ open-docs:
 .PHONY: test
 test:
 	uv run pytest -c pyproject.toml --cov=orion_finance_sdk_py --cov-report=xml --cov-report=term tests/
+
+sepolia-fork:
+	ape test tests/test_fork.py --network   ethereum:sepolia-fork:hardhat -s
