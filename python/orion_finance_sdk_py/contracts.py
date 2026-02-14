@@ -219,6 +219,12 @@ class OrionConfig(OrionSmartContract):
             Web3.to_checksum_address(manager_address)
         ).call()
 
+    def is_orion_vault(self, vault_address: str) -> bool:
+        """Check if an address is a registered Orion vault."""
+        return self.contract.functions.isOrionVault(
+            Web3.to_checksum_address(vault_address)
+        ).call()
+
     @property
     def orion_transparent_vaults(self) -> list[str]:
         """Fetch all Orion transparent vault addresses from the OrionConfig contract."""
@@ -474,7 +480,7 @@ class OrionVault(OrionSmartContract):
 
         # Validate that the address is a valid Orion Vault
         config = OrionConfig()
-        is_transparent = contract_address in config.orion_transparent_vaults
+        is_transparent = config.is_orion_vault(contract_address)
 
         if not is_transparent:
             raise ValueError(
