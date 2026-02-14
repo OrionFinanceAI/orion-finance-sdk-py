@@ -164,21 +164,23 @@ wheels = [
 ]
 
 [[package]]
-name = "ape-foundry"
-version = "0.8.11"
+name = "ape-hardhat"
+version = "0.8.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "chompjs" },
     { name = "eth-ape" },
-    { name = "eth-pydantic-types" },
     { name = "ethpm-types" },
     { name = "evm-trace" },
     { name = "hexbytes" },
+    { name = "packaging" },
+    { name = "requests" },
     { name = "web3" },
     { name = "yarl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e3/32/c1d89ebe46fae8af8bcc3dbb9eb3b5cec74dc58372aa9b097a2b201a4e19/ape_foundry-0.8.11.tar.gz", hash = "sha256:7f7d3a41c2f0aa383274080cb63dbc5438772081c35122806c6453919273faa8", size = 105469, upload-time = "2025-12-15T17:20:54.814Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/7b/ab6b9b94bd5833220cec59e47510871c32f0829f041e435909c5533576f3/ape_hardhat-0.8.5.tar.gz", hash = "sha256:c56eebb01c6f19c70c1551fa060b6c6444e27e2b8d9e0dba7fa48b0623dbf6d9", size = 124984, upload-time = "2024-12-09T22:04:09.888Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fb/e7/b207d0cf933592e120975ec439bd372229cb6fe652e3d3e1d9007818880d/ape_foundry-0.8.11-py3-none-any.whl", hash = "sha256:44906c418a51b49364646b97a5e272262ba87154538c150cdad536368a080687", size = 19075, upload-time = "2025-12-15T17:20:53.501Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/98/eeb0e8687b3dac6123d84f4ce03d7b4d6e731311953f210c9d77e4567bf7/ape_hardhat-0.8.5-py3-none-any.whl", hash = "sha256:b5f1fcc37ed7a2133d0aa6571207b593f008966db50e4400a240ca4a22ae523d", size = 20207, upload-time = "2024-12-09T22:04:08.099Z" },
 ]
 
 [[package]]
@@ -412,6 +414,38 @@ wheels = [
 ]
 
 [[package]]
+name = "chompjs"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/73/e7/e5a9874798ec4bc505b34b8cb766337acde9d1ffc8db411cfa96ac59de49/chompjs-1.4.0.tar.gz", hash = "sha256:b0bf92bb508de5c0dbd802e3e6dabac9f0e71caf5f67a6a29112d1213812bd68", size = 17383, upload-time = "2025-08-04T21:08:38.612Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8b/a9/8b8223c643ddfc9cec16c4f68590cc1c6c7a5a4704a0423167df160e9e82/chompjs-1.4.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:01f0c1ef6644dc7e676f0d364ba8b0d5aa54fd066af71cc4af80826fb61e9d72", size = 17079, upload-time = "2025-08-04T21:08:02.753Z" },
+    { url = "https://files.pythonhosted.org/packages/15/05/1650bd29dd51d40e9fdfc52a7d445c9f3bdd8e9d89a7a4438d125803bd45/chompjs-1.4.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:828af4d37efbc58f2c7e95d000cd041b27d7101a3b391d09ea14b88d9c6d5d20", size = 17478, upload-time = "2025-08-04T21:08:04.031Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/d1/a68d8a3b6656f61e88437e42d1db9e54466f5f56f09f47d9b9c30dc5b53d/chompjs-1.4.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:396ce73341117533947d33127098c723d7bc0524e0cce6badd9619faf9ef2325", size = 33826, upload-time = "2025-08-04T21:08:05.821Z" },
+    { url = "https://files.pythonhosted.org/packages/15/f1/58b9834f660e1ce77c50054e60d52528aabb7541fe7f18f000565a4435c6/chompjs-1.4.0-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:96c8254f51030f5bd39ed6dca7a6d6dfab21237f4acdbab362a96a485a118a3c", size = 32336, upload-time = "2025-08-04T21:08:06.736Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/df/4ea51974d15b36bc4bc357b6601dd9aa09f4cc666f76f534d4734ac6fb93/chompjs-1.4.0-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:58a268db242d319ce1442b871827b54d044e3bb7284f4dc1d52252765bb7e967", size = 32317, upload-time = "2025-08-04T21:08:07.741Z" },
+    { url = "https://files.pythonhosted.org/packages/60/57/cc39d96ee1faaeef51b0b9be9f3986e21bf8217b43d3b410981de158bfff/chompjs-1.4.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:976fb229ff7ba856a1833dab2a966d6a88acdb96842244fa44d8becd5380d830", size = 33230, upload-time = "2025-08-04T21:08:08.662Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/2d/16050f64a3fad373b69f21acbb59b19719cdc1215dcdda7ec16ebac28461/chompjs-1.4.0-cp311-cp311-win32.whl", hash = "sha256:ec4ee7c76976fdb7b272f9924e9f834b8e83003e14d4ab3e8b54a590af878afa", size = 17707, upload-time = "2025-08-04T21:08:09.57Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/5f/47febcadfc40f0f69cb2990ade2a28c08edb87715afd2408adbfe818b955/chompjs-1.4.0-cp311-cp311-win_amd64.whl", hash = "sha256:72da31389cb61b6b25f7f7f794570f09759f1f4b994ba70ca05c257277668f7b", size = 18516, upload-time = "2025-08-04T21:08:10.539Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/ac/37c5a771b99b038de6cdd0ae85ebc6a9d5beb6a5b4ed6f6b4d921e339c08/chompjs-1.4.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:d79a5a6b3199044aa6a3e5162dab42fef05d0e7395995e009b9cac878f669f3f", size = 17083, upload-time = "2025-08-04T21:08:11.474Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/40/528ec8ef3365803d8e7e6c9fd09e0dd9a8deb8404cf098a24f3336b49640/chompjs-1.4.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:4ee47ca7fbcf59824e12eefb3e22fc477e2f78c00262c2f3ec0f5cf8bc93a231", size = 17476, upload-time = "2025-08-04T21:08:12.493Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/ed/559696b7be6e5d09acbd11c6f757e754ce82484f15a01dd2d586e24b2f5b/chompjs-1.4.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fd873ebf06b869c490c9aeb9a0127b4011e435c9302142d808461e196396a8a7", size = 33738, upload-time = "2025-08-04T21:08:13.481Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/97/288ef196ca4203a8c646802abc90a0ce1129b4ac5d8f0eb7430755d0c6b7/chompjs-1.4.0-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b392204f49dd1a5e755fc483a372a4598c18d2c3a64edfbbbb87f5c14a34ae5c", size = 32164, upload-time = "2025-08-04T21:08:14.497Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/ea/1404cbbe89109fb150a7b857ec38113e99194525845f5ede71cc15df447d/chompjs-1.4.0-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:e7bf87801b77962c5ac36295489dd450e50a12a28bbd3cb2ee0a7e183b55487a", size = 32166, upload-time = "2025-08-04T21:08:15.406Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/a4/527368c681bc00c7733202a20b01630f4e02f09b9ceff95d67e67fa02406/chompjs-1.4.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:1e97ae9e635e7b7ac609acb65738506517034f7afc893302994d1aa5d8aeceaa", size = 33084, upload-time = "2025-08-04T21:08:16.703Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/a1/6e52f583570422d458767f4c03976a051cceb8b8a50589e38573a2ab15f4/chompjs-1.4.0-cp312-cp312-win32.whl", hash = "sha256:e9e1f896dfebc655ae2c416a91f576319959cb67850a16272775a4643af4e405", size = 17714, upload-time = "2025-08-04T21:08:18.045Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/fe/6daab4e7edd4018cad593309c6ba6c6ef7608760c88dd7922c50f5d0d36f/chompjs-1.4.0-cp312-cp312-win_amd64.whl", hash = "sha256:c78c432da60ef0b381c5275a329ced4790071a306b00f84ab96461ec2c7b8796", size = 18517, upload-time = "2025-08-04T21:08:18.931Z" },
+    { url = "https://files.pythonhosted.org/packages/36/03/c089d4b62c4239b63ee30b216a28a3f97ff60bc5cd96ac8ccb0d12abe4ea/chompjs-1.4.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:0c7e44df2eda99377fc51c5df84446c33d35e15c42afe416a4d446fcfddd66df", size = 17075, upload-time = "2025-08-04T21:08:20.243Z" },
+    { url = "https://files.pythonhosted.org/packages/33/eb/9475d48a758cd1dd60c8584d350312b63f59178ad2a7a80b08b801f5f066/chompjs-1.4.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:5b543d2c74d23fe4ed785994afbab75e3a5abf2db16d626bd6ac79befcc8e141", size = 17470, upload-time = "2025-08-04T21:08:21.169Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/51/d40e3327ab4a0a2db6d55163204ed95fdda3e79c5074300dd730155076e7/chompjs-1.4.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b08d9360a0f68932d56cb7de373dacd3f6d55b6df3f21edb8f5bc63e36be8d9a", size = 33673, upload-time = "2025-08-04T21:08:22.546Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/93/9a5d6526b87f464dfba99f6550672969c4b1dc8774b345f55b38faae21d1/chompjs-1.4.0-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:a16f4d651342c385fc15c1bc816cf45c9be125cf95a2afa43d1de2015dea2f9b", size = 32093, upload-time = "2025-08-04T21:08:23.794Z" },
+    { url = "https://files.pythonhosted.org/packages/67/41/e5fbbbb0110d4943a422202d6c825ca1e33b945edb6d771b30d8307ccf32/chompjs-1.4.0-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:87a02fae308d80bc3993151059df4a1b2e28115ab7af68423cc641d04b6bcb48", size = 32221, upload-time = "2025-08-04T21:08:25.18Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/d7/3da8893a8461692c99f2784f822ea0222384aee706d6f94210a9f49282d1/chompjs-1.4.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:95f11788f6111c2e779ddd79908d35a61eaa2c2f527865701322c1ceab12a5f2", size = 33130, upload-time = "2025-08-04T21:08:26.131Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/2b/143028f52e7fd4b049dc9b9d4cf1ad879de2121f8d6c5800ebc2f8d33627/chompjs-1.4.0-cp313-cp313-win32.whl", hash = "sha256:6a0af74bf2ea05217c107b01c8e128d30999a85f2795116666ff019d8b12d7bb", size = 17717, upload-time = "2025-08-04T21:08:27.079Z" },
+    { url = "https://files.pythonhosted.org/packages/42/de/f5fbc56c91c19c4cabdba5186ccc658dfd71715e591cfdaaf8f4ab247e83/chompjs-1.4.0-cp313-cp313-win_amd64.whl", hash = "sha256:76620487f40cd28407b06ab5dc1c2854f7261b5975adfe3fa64d4dd47c87235c", size = 18513, upload-time = "2025-08-04T21:08:28.076Z" },
+]
+
+[[package]]
 name = "ckzg"
 version = "2.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -570,7 +604,7 @@ name = "cytoolz"
 version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "toolz" },
+    { name = "toolz", marker = "implementation_name == 'cpython'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a7/f9/3243eed3a6545c2a33a21f74f655e3fcb5d2192613cd3db81a93369eb339/cytoolz-1.0.1.tar.gz", hash = "sha256:89cc3161b89e1bb3ed7636f74ed2e55984fd35516904fc878cae216e42b2c7d6", size = 626652, upload-time = "2024-12-13T05:47:36.672Z" }
 wheels = [
@@ -1648,7 +1682,7 @@ dependencies = [
 dev = [
     { name = "ape-alchemy" },
     { name = "ape-etherscan" },
-    { name = "ape-foundry" },
+    { name = "ape-hardhat" },
     { name = "eth-ape" },
     { name = "pre-commit" },
     { name = "pydeps" },
@@ -1670,7 +1704,7 @@ docs = [
 requires-dist = [
     { name = "ape-alchemy", marker = "extra == 'dev'" },
     { name = "ape-etherscan", marker = "extra == 'dev'" },
-    { name = "ape-foundry", marker = "extra == 'dev'" },
+    { name = "ape-hardhat", marker = "extra == 'dev'" },
     { name = "eth-ape", marker = "extra == 'dev'", specifier = ">=0.8.0" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.0,<6.0.0" },
     { name = "numpy", specifier = ">=1.21.0,<3.0.0" },

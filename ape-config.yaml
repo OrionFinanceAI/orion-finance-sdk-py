@@ -1,18 +1,21 @@
 name: orion-finance-sdk-py
 
 plugins:
-  - name: foundry
+  - name: hardhat
   - name: alchemy
   - name: etherscan
 
 ethereum:
   mainnet_fork:
-    default_provider: foundry
+    default_provider: hardhat
   sepolia_fork:
-    default_provider: foundry
+    default_provider: hardhat
 
-foundry:
+hardhat:
   host: auto
+  hardhat_config_file: ./hardhat.config.js
+  request_timeout: 60
+  fork_request_timeout: 600
   fork:
     ethereum:
       mainnet:

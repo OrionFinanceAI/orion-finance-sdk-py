@@ -274,3 +274,5 @@ python/orion_finance_sdk_py/js_sdk/
 protocol/
 docs-config/
 .vscode/settings.json
+
+/cache*

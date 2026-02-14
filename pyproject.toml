@@ -25,7 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "eth-ape>=0.8.0",
-    "ape-foundry",
+    "ape-hardhat",
     "ape-alchemy",
     "ape-etherscan",
     "pre-commit>=4.1.0,<4.6.0",
