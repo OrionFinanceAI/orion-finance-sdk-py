@@ -61,6 +61,24 @@ class OrionSmartContract:
             load_dotenv(os.getcwd() + "/.env")
             rpc_url = os.getenv("RPC_URL")
 
+        if not rpc_url:
+            # Check if we are in an ape context
+            try:
+                from ape import networks
+
+                if networks.active_provider:
+                    self.w3 = networks.active_provider.web3
+                    self.chain_id = self.w3.eth.chain_id
+                    self.contract_name = contract_name
+                    self.contract_address = contract_address
+                    self.contract = self.w3.eth.contract(
+                        address=self.contract_address,
+                        abi=load_contract_abi(self.contract_name),
+                    )
+                    return
+            except (ImportError, AttributeError):
+                pass
+
         validate_var(
             rpc_url,
             error_message=(
@@ -131,15 +149,19 @@ class OrionConfig(OrionSmartContract):
 
     def __init__(self):
         """Initialize the OrionConfig contract."""
-        # Default to Sepolia if not specified, but prefer env var
-        chain_id = int(os.getenv("CHAIN_ID", "11155111"))
+        # Check for manual address override first
+        contract_address = os.getenv("ORION_CONFIG_ADDRESS")
 
-        if chain_id in CHAIN_CONFIG:
-            contract_address = CHAIN_CONFIG[chain_id]["OrionConfig"]
-        else:
-            raise ValueError(
-                f"Unsupported CHAIN_ID: {chain_id}. Please check CHAIN_CONFIG in types.py or set CHAIN_ID env var correctly."
-            )
+        if not contract_address:
+            # Default to Sepolia if not specified, but prefer env var
+            chain_id = int(os.getenv("CHAIN_ID", "11155111"))
+
+            if chain_id in CHAIN_CONFIG:
+                contract_address = CHAIN_CONFIG[chain_id]["OrionConfig"]
+            else:
+                raise ValueError(
+                    f"Unsupported CHAIN_ID: {chain_id}. Please check CHAIN_CONFIG in types.py or set CHAIN_ID env var correctly."
+                )
 
         super().__init__(
             contract_name="OrionConfig",
