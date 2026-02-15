@@ -6,7 +6,10 @@ from orion_finance_sdk_py.contracts import (
     LiquidityOrchestrator,
     OrionConfig,
     OrionTransparentVault,
+    VaultFactory,
 )
+from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
+from web3.exceptions import ABIFunctionNotFound
 
 try:
     from ape import accounts, networks
@@ -129,3 +132,191 @@ def test_fork_connection(skip_if_no_ape):
         block_number = networks.active_provider.get_block("latest").number
         assert block_number > 0
         print(f"\n[Hardhat Fork] Latest Block: {block_number}")
+
+
+def test_orion_config_v2_properties_on_fork(skip_if_no_ape):
+    """OrionConfig v2 properties against Sepolia fork state."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+
+        assert config.min_deposit_amount >= 0
+        assert config.min_redeem_amount >= 0
+        assert config.fee_change_cooldown_duration >= 0
+        assert config.max_fulfill_batch_size > 0
+
+        underlying = config.underlying_asset
+        assert (
+            underlying is not None
+            and len(underlying) == 42
+            and underlying.startswith("0x")
+        )
+
+        assert config.risk_free_rate >= 0
+
+        names = config.whitelisted_asset_names
+        assets = config.whitelisted_assets
+        assert len(names) == len(assets), (
+            "whitelisted_asset_names length must match whitelisted_assets"
+        )
+
+
+def test_orion_config_system_idle_on_fork(skip_if_no_ape):
+    """OrionConfig is_system_idle reflects chain state."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        idle = config.is_system_idle()
+        assert isinstance(idle, bool)
+
+
+def test_orion_config_is_orion_vault_on_fork(skip_if_no_ape):
+    """OrionConfig is_orion_vault: registered vaults True, zero address False."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        vaults = config.orion_transparent_vaults
+
+        for addr in vaults:
+            assert config.is_orion_vault(addr) is True
+
+        assert config.is_orion_vault(ZERO_ADDRESS) is False
+
+
+def test_orion_config_managers_whitelisted_on_fork(skip_if_no_ape):
+    """Every registered vault's manager is whitelisted in OrionConfig."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        vaults = config.orion_transparent_vaults
+        if not vaults:
+            pytest.skip("No Orion Transparent Vaults found")
+
+        for vault_addr in vaults:
+            os.environ["ORION_VAULT_ADDRESS"] = vault_addr
+            vault = OrionTransparentVault()
+            manager = vault.manager_address
+            assert config.is_whitelisted_manager(manager), (
+                f"Manager {manager} of vault {vault_addr} should be whitelisted"
+            )
+
+
+def test_liquidity_orchestrator_state_on_fork(skip_if_no_ape):
+    """LiquidityOrchestrator slippage_tolerance, target_buffer_ratio, epoch_duration from chain."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        lo = LiquidityOrchestrator()
+        assert lo.slippage_tolerance >= 0
+        assert lo.target_buffer_ratio >= 0
+        assert lo.epoch_duration > 0
+        try:
+            assert isinstance(lo.is_system_idle(), bool)
+        except ABIFunctionNotFound:
+            # LiquidityOrchestrator ABI may not expose isSystemIdle
+            pass
+
+
+def test_vault_factory_address_matches_config_on_fork(skip_if_no_ape):
+    """VaultFactory(transparent) address equals OrionConfig.transparentVaultFactory()."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        expected = config.contract.functions.transparentVaultFactory().call()
+        factory = VaultFactory(vault_type=VaultType.TRANSPARENT.value)
+        assert factory.contract_address.lower() == expected.lower()
+
+
+def test_vault_fee_limits_and_fees_on_fork(skip_if_no_ape):
+    """Vault max_performance_fee, max_management_fee, pending_vault_fees from state."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        vaults = config.orion_transparent_vaults
+        if not vaults:
+            pytest.skip("No Orion Transparent Vaults found")
+
+        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        vault = OrionTransparentVault()
+
+        assert vault.max_performance_fee > 0
+        assert vault.max_management_fee > 0
+        assert vault.pending_vault_fees >= 0.0
+
+
+def test_vault_share_price_convert_consistency_on_fork(skip_if_no_ape):
+    """Vault share_price equals convertToAssets(10**decimals) from contract."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        vaults = config.orion_transparent_vaults
+        if not vaults:
+            pytest.skip("No Orion Transparent Vaults found")
+
+        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        vault = OrionTransparentVault()
+
+        decimals = vault.contract.functions.decimals().call()
+        one_share = 10**decimals
+        assert vault.share_price == vault.convert_to_assets(one_share)
+
+
+def test_vault_can_request_deposit_and_max_deposit_on_fork(skip_if_no_ape):
+    """Vault can_request_deposit and max_deposit for a receiver on fork."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        vaults = config.orion_transparent_vaults
+        if not vaults:
+            pytest.skip("No Orion Transparent Vaults found")
+
+        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        vault = OrionTransparentVault()
+
+        receiver = accounts.test_accounts[0].address
+        can_deposit = vault.can_request_deposit(receiver)
+        assert isinstance(can_deposit, bool)
+
+        max_dep = vault.max_deposit(receiver)
+        assert max_dep >= 0
+
+
+def test_vault_is_decommissioning_on_fork(skip_if_no_ape):
+    """Vault is_decommissioning reflects chain state."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        vaults = config.orion_transparent_vaults
+        if not vaults:
+            pytest.skip("No Orion Transparent Vaults found")
+
+        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        vault = OrionTransparentVault()
+        assert isinstance(vault.is_decommissioning, bool)
+
+
+def test_vault_pending_deposit_redeem_non_negative_on_fork(skip_if_no_ape):
+    """Vault pending_deposit and pending_redeem are non-negative with default and explicit batch size."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        vaults = config.orion_transparent_vaults
+        if not vaults:
+            pytest.skip("No Orion Transparent Vaults found")
+
+        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        vault = OrionTransparentVault()
+
+        batch = config.max_fulfill_batch_size
+        assert vault.pending_deposit() >= 0
+        assert vault.pending_deposit(batch) >= 0
+        assert vault.pending_redeem() >= 0
+        assert vault.pending_redeem(batch) >= 0
+
+
+def test_vault_portfolio_tokens_whitelisted_on_fork(skip_if_no_ape):
+    """Every token in a vault's portfolio is whitelisted in OrionConfig."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        vaults = config.orion_transparent_vaults
+        if not vaults:
+            pytest.skip("No Orion Transparent Vaults found")
+
+        whitelisted = set(a.lower() for a in config.whitelisted_assets)
+
+        for vault_addr in vaults:
+            os.environ["ORION_VAULT_ADDRESS"] = vault_addr
+            vault = OrionTransparentVault()
+            portfolio = vault.get_portfolio()
+            for token in portfolio:
+                assert token.lower() in whitelisted, (
+                    f"Portfolio token {token} not whitelisted"
+                )

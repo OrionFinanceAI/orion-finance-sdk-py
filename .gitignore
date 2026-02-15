@@ -276,3 +276,4 @@ docs-config/
 .vscode/settings.json
 
 /cache*
+/.cursor*

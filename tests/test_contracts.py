@@ -607,9 +607,8 @@ class TestOrionVaults:
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_init_invalid_vault(self, MockConfig):
         """Test OrionVault init with invalid vault address."""
-        # Mock config to not contain the vault
         config_instance = MockConfig.return_value
-        config_instance.orion_transparent_vaults = []
+        config_instance.is_orion_vault.return_value = False
 
         with pytest.raises(
             ValueError, match="is NOT a valid Orion Transparent Vault registered"
