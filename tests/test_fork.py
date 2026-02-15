@@ -320,3 +320,53 @@ def test_vault_portfolio_tokens_whitelisted_on_fork(skip_if_no_ape):
                 assert token.lower() in whitelisted, (
                     f"Portfolio token {token} not whitelisted"
                 )
+
+
+def test_orion_config_uses_ape_provider_when_rpc_unset(skip_if_no_ape):
+    """OrionConfig uses ape's active provider when RPC_URL is not set (user read path)."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        rpc_saved = os.environ.pop("RPC_URL", None)
+        try:
+            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
+                config = OrionConfig()
+            assert config.underlying_asset is not None
+            assert len(config.underlying_asset) == 42
+        finally:
+            if rpc_saved is not None:
+                os.environ["RPC_URL"] = rpc_saved
+
+
+def test_orion_config_uses_env_address_when_set(skip_if_no_ape):
+    """OrionConfig uses ORION_CONFIG_ADDRESS when set (user/config override)."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        from orion_finance_sdk_py.types import CHAIN_CONFIG
+
+        expected_addr = CHAIN_CONFIG[11155111]["OrionConfig"]
+        os.environ["ORION_CONFIG_ADDRESS"] = expected_addr
+        try:
+            config = OrionConfig()
+            assert config.contract_address.lower() == expected_addr.lower()
+            assert config.underlying_asset is not None
+        finally:
+            os.environ.pop("ORION_CONFIG_ADDRESS", None)
+
+
+def test_list_whitelisted_assets_logic_on_fork(skip_if_no_ape, capsys):
+    """User path: list whitelisted assets from chain via CLI logic (no admin)."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        from orion_finance_sdk_py.cli import _list_whitelisted_assets_logic
+
+        _list_whitelisted_assets_logic()
+        out, _ = capsys.readouterr()
+        assert "whitelisted" in out.lower() or "Total:" in out
+
+
+def test_get_investment_universe_on_fork(skip_if_no_ape):
+    """User path: get_investment_universe alias equals whitelisted_assets."""
+    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+        config = OrionConfig()
+        universe = config.get_investment_universe
+        assets = config.whitelisted_assets
+        assert universe == assets
+        if assets:
+            assert config.is_whitelisted(assets[0])
