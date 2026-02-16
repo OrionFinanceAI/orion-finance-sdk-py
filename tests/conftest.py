@@ -15,9 +15,9 @@ for _p in (_root / ".env", Path.cwd() / ".env", _root / "tests" / ".env"):
 if os.getenv("GITHUB_ACTIONS") or os.getenv("CI"):
     import ape.api.providers as _ape_providers
 
-    _original_start = _ape_providers.ProviderAPI.start
+    _original_start = _ape_providers.SubprocessProvider.start
 
     def _start_with_ci_timeout(self, timeout: int = 90):
         return _original_start(self, timeout=timeout)
 
-    _ape_providers.ProviderAPI.start = _start_with_ci_timeout
+    _ape_providers.SubprocessProvider.start = _start_with_ci_timeout
