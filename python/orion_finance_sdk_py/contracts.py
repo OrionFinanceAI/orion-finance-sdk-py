@@ -18,6 +18,9 @@ from .utils import (
 
 load_dotenv()
 
+# Gas limit for eth_call (view) so we stay under Hardhat/default node cap (16M)
+_VIEW_CALL_TX = {"gas": 15_000_000}
+
 
 @dataclass
 class TransactionResult:
@@ -171,12 +174,12 @@ class OrionConfig(OrionSmartContract):
     @property
     def underlying_asset(self) -> str:
         """Fetch the underlying asset address."""
-        return self.contract.functions.underlyingAsset().call()
+        return self.contract.functions.underlyingAsset().call(_VIEW_CALL_TX)
 
     @property
     def strategist_intent_decimals(self) -> int:
         """Fetch the strategist intent decimals from the OrionConfig contract."""
-        return self.contract.functions.strategistIntentDecimals().call()
+        return self.contract.functions.strategistIntentDecimals().call(_VIEW_CALL_TX)
 
     @property
     def manager_intent_decimals(self) -> int:
@@ -185,22 +188,24 @@ class OrionConfig(OrionSmartContract):
 
     def token_decimals(self, token_address: str) -> int:
         """Fetch the decimals of a token address."""
-        return self.contract.functions.getTokenDecimals(token_address).call()
+        return self.contract.functions.getTokenDecimals(token_address).call(
+            _VIEW_CALL_TX
+        )
 
     @property
     def risk_free_rate(self) -> int:
         """Fetch the risk free rate from the OrionConfig contract."""
-        return self.contract.functions.riskFreeRate().call()
+        return self.contract.functions.riskFreeRate().call(_VIEW_CALL_TX)
 
     @property
     def whitelisted_assets(self) -> list[str]:
         """Fetch all whitelisted asset addresses from the OrionConfig contract."""
-        return self.contract.functions.getAllWhitelistedAssets().call()
+        return self.contract.functions.getAllWhitelistedAssets().call(_VIEW_CALL_TX)
 
     @property
     def whitelisted_asset_names(self) -> list[str]:
         """Fetch all whitelisted asset names from the OrionConfig contract."""
-        return self.contract.functions.getAllWhitelistedAssetNames().call()
+        return self.contract.functions.getAllWhitelistedAssetNames().call(_VIEW_CALL_TX)
 
     @property
     def get_investment_universe(self) -> list[str]:
@@ -211,58 +216,58 @@ class OrionConfig(OrionSmartContract):
         """Check if a token address is whitelisted."""
         return self.contract.functions.isWhitelisted(
             Web3.to_checksum_address(token_address)
-        ).call()
+        ).call(_VIEW_CALL_TX)
 
     def is_whitelisted_manager(self, manager_address: str) -> bool:
         """Check if a manager address is whitelisted."""
         return self.contract.functions.isWhitelistedManager(
             Web3.to_checksum_address(manager_address)
-        ).call()
+        ).call(_VIEW_CALL_TX)
 
     def is_orion_vault(self, vault_address: str) -> bool:
         """Check if an address is a registered Orion vault."""
         return self.contract.functions.isOrionVault(
             Web3.to_checksum_address(vault_address)
-        ).call()
+        ).call(_VIEW_CALL_TX)
 
     @property
     def orion_transparent_vaults(self) -> list[str]:
         """Fetch all Orion transparent vault addresses from the OrionConfig contract."""
-        return self.contract.functions.getAllOrionVaults(0).call()
+        return self.contract.functions.getAllOrionVaults(0).call(_VIEW_CALL_TX)
 
     @property
     def min_deposit_amount(self) -> int:
         """Fetch the minimum deposit amount from the OrionConfig contract."""
-        return self.contract.functions.minDepositAmount().call()
+        return self.contract.functions.minDepositAmount().call(_VIEW_CALL_TX)
 
     @property
     def min_redeem_amount(self) -> int:
         """Fetch the minimum redeem amount from the OrionConfig contract."""
-        return self.contract.functions.minRedeemAmount().call()
+        return self.contract.functions.minRedeemAmount().call(_VIEW_CALL_TX)
 
     @property
     def v_fee_coefficient(self) -> int:
         """Fetch the volume fee coefficient from the OrionConfig contract."""
-        return self.contract.functions.vFeeCoefficient().call()
+        return self.contract.functions.vFeeCoefficient().call(_VIEW_CALL_TX)
 
     @property
     def rs_fee_coefficient(self) -> int:
         """Fetch the revenue share fee coefficient from the OrionConfig contract."""
-        return self.contract.functions.rsFeeCoefficient().call()
+        return self.contract.functions.rsFeeCoefficient().call(_VIEW_CALL_TX)
 
     @property
     def fee_change_cooldown_duration(self) -> int:
         """Fetch the fee change cooldown duration in seconds."""
-        return self.contract.functions.feeChangeCooldownDuration().call()
+        return self.contract.functions.feeChangeCooldownDuration().call(_VIEW_CALL_TX)
 
     @property
     def max_fulfill_batch_size(self) -> int:
         """Fetch the maximum fulfill batch size."""
-        return self.contract.functions.maxFulfillBatchSize().call()
+        return self.contract.functions.maxFulfillBatchSize().call(_VIEW_CALL_TX)
 
     def is_system_idle(self) -> bool:
         """Check if the system is in idle state, required for vault deployment."""
-        return self.contract.functions.isSystemIdle().call()
+        return self.contract.functions.isSystemIdle().call(_VIEW_CALL_TX)
 
 
 class LiquidityOrchestrator(OrionSmartContract):
@@ -271,7 +276,9 @@ class LiquidityOrchestrator(OrionSmartContract):
     def __init__(self):
         """Initialize the LiquidityOrchestrator contract."""
         config = OrionConfig()
-        contract_address = config.contract.functions.liquidityOrchestrator().call()
+        contract_address = config.contract.functions.liquidityOrchestrator().call(
+            _VIEW_CALL_TX
+        )
         super().__init__(
             contract_name="LiquidityOrchestrator",
             contract_address=contract_address,
@@ -280,21 +287,21 @@ class LiquidityOrchestrator(OrionSmartContract):
     @property
     def target_buffer_ratio(self) -> int:
         """Fetch the target buffer ratio."""
-        return self.contract.functions.targetBufferRatio().call()
+        return self.contract.functions.targetBufferRatio().call(_VIEW_CALL_TX)
 
     @property
     def slippage_tolerance(self) -> int:
         """Fetch the slippage tolerance."""
-        return self.contract.functions.slippageTolerance().call()
+        return self.contract.functions.slippageTolerance().call(_VIEW_CALL_TX)
 
     @property
     def epoch_duration(self) -> int:
         """Fetch the epoch duration in seconds."""
-        return self.contract.functions.epochDuration().call()
+        return self.contract.functions.epochDuration().call(_VIEW_CALL_TX)
 
     def is_system_idle(self) -> bool:
         """Check if the liquidity orchestrator system is idle."""
-        return self.contract.functions.isSystemIdle().call()
+        return self.contract.functions.isSystemIdle().call(_VIEW_CALL_TX)
 
 
 class VaultFactory(OrionSmartContract):
@@ -310,7 +317,9 @@ class VaultFactory(OrionSmartContract):
             config = OrionConfig()
             if vault_type == VaultType.TRANSPARENT:
                 contract_address = (
-                    config.contract.functions.transparentVaultFactory().call()
+                    config.contract.functions.transparentVaultFactory().call(
+                        _VIEW_CALL_TX
+                    )
                 )
             else:
                 raise ValueError(f"Unsupported vault type: {vault_type}")
@@ -497,32 +506,32 @@ class OrionVault(OrionSmartContract):
     @property
     def max_performance_fee(self) -> int:
         """Fetch the maximum performance fee allowed from the vault contract."""
-        return self.contract.functions.MAX_PERFORMANCE_FEE().call()
+        return self.contract.functions.MAX_PERFORMANCE_FEE().call(_VIEW_CALL_TX)
 
     @property
     def max_management_fee(self) -> int:
         """Fetch the maximum management fee allowed from the vault contract."""
-        return self.contract.functions.MAX_MANAGEMENT_FEE().call()
+        return self.contract.functions.MAX_MANAGEMENT_FEE().call(_VIEW_CALL_TX)
 
     @property
     def manager_address(self) -> str:
         """Fetch the manager address."""
-        return self.contract.functions.manager().call()
+        return self.contract.functions.manager().call(_VIEW_CALL_TX)
 
     @property
     def strategist_address(self) -> str:
         """Fetch the strategist address."""
-        return self.contract.functions.strategist().call()
+        return self.contract.functions.strategist().call(_VIEW_CALL_TX)
 
     @property
     def is_decommissioning(self) -> bool:
         """Check if the vault is in decommissioning mode."""
-        return self.contract.functions.isDecommissioning().call()
+        return self.contract.functions.isDecommissioning().call(_VIEW_CALL_TX)
 
     @property
     def active_fee_model(self) -> dict:
         """Fetch the currently active fee model (struct FeeModel)."""
-        model = self.contract.functions.activeFeeModel().call()
+        model = self.contract.functions.activeFeeModel().call(_VIEW_CALL_TX)
         return {
             "feeType": model[0],
             "performanceFee": model[1],
@@ -535,14 +544,18 @@ class OrionVault(OrionSmartContract):
         if fulfill_batch_size is None:
             config = OrionConfig()
             fulfill_batch_size = config.max_fulfill_batch_size
-        return self.contract.functions.pendingDeposit(fulfill_batch_size).call()
+        return self.contract.functions.pendingDeposit(fulfill_batch_size).call(
+            _VIEW_CALL_TX
+        )
 
     def pending_redeem(self, fulfill_batch_size: int | None = None) -> int:
         """Get total pending redemption shares across all users."""
         if fulfill_batch_size is None:
             config = OrionConfig()
             fulfill_batch_size = config.max_fulfill_batch_size
-        return self.contract.functions.pendingRedeem(fulfill_batch_size).call()
+        return self.contract.functions.pendingRedeem(fulfill_batch_size).call(
+            _VIEW_CALL_TX
+        )
 
     def _execute_vault_tx(
         self,
@@ -725,29 +738,32 @@ class OrionVault(OrionSmartContract):
     @property
     def total_assets(self) -> int:
         """Fetch the total assets of the vault."""
-        return self.contract.functions.totalAssets().call()
+        return self.contract.functions.totalAssets().call(_VIEW_CALL_TX)
 
     @property
     def pending_vault_fees(self) -> float:
         """Fetch the pending vault fees in the underlying asset."""
         config = OrionConfig()
         decimals = config.token_decimals(config.underlying_asset)
-        return self.contract.functions.pendingVaultFees().call() / 10**decimals
+        return (
+            self.contract.functions.pendingVaultFees().call(_VIEW_CALL_TX)
+            / 10**decimals
+        )
 
     @property
     def share_price(self) -> int:
         """Fetch the current share price (value of 1 share unit)."""
-        decimals = self.contract.functions.decimals().call()
-        return self.contract.functions.convertToAssets(10**decimals).call()
+        decimals = self.contract.functions.decimals().call(_VIEW_CALL_TX)
+        return self.contract.functions.convertToAssets(10**decimals).call(_VIEW_CALL_TX)
 
     def convert_to_assets(self, shares: int) -> int:
         """Convert shares to assets."""
-        return self.contract.functions.convertToAssets(shares).call()
+        return self.contract.functions.convertToAssets(shares).call(_VIEW_CALL_TX)
 
     def get_portfolio(self) -> dict:
         """Get the vault portfolio."""
         # This returns a tuple (tokens, values)
-        tokens, values = self.contract.functions.getPortfolio().call()
+        tokens, values = self.contract.functions.getPortfolio().call(_VIEW_CALL_TX)
         return dict(zip(tokens, values, strict=True))
 
     def set_deposit_access_control(
@@ -792,7 +808,7 @@ class OrionVault(OrionSmartContract):
         """Fetch the maximum deposit amount for a receiver."""
         return self.contract.functions.maxDeposit(
             Web3.to_checksum_address(receiver)
-        ).call()
+        ).call(_VIEW_CALL_TX)
 
     def can_request_deposit(self, user: str) -> bool:
         """Check if a user is allowed to request a deposit.
@@ -802,7 +818,7 @@ class OrionVault(OrionSmartContract):
         """
         try:
             access_control_address = (
-                self.contract.functions.depositAccessControl().call()
+                self.contract.functions.depositAccessControl().call(_VIEW_CALL_TX)
             )
         except (AttributeError, ValueError):
             # If function doesn't exist in ABI or call fails due to missing method
@@ -828,7 +844,7 @@ class OrionVault(OrionSmartContract):
         )
         return access_control.functions.canRequestDeposit(
             Web3.to_checksum_address(user)
-        ).call()
+        ).call(_VIEW_CALL_TX)
 
 
 class OrionTransparentVault(OrionVault):

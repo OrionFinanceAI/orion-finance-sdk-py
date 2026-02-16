@@ -1,7 +1,9 @@
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from dotenv import load_dotenv
 from orion_finance_sdk_py.contracts import (
     LiquidityOrchestrator,
     OrionConfig,
@@ -11,6 +13,17 @@ from orion_finance_sdk_py.contracts import (
 from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
 from web3.exceptions import ABIFunctionNotFound
 
+# Load .env at import so env vars are set before pytest collects/runs
+_root = Path(__file__).resolve().parents[1]
+for _env_path in (
+    _root / ".env",
+    Path.cwd() / ".env",
+    Path(__file__).resolve().parent / ".env",
+):
+    if _env_path.exists():
+        load_dotenv(_env_path, override=True)
+        break
+
 try:
     from ape import accounts, networks
 
@@ -19,10 +32,21 @@ except ImportError:
     HAS_APE = False
 
 
+# Gas limit for eth_call under Hardhat fork node cap (16M)
+_CALL_GAS = {"gas": 15_000_000}
+
+
+def _has_fork_config() -> bool:
+    """True if any RPC/fork env var is set (after .env loaded)."""
+    return bool(os.getenv("ALCHEMY_API_KEY") or os.getenv("RPC_URL"))
+
+
 @pytest.fixture
 def skip_if_no_ape():
     if not HAS_APE:
         pytest.skip("ape not installed")
+    if not _has_fork_config():
+        pytest.skip("Fork not configured: set ALCHEMY_API_KEY or RPC_URL in .env")
 
 
 def test_comprehensive_config_on_fork(skip_if_no_ape):
@@ -215,7 +239,7 @@ def test_vault_factory_address_matches_config_on_fork(skip_if_no_ape):
     """VaultFactory(transparent) address equals OrionConfig.transparentVaultFactory()."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
-        expected = config.contract.functions.transparentVaultFactory().call()
+        expected = config.contract.functions.transparentVaultFactory().call(_CALL_GAS)
         factory = VaultFactory(vault_type=VaultType.TRANSPARENT.value)
         assert factory.contract_address.lower() == expected.lower()
 
@@ -247,7 +271,7 @@ def test_vault_share_price_convert_consistency_on_fork(skip_if_no_ape):
         os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
         vault = OrionTransparentVault()
 
-        decimals = vault.contract.functions.decimals().call()
+        decimals = vault.contract.functions.decimals().call(_CALL_GAS)
         one_share = 10**decimals
         assert vault.share_price == vault.convert_to_assets(one_share)
 

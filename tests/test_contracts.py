@@ -222,8 +222,17 @@ class TestOrionConfig:
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_init_invalid_chain(self):
-        """Test init with invalid chain ID."""
-        with patch.dict(os.environ, {"CHAIN_ID": "1", "RPC_URL": "http://localhost"}):
+        """Test init with invalid chain ID (chain 1 not in CHAIN_CONFIG)."""
+        # Force address from CHAIN_ID so we hit the "unsupported chain" path
+        with patch.dict(
+            os.environ,
+            {
+                "CHAIN_ID": "1",
+                "RPC_URL": "http://localhost",
+                "ORION_CONFIG_ADDRESS": "",  # unset so OrionConfig uses CHAIN_ID
+            },
+            clear=False,
+        ):
             with pytest.raises(ValueError, match="Unsupported CHAIN_ID"):
                 OrionConfig()
 
