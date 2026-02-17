@@ -102,15 +102,20 @@ def test_vault_getters_on_fork(sepolia_fork, monkeypatch):
         monkeypatch.setenv("ORION_VAULT_ADDRESS", vault_addr)
         vault = OrionTransparentVault()
 
+        assert vault.manager_address and isinstance(vault.manager_address, str)
+        assert vault.strategist_address and isinstance(vault.strategist_address, str)
+        assert vault.total_assets >= 0
+        assert vault.share_price > 0
+        assert vault.active_fee_model is not None
+        assert isinstance(vault.active_fee_model, dict)
+        portfolio = vault.get_portfolio()
+        assert isinstance(portfolio, dict)
+
         print(f"Manager: {vault.manager_address}")
         print(f"Strategist: {vault.strategist_address}")
         print(f"Total Assets: {vault.total_assets}")
         print(f"Share Price: {vault.share_price}")
-
-        fee_model = vault.active_fee_model
-        print(f"Active Fee Model: {fee_model}")
-
-        portfolio = vault.get_portfolio()
+        print(f"Active Fee Model: {vault.active_fee_model}")
         print(f"Portfolio: {portfolio}")
 
 
@@ -124,11 +129,6 @@ def test_vault_pending_state_readable_on_fork(sepolia_fork, monkeypatch):
     vault_addr = vaults[0]
     monkeypatch.setenv("ORION_VAULT_ADDRESS", vault_addr)
     vault = OrionTransparentVault()
-
-    manager_addr = vault.manager_address
-    # Impersonate manager so we could submit txs in a full test
-    manager = accounts[manager_addr]
-    accounts.test_accounts[0].transfer(manager, "1 ether", gas_limit=15000000)
 
     pending_dep = vault.pending_deposit(10)
     pending_red = vault.pending_redeem(10)
