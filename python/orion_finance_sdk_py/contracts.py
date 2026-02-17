@@ -777,8 +777,7 @@ class OrionVault(OrionSmartContract):
 
     def get_portfolio(self) -> dict:
         """Get the vault portfolio."""
-        # This returns a tuple (tokens, values)
-        tokens, values = self.contract.functions.getPortfolio().call(_VIEW_CALL_TX)
+        tokens, values = _call_view(self.contract.functions.getPortfolio())
         return dict(zip(tokens, values, strict=True))
 
     def set_deposit_access_control(

@@ -1,5 +1,6 @@
 """Tests for the contracts module."""
 
+import json
 import os
 from unittest.mock import MagicMock, patch
 
@@ -13,6 +14,8 @@ from orion_finance_sdk_py.contracts import (
     SystemNotIdleError,
     TransactionResult,
     VaultFactory,
+    _get_view_call_tx,
+    load_contract_abi,
 )
 from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
 
@@ -89,6 +92,44 @@ def mock_env():
     }
     with patch.dict(os.environ, env_vars):
         yield
+
+
+class TestLoadContractAbi:
+    """Tests for load_contract_abi and _get_view_call_tx."""
+
+    def test_load_contract_abi_from_package(self):
+        """Load ABI from package resources (normal path)."""
+        abi = load_contract_abi("OrionConfig")
+        assert isinstance(abi, list)
+        assert len(abi) > 0
+
+    def test_load_contract_abi_fallback(self):
+        """Load ABI from local path when package resources fail."""
+        with patch("orion_finance_sdk_py.contracts.resources.files") as mock_files:
+            mock_files.return_value.joinpath.return_value.open.side_effect = (
+                FileNotFoundError
+            )
+            mock_f = MagicMock()
+            mock_f.read.return_value = json.dumps(
+                {"abi": [{"type": "function", "name": "test"}]}
+            )
+            mock_f.__enter__.return_value = mock_f
+            mock_f.__exit__.return_value = None
+            with patch("builtins.open", return_value=mock_f):
+                abi = load_contract_abi("OrionConfig")
+                assert abi == [{"type": "function", "name": "test"}]
+
+    def test_get_view_call_tx_without_env(self):
+        """_get_view_call_tx returns empty dict when ORION_FORCE_VIEW_GAS not set."""
+        with patch.dict(os.environ, {"ORION_FORCE_VIEW_GAS": ""}, clear=False):
+            result = _get_view_call_tx()
+        assert result == {}
+
+    def test_get_view_call_tx_with_env(self):
+        """_get_view_call_tx returns gas dict when ORION_FORCE_VIEW_GAS is set."""
+        with patch.dict(os.environ, {"ORION_FORCE_VIEW_GAS": "1"}, clear=False):
+            result = _get_view_call_tx()
+        assert result == {"gas": 15_000_000}
 
 
 class TestOrionSmartContract:
@@ -246,6 +287,18 @@ class TestOrionConfig:
                 OrionSmartContract("Test", "0xAddress")
                 mock_print.assert_called_with(
                     "⚠️ Warning: CHAIN_ID in env (1) does not match RPC chain ID (11155111)"
+                )
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
+    def test_init_invalid_chain_id_env(self):
+        """Test init with non-integer CHAIN_ID in env prints warning."""
+        with patch.dict(
+            os.environ, {"CHAIN_ID": "invalid", "RPC_URL": "http://localhost"}
+        ):
+            with patch("builtins.print") as mock_print:
+                OrionSmartContract("Test", "0xAddress")
+                mock_print.assert_called_with(
+                    "⚠️ Warning: Invalid CHAIN_ID in env: invalid"
                 )
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -416,6 +469,86 @@ class TestVaultFactory:
         result.decoded_logs = []
         assert factory.get_vault_address_from_result(result) is None
 
+        # Logs present but no OrionVaultCreated event returns None
+        result.decoded_logs = [{"event": "OtherEvent"}, {"event": "AnotherEvent"}]
+        assert factory.get_vault_address_from_result(result) is None
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_create_orion_vault_unsupported_type(self):
+        """Test VaultFactory with unsupported vault type raises."""
+        with patch("orion_finance_sdk_py.contracts.OrionConfig") as MockConfig:
+            MockConfig.return_value.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+            with pytest.raises(ValueError, match="Unsupported vault type"):
+                VaultFactory(vault_type="unknown")
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_load_abi", "mock_env")
+    def test_create_orion_vault_fee_exceeds_max(self, MockConfig, mock_w3):
+        """Test vault creation fails when performance or management fee exceeds max."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.is_whitelisted_manager.return_value = True
+        config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+        config_instance.max_performance_fee = 3000
+        config_instance.max_management_fee = 300
+
+        factory = VaultFactory(VaultType.TRANSPARENT)
+        factory.contract.functions.createVault.return_value.estimate_gas.return_value = 100000
+
+        with pytest.raises(ValueError, match="Performance fee .* exceeds maximum"):
+            factory.create_orion_vault("0xStrategist", "N", "S", 0, 3001, 0)
+        with pytest.raises(ValueError, match="Management fee .* exceeds maximum"):
+            factory.create_orion_vault("0xStrategist", "N", "S", 0, 0, 301)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_load_abi", "mock_env")
+    def test_create_orion_vault_whitelist_revert(self, MockConfig, mock_w3):
+        """Test vault creation when tx reverts with not-whitelisted selector."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.is_whitelisted_manager.return_value = True
+        config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+
+        factory = VaultFactory(VaultType.TRANSPARENT)
+        factory.contract.functions.createVault.return_value.estimate_gas.return_value = 100000
+        factory.contract.functions.createVault.return_value.build_transaction.return_value = {}
+        mock_w3.eth.account.from_key.return_value.address = "0xDeployer"
+        mock_w3.eth.account.from_key.return_value.sign_transaction.return_value = (
+            MagicMock(raw_transaction=b"raw")
+        )
+        mock_w3.eth.send_raw_transaction.return_value = b"\x00" * 32
+        mock_w3.eth.wait_for_transaction_receipt.side_effect = Exception(
+            "revert 0xea8e4eb5..."
+        )
+
+        with pytest.raises(ValueError, match="not whitelisted to create vaults"):
+            factory.create_orion_vault("0xStrategist", "N", "S", 0, 0, 0)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_load_abi", "mock_env")
+    def test_create_orion_vault_receipt_failed(self, MockConfig, mock_w3):
+        """Test vault creation when receipt status is 0."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.is_whitelisted_manager.return_value = True
+        config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+
+        factory = VaultFactory(VaultType.TRANSPARENT)
+        factory.contract.functions.createVault.return_value.estimate_gas.return_value = 100000
+        factory.contract.functions.createVault.return_value.build_transaction.return_value = {}
+        mock_w3.eth.account.from_key.return_value.address = "0xDeployer"
+        mock_w3.eth.account.from_key.return_value.sign_transaction.return_value = (
+            MagicMock(raw_transaction=b"raw")
+        )
+        mock_w3.eth.send_raw_transaction.return_value = b"\x00" * 32
+        mock_w3.eth.wait_for_transaction_receipt.return_value = {
+            "status": 0,
+            "logs": [],
+        }
+
+        with pytest.raises(Exception, match="Transaction failed with status"):
+            factory.create_orion_vault("0xStrategist", "N", "S", 0, 0, 0)
+
 
 class TestOrionVaults:
     """Tests for OrionVault and subclasses."""
@@ -559,6 +692,31 @@ class TestOrionVaults:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_execute_vault_tx_with_gas_limit(self, MockConfig):
+        """Test _execute_vault_tx includes gas in tx_params when gas_limit is provided."""
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = ["0xVault"]
+        config_instance.is_system_idle.return_value = True
+
+        vault = OrionTransparentVault()
+        vault.contract.functions.requestDeposit.return_value.build_transaction.return_value = {}
+        mock_w3 = vault.w3
+        mock_w3.eth.account.from_key.return_value.address = "0xDeployer"
+
+        res = vault._execute_vault_tx(
+            vault.contract.functions.requestDeposit(100),
+            error_msg="Private key missing.",
+            gas_limit=0,
+        )
+        assert res.receipt["status"] == 1
+        # build_transaction should have been called with gas=0 in tx_params
+        call_args = vault.contract.functions.requestDeposit.return_value.build_transaction.call_args[
+            0
+        ][0]
+        assert call_args.get("gas") == 0
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_can_request_deposit_no_method(self, MockConfig):
         """Test can_request_deposit when contract method is missing."""
         config_instance = MockConfig.return_value
@@ -597,6 +755,43 @@ class TestOrionVaults:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_submit_order_intent_system_not_idle(self, MockConfig):
+        """Test submit_order_intent raises SystemNotIdleError when system not idle."""
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = ["0xVault"]
+        config_instance.is_system_idle.return_value = False
+
+        vault = OrionTransparentVault()
+        with pytest.raises(SystemNotIdleError, match="Cannot submit order intent"):
+            vault.submit_order_intent({"0xToken": 1})
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_submit_order_intent_receipt_failed(self, MockConfig, mock_w3):
+        """Test submit_order_intent when receipt status is 0."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.orion_transparent_vaults = ["0xVault"]
+
+        vault = OrionTransparentVault()
+        vault.contract.functions.strategist.return_value.call.return_value = (
+            "0xDeployer"
+        )
+        vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
+            100
+        )
+        vault.contract.functions.submitIntent.return_value.build_transaction.return_value = {}
+        mock_w3.eth.account.from_key.return_value.address = "0xDeployer"
+        mock_w3.eth.wait_for_transaction_receipt.return_value = {
+            "status": 0,
+            "logs": [],
+        }
+
+        with pytest.raises(Exception, match="Transaction failed with status"):
+            vault.submit_order_intent({"0xA": 1})
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_transparent_vault_transfer_fees(self, MockConfig):
         """Test transparent vault transfer fees."""
         # Mock config validation
@@ -611,6 +806,18 @@ class TestOrionVaults:
         res = vault.transfer_manager_fees(100)
         assert res.receipt["status"] == 1
         vault.contract.functions.claimVaultFees.assert_called_with(100)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_transfer_manager_fees_system_not_idle(self, MockConfig):
+        """Test transfer_manager_fees raises SystemNotIdleError when system not idle."""
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = ["0xVault"]
+        config_instance.is_system_idle.return_value = False
+
+        vault = OrionTransparentVault()
+        with pytest.raises(SystemNotIdleError, match="Cannot transfer manager fees"):
+            vault.transfer_manager_fees(100)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -661,6 +868,30 @@ class TestOrionVaults:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_update_fee_model_receipt_failed(self, MockConfig, mock_w3):
+        """Test update_fee_model when receipt status is 0."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.orion_transparent_vaults = ["0xVault"]
+
+        vault = OrionTransparentVault()
+        vault.contract.functions.MAX_PERFORMANCE_FEE.return_value.call.return_value = (
+            3000
+        )
+        vault.contract.functions.MAX_MANAGEMENT_FEE.return_value.call.return_value = 300
+        vault.contract.functions.manager.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.updateFeeModel.return_value.build_transaction.return_value = {}
+        mock_w3.eth.account.from_key.return_value.address = "0xDeployer"
+        mock_w3.eth.wait_for_transaction_receipt.return_value = {
+            "status": 0,
+            "logs": [],
+        }
+
+        with pytest.raises(Exception, match="Transaction failed with status"):
+            vault.update_fee_model(0, 0, 0)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_update_strategist_error(self, MockConfig):
         """Test update_strategist error (signer != manager)."""
         config_instance = MockConfig.return_value
@@ -671,6 +902,38 @@ class TestOrionVaults:
         vault.contract.functions.manager.return_value.call.return_value = "0xOther"
 
         with pytest.raises(ValueError, match="Signer .* is not the vault manager"):
+            vault.update_strategist("0xNew")
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_update_strategist_system_not_idle(self, MockConfig):
+        """Test update_strategist raises SystemNotIdleError when system not idle."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = False
+        config_instance.orion_transparent_vaults = ["0xVault"]
+
+        vault = OrionTransparentVault()
+        with pytest.raises(SystemNotIdleError, match="Cannot update strategist"):
+            vault.update_strategist("0xNew")
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_update_strategist_receipt_failed(self, MockConfig, mock_w3):
+        """Test update_strategist when receipt status is 0."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.orion_transparent_vaults = ["0xVault"]
+
+        vault = OrionTransparentVault()
+        vault.contract.functions.manager.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.updateStrategist.return_value.build_transaction.return_value = {}
+        mock_w3.eth.account.from_key.return_value.address = "0xDeployer"
+        mock_w3.eth.wait_for_transaction_receipt.return_value = {
+            "status": 0,
+            "logs": [],
+        }
+
+        with pytest.raises(Exception, match="Transaction failed with status"):
             vault.update_strategist("0xNew")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
