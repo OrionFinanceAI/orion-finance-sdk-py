@@ -482,8 +482,8 @@ class TestVaultFactory:
                 VaultFactory(vault_type="unknown")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
-    @pytest.mark.usefixtures("mock_load_abi", "mock_env")
-    def test_create_orion_vault_fee_exceeds_max(self, MockConfig, mock_w3):
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_create_orion_vault_fee_exceeds_max(self, MockConfig):
         """Test vault creation fails when performance or management fee exceeds max."""
         config_instance = MockConfig.return_value
         config_instance.is_system_idle.return_value = True
@@ -495,9 +495,9 @@ class TestVaultFactory:
         factory = VaultFactory(VaultType.TRANSPARENT)
         factory.contract.functions.createVault.return_value.estimate_gas.return_value = 100000
 
-        with pytest.raises(ValueError, match="Performance fee .* exceeds maximum"):
+        with pytest.raises(ValueError, match=r"Performance fee .* exceeds maximum"):
             factory.create_orion_vault("0xStrategist", "N", "S", 0, 3001, 0)
-        with pytest.raises(ValueError, match="Management fee .* exceeds maximum"):
+        with pytest.raises(ValueError, match=r"Management fee .* exceeds maximum"):
             factory.create_orion_vault("0xStrategist", "N", "S", 0, 0, 301)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
