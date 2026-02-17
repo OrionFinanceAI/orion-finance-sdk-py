@@ -105,7 +105,6 @@ RPC_URL=https://sepolia.infura.io/v3/YOUR_API_KEY
 
 ```bash
 orion deploy-vault \
-  --vault-type transparent \
   --name "Algorithmic Liquidity Provision & Hedging Agent" \
   --symbol "ALPHA" \
   --fee-type hard_hurdle \
