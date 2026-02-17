@@ -18,13 +18,21 @@ from .utils import (
 
 load_dotenv()
 
-# Gas limit for eth_call (view) so we stay under Hardhat/default node cap (16M)
-_VIEW_CALL_TX = {"gas": 15_000_000}
+# Gas limit for eth_call (view) when using Hardhat fork (node cap 16M)
+_VIEW_CALL_GAS = 15_000_000
+_VIEW_CALL_TX = {"gas": _VIEW_CALL_GAS}
+
+
+def _get_view_call_tx():
+    """Return tx dict for view calls: gas override only when ORION_FORCE_VIEW_GAS is set (e.g. fork tests)."""
+    if os.getenv("ORION_FORCE_VIEW_GAS"):
+        return _VIEW_CALL_TX
+    return {}
 
 
 def _call_view(contract_fn):
-    """Execute a view/pure contract call with capped gas (for fork compatibility)."""
-    return contract_fn.call(_VIEW_CALL_TX)
+    """Execute a view/pure contract call (uses gas override in fork/dev when ORION_FORCE_VIEW_GAS is set)."""
+    return contract_fn.call(_get_view_call_tx())
 
 
 @dataclass
@@ -69,6 +77,7 @@ class OrionSmartContract:
             load_dotenv(os.getcwd() + "/.env")
             rpc_url = os.getenv("RPC_URL")
 
+        ape_error = None
         if not rpc_url:
             # Check if we are in an ape context
             try:
@@ -86,6 +95,18 @@ class OrionSmartContract:
                     return
             except (ImportError, AttributeError):
                 pass
+            except Exception as e:
+                ape_error = e
+
+        if not rpc_url:
+            msg = (
+                "RPC_URL environment variable is missing or invalid. "
+                "Please set RPC_URL in your .env file or as an environment variable. "
+            )
+            if ape_error is not None:
+                msg += f" (Ape provider failed: {ape_error})"
+                raise ValueError(msg) from ape_error
+            raise ValueError(msg)
 
         validate_var(
             rpc_url,
@@ -305,10 +326,6 @@ class LiquidityOrchestrator(OrionSmartContract):
     def epoch_duration(self) -> int:
         """Fetch the epoch duration in seconds."""
         return _call_view(self.contract.functions.epochDuration())
-
-    def is_system_idle(self) -> bool:
-        """Check if the liquidity orchestrator system is idle."""
-        return _call_view(self.contract.functions.isSystemIdle())
 
 
 class VaultFactory(OrionSmartContract):

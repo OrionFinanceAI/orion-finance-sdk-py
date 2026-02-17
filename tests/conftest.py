@@ -11,6 +11,10 @@ for _p in (_root / ".env", Path.cwd() / ".env", _root / "tests" / ".env"):
     if _p.exists():
         load_dotenv(_p, override=True)
 
+# Fork tests use Hardhat node (16M gas cap); SDK view calls need explicit gas when forking
+if os.getenv("ALCHEMY_API_KEY") or os.getenv("RPC_URL"):
+    os.environ.setdefault("ORION_FORCE_VIEW_GAS", "1")
+
 # In CI, give the Hardhat fork node more time to start (default 20s is often too low on runners).
 if os.getenv("GITHUB_ACTIONS") or os.getenv("CI"):
     import ape.api.providers as _ape_providers

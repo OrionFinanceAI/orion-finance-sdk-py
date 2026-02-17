@@ -1711,9 +1711,9 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ape-alchemy", marker = "extra == 'dev'" },
-    { name = "ape-etherscan", marker = "extra == 'dev'" },
-    { name = "ape-hardhat", marker = "extra == 'dev'" },
+    { name = "ape-alchemy", marker = "extra == 'dev'", specifier = ">=0.8.0,<2.0.0" },
+    { name = "ape-etherscan", marker = "extra == 'dev'", specifier = ">=0.8.0,<2.0.0" },
+    { name = "ape-hardhat", marker = "extra == 'dev'", specifier = ">=0.8.0,<2.0.0" },
     { name = "eth-ape", marker = "extra == 'dev'", specifier = ">=0.8.0" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.0,<6.0.0" },
     { name = "numpy", specifier = ">=1.21.0,<3.0.0" },

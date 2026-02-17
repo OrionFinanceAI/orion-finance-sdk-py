@@ -40,12 +40,12 @@ def test_ensure_env_file_exists(tmp_path):
 def test_validate_var():
     """Test environment variable validation."""
     # Should raise ValueError if invalid
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Error"):
         validate_var(None, "Error")
 
     from orion_finance_sdk_py.types import ZERO_ADDRESS
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Error"):
         validate_var(ZERO_ADDRESS, "Error")
 
     # Should not raise

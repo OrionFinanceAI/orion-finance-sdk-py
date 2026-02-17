@@ -5,13 +5,13 @@ from unittest.mock import patch
 import pytest
 from dotenv import load_dotenv
 from orion_finance_sdk_py.contracts import (
+    _VIEW_CALL_TX,
     LiquidityOrchestrator,
     OrionConfig,
     OrionTransparentVault,
     VaultFactory,
 )
 from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
-from web3.exceptions import ABIFunctionNotFound
 
 # Load .env at import so env vars are set before pytest collects/runs
 _root = Path(__file__).resolve().parents[1]
@@ -32,24 +32,21 @@ except ImportError:
     HAS_APE = False
 
 
-# Gas limit for eth_call under Hardhat fork node cap (16M)
-_CALL_GAS = {"gas": 15_000_000}
-
-
 def _has_fork_config() -> bool:
     """True if any RPC/fork env var is set (after .env loaded)."""
     return bool(os.getenv("ALCHEMY_API_KEY") or os.getenv("RPC_URL"))
 
 
-@pytest.fixture
-def skip_if_no_ape():
+@pytest.fixture(autouse=True)
+def _require_ape_and_fork_config():
+    """Skip fork tests when ape is not installed or fork env is not set."""
     if not HAS_APE:
         pytest.skip("ape not installed")
     if not _has_fork_config():
         pytest.skip("Fork not configured: set ALCHEMY_API_KEY or RPC_URL in .env")
 
 
-def test_comprehensive_config_on_fork(skip_if_no_ape):
+def test_comprehensive_config_on_fork():
     """Extensive testing of OrionConfig and linked components on Sepolia fork."""
 
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
@@ -85,7 +82,7 @@ def test_comprehensive_config_on_fork(skip_if_no_ape):
         assert lo.epoch_duration > 0
 
 
-def test_vault_getters_on_fork(skip_if_no_ape):
+def test_vault_getters_on_fork(monkeypatch):
     """Dynamically discover and test OrionTransparentVaults from OrionConfig."""
 
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
@@ -99,7 +96,7 @@ def test_vault_getters_on_fork(skip_if_no_ape):
 
         for i, vault_addr in enumerate(vaults):
             print(f"\n--- [Vault #{i}: {vault_addr}] ---")
-            os.environ["ORION_VAULT_ADDRESS"] = vault_addr
+            monkeypatch.setenv("ORION_VAULT_ADDRESS", vault_addr)
             vault = OrionTransparentVault()
 
             print(f"Manager: {vault.manager_address}")
@@ -114,8 +111,8 @@ def test_vault_getters_on_fork(skip_if_no_ape):
             print(f"Portfolio: {portfolio}")
 
 
-def test_vault_pending_ops_on_fork(skip_if_no_ape):
-    """Test async pending deposit/redeem requests on fork."""
+def test_vault_pending_ops_on_fork(monkeypatch):
+    """Test that pending deposit/redeem state is readable on fork."""
 
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -124,20 +121,13 @@ def test_vault_pending_ops_on_fork(skip_if_no_ape):
             pytest.skip("No vaults to test pending ops")
 
         vault_addr = vaults[0]
-        os.environ["ORION_VAULT_ADDRESS"] = vault_addr
+        monkeypatch.setenv("ORION_VAULT_ADDRESS", vault_addr)
         vault = OrionTransparentVault()
 
         manager_addr = vault.manager_address
-        print(f"\nTesting Pending Ops on Vault: {vault_addr}")
-
-        # Impersonate manager
+        # Impersonate manager so we could submit txs in a full test
         manager = accounts[manager_addr]
         accounts.test_accounts[0].transfer(manager, "1 ether", gas_limit=15000000)
-
-        # Building simple intent
-        whitelisted = config.whitelisted_assets
-        intent_decimals = config.strategist_intent_decimals
-        intent = {whitelisted[0]: 1 * 10**intent_decimals}
 
         pending_dep = vault.pending_deposit(10)
         pending_red = vault.pending_redeem(10)
@@ -147,14 +137,14 @@ def test_vault_pending_ops_on_fork(skip_if_no_ape):
         assert pending_red >= 0, "pending_redeem should be non-negative"
 
 
-def test_fork_connection(skip_if_no_ape):
+def test_fork_connection():
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         block_number = networks.active_provider.get_block("latest").number
         assert block_number > 0
         print(f"\n[Hardhat Fork] Latest Block: {block_number}")
 
 
-def test_orion_config_v2_properties_on_fork(skip_if_no_ape):
+def test_orion_config_v2_properties_on_fork():
     """OrionConfig v2 properties against Sepolia fork state."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -180,7 +170,7 @@ def test_orion_config_v2_properties_on_fork(skip_if_no_ape):
         )
 
 
-def test_orion_config_system_idle_on_fork(skip_if_no_ape):
+def test_orion_config_system_idle_on_fork():
     """OrionConfig is_system_idle reflects chain state."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -188,7 +178,7 @@ def test_orion_config_system_idle_on_fork(skip_if_no_ape):
         assert isinstance(idle, bool)
 
 
-def test_orion_config_is_orion_vault_on_fork(skip_if_no_ape):
+def test_orion_config_is_orion_vault_on_fork():
     """OrionConfig is_orion_vault: registered vaults True, zero address False."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -200,7 +190,7 @@ def test_orion_config_is_orion_vault_on_fork(skip_if_no_ape):
         assert config.is_orion_vault(ZERO_ADDRESS) is False
 
 
-def test_orion_config_managers_whitelisted_on_fork(skip_if_no_ape):
+def test_orion_config_managers_whitelisted_on_fork(monkeypatch):
     """Every registered vault's manager is whitelisted in OrionConfig."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -209,7 +199,7 @@ def test_orion_config_managers_whitelisted_on_fork(skip_if_no_ape):
             pytest.skip("No Orion Transparent Vaults found")
 
         for vault_addr in vaults:
-            os.environ["ORION_VAULT_ADDRESS"] = vault_addr
+            monkeypatch.setenv("ORION_VAULT_ADDRESS", vault_addr)
             vault = OrionTransparentVault()
             manager = vault.manager_address
             assert config.is_whitelisted_manager(manager), (
@@ -217,30 +207,27 @@ def test_orion_config_managers_whitelisted_on_fork(skip_if_no_ape):
             )
 
 
-def test_liquidity_orchestrator_state_on_fork(skip_if_no_ape):
+def test_liquidity_orchestrator_state_on_fork():
     """LiquidityOrchestrator slippage_tolerance, target_buffer_ratio, epoch_duration from chain."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         lo = LiquidityOrchestrator()
         assert lo.slippage_tolerance >= 0
         assert lo.target_buffer_ratio >= 0
         assert lo.epoch_duration > 0
-        try:
-            assert isinstance(lo.is_system_idle(), bool)
-        except ABIFunctionNotFound:
-            # LiquidityOrchestrator ABI may not expose isSystemIdle
-            pass
 
 
-def test_vault_factory_address_matches_config_on_fork(skip_if_no_ape):
+def test_vault_factory_address_matches_config_on_fork():
     """VaultFactory(transparent) address equals OrionConfig.transparentVaultFactory()."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
-        expected = config.contract.functions.transparentVaultFactory().call(_CALL_GAS)
+        expected = config.contract.functions.transparentVaultFactory().call(
+            _VIEW_CALL_TX
+        )
         factory = VaultFactory(vault_type=VaultType.TRANSPARENT.value)
         assert factory.contract_address.lower() == expected.lower()
 
 
-def test_vault_fee_limits_and_fees_on_fork(skip_if_no_ape):
+def test_vault_fee_limits_and_fees_on_fork(monkeypatch):
     """Vault max_performance_fee, max_management_fee, pending_vault_fees from state."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -248,7 +235,7 @@ def test_vault_fee_limits_and_fees_on_fork(skip_if_no_ape):
         if not vaults:
             pytest.skip("No Orion Transparent Vaults found")
 
-        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        monkeypatch.setenv("ORION_VAULT_ADDRESS", vaults[0])
         vault = OrionTransparentVault()
 
         assert vault.max_performance_fee > 0
@@ -256,7 +243,7 @@ def test_vault_fee_limits_and_fees_on_fork(skip_if_no_ape):
         assert vault.pending_vault_fees >= 0.0
 
 
-def test_vault_share_price_convert_consistency_on_fork(skip_if_no_ape):
+def test_vault_share_price_convert_consistency_on_fork(monkeypatch):
     """Vault share_price equals convertToAssets(10**decimals) from contract."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -264,15 +251,15 @@ def test_vault_share_price_convert_consistency_on_fork(skip_if_no_ape):
         if not vaults:
             pytest.skip("No Orion Transparent Vaults found")
 
-        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        monkeypatch.setenv("ORION_VAULT_ADDRESS", vaults[0])
         vault = OrionTransparentVault()
 
-        decimals = vault.contract.functions.decimals().call(_CALL_GAS)
+        decimals = vault.contract.functions.decimals().call(_VIEW_CALL_TX)
         one_share = 10**decimals
         assert vault.share_price == vault.convert_to_assets(one_share)
 
 
-def test_vault_can_request_deposit_and_max_deposit_on_fork(skip_if_no_ape):
+def test_vault_can_request_deposit_and_max_deposit_on_fork(monkeypatch):
     """Vault can_request_deposit and max_deposit for a receiver on fork."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -280,7 +267,7 @@ def test_vault_can_request_deposit_and_max_deposit_on_fork(skip_if_no_ape):
         if not vaults:
             pytest.skip("No Orion Transparent Vaults found")
 
-        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        monkeypatch.setenv("ORION_VAULT_ADDRESS", vaults[0])
         vault = OrionTransparentVault()
 
         receiver = accounts.test_accounts[0].address
@@ -291,7 +278,7 @@ def test_vault_can_request_deposit_and_max_deposit_on_fork(skip_if_no_ape):
         assert max_dep >= 0
 
 
-def test_vault_is_decommissioning_on_fork(skip_if_no_ape):
+def test_vault_is_decommissioning_on_fork(monkeypatch):
     """Vault is_decommissioning reflects chain state."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -299,12 +286,12 @@ def test_vault_is_decommissioning_on_fork(skip_if_no_ape):
         if not vaults:
             pytest.skip("No Orion Transparent Vaults found")
 
-        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        monkeypatch.setenv("ORION_VAULT_ADDRESS", vaults[0])
         vault = OrionTransparentVault()
         assert isinstance(vault.is_decommissioning, bool)
 
 
-def test_vault_pending_deposit_redeem_non_negative_on_fork(skip_if_no_ape):
+def test_vault_pending_deposit_redeem_non_negative_on_fork(monkeypatch):
     """Vault pending_deposit and pending_redeem are non-negative with default and explicit batch size."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -312,7 +299,7 @@ def test_vault_pending_deposit_redeem_non_negative_on_fork(skip_if_no_ape):
         if not vaults:
             pytest.skip("No Orion Transparent Vaults found")
 
-        os.environ["ORION_VAULT_ADDRESS"] = vaults[0]
+        monkeypatch.setenv("ORION_VAULT_ADDRESS", vaults[0])
         vault = OrionTransparentVault()
 
         batch = config.max_fulfill_batch_size
@@ -322,7 +309,7 @@ def test_vault_pending_deposit_redeem_non_negative_on_fork(skip_if_no_ape):
         assert vault.pending_redeem(batch) >= 0
 
 
-def test_vault_portfolio_tokens_whitelisted_on_fork(skip_if_no_ape):
+def test_vault_portfolio_tokens_whitelisted_on_fork(monkeypatch):
     """Every token in a vault's portfolio is whitelisted in OrionConfig."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
@@ -330,10 +317,10 @@ def test_vault_portfolio_tokens_whitelisted_on_fork(skip_if_no_ape):
         if not vaults:
             pytest.skip("No Orion Transparent Vaults found")
 
-        whitelisted = set(a.lower() for a in config.whitelisted_assets)
+        whitelisted = {a.lower() for a in config.whitelisted_assets}
 
         for vault_addr in vaults:
-            os.environ["ORION_VAULT_ADDRESS"] = vault_addr
+            monkeypatch.setenv("ORION_VAULT_ADDRESS", vault_addr)
             vault = OrionTransparentVault()
             portfolio = vault.get_portfolio()
             for token in portfolio:
@@ -342,36 +329,29 @@ def test_vault_portfolio_tokens_whitelisted_on_fork(skip_if_no_ape):
                 )
 
 
-def test_orion_config_uses_ape_provider_when_rpc_unset(skip_if_no_ape):
+def test_orion_config_uses_ape_provider_when_rpc_unset(monkeypatch):
     """OrionConfig uses ape's active provider when RPC_URL is not set (user read path)."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
-        rpc_saved = os.environ.pop("RPC_URL", None)
-        try:
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                config = OrionConfig()
-            assert config.underlying_asset is not None
-            assert len(config.underlying_asset) == 42
-        finally:
-            if rpc_saved is not None:
-                os.environ["RPC_URL"] = rpc_saved
+        monkeypatch.delenv("RPC_URL", raising=False)
+        with patch("orion_finance_sdk_py.contracts.load_dotenv"):
+            config = OrionConfig()
+        assert config.underlying_asset is not None
+        assert len(config.underlying_asset) == 42
 
 
-def test_orion_config_uses_env_address_when_set(skip_if_no_ape):
+def test_orion_config_uses_env_address_when_set(monkeypatch):
     """OrionConfig uses ORION_CONFIG_ADDRESS when set (user/config override)."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         from orion_finance_sdk_py.types import CHAIN_CONFIG
 
         expected_addr = CHAIN_CONFIG[11155111]["OrionConfig"]
-        os.environ["ORION_CONFIG_ADDRESS"] = expected_addr
-        try:
-            config = OrionConfig()
-            assert config.contract_address.lower() == expected_addr.lower()
-            assert config.underlying_asset is not None
-        finally:
-            os.environ.pop("ORION_CONFIG_ADDRESS", None)
+        monkeypatch.setenv("ORION_CONFIG_ADDRESS", expected_addr)
+        config = OrionConfig()
+        assert config.contract_address.lower() == expected_addr.lower()
+        assert config.underlying_asset is not None
 
 
-def test_list_whitelisted_assets_logic_on_fork(skip_if_no_ape, capsys):
+def test_list_whitelisted_assets_logic_on_fork(capsys):
     """User path: list whitelisted assets from chain via CLI logic (no admin)."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         from orion_finance_sdk_py.cli import _list_whitelisted_assets_logic
@@ -381,7 +361,7 @@ def test_list_whitelisted_assets_logic_on_fork(skip_if_no_ape, capsys):
         assert "whitelisted" in out.lower() or "Total:" in out
 
 
-def test_get_investment_universe_on_fork(skip_if_no_ape):
+def test_get_investment_universe_on_fork():
     """User path: get_investment_universe alias equals whitelisted_assets."""
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()

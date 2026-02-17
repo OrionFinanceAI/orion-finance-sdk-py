@@ -11,7 +11,6 @@ module.exports = {
       initialBaseFeePerGas: 0,
       // Web3 default call gas is 60M; node cap must be >= that.
       blockGasLimit: 80000000,
-      gasLimit: 80000000,
       accounts: {
         mnemonic: "test test test test test test test test test test test junk",
         path: "m/44'/60'/0'/0",

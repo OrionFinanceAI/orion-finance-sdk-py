@@ -25,9 +25,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "eth-ape>=0.8.0",
-    "ape-hardhat",
-    "ape-alchemy",
-    "ape-etherscan",
+    "ape-hardhat>=0.8.0,<2.0.0",
+    "ape-alchemy>=0.8.0,<2.0.0",
+    "ape-etherscan>=0.8.0,<2.0.0",
     "pre-commit>=4.1.0,<4.6.0",
     "ruff>=0.9.10,<1.0.0",
     "pydocstyle>=6.3.0,<6.4.0",
