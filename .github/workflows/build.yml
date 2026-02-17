@@ -60,7 +60,10 @@ jobs:
 
       - name: Run tests
         env:
+          # Our fork tests skip unless ALCHEMY_API_KEY or RPC_URL is set
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          # Ape's Alchemy plugin uses WEB3_* vars for the fork; without this it uses the demo key and the node never becomes ready
+          WEB3_ETHEREUM_SEPOLIA_ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         run: |
           make test
 
