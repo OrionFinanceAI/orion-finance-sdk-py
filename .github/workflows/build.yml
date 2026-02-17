@@ -60,7 +60,11 @@ jobs:
 
       - name: Run tests
         env:
+          # Fork tests skip unless ALCHEMY_API_KEY or RPC_URL is set
+          ALCHEMY_API_KEY: ${{ secrets.WEB3_ALCHEMY_API_KEY }}
+          # Ape Hardhat fork uses WEB3_* vars to connect to Sepolia
           WEB3_ALCHEMY_API_KEY: ${{ secrets.WEB3_ALCHEMY_API_KEY }}
+          WEB3_ETHEREUM_SEPOLIA_ALCHEMY_API_KEY: ${{ secrets.WEB3_ALCHEMY_API_KEY }}
         run: |
           make test
 
