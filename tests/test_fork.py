@@ -111,8 +111,8 @@ def test_vault_getters_on_fork(monkeypatch):
             print(f"Portfolio: {portfolio}")
 
 
-def test_vault_pending_ops_on_fork(monkeypatch):
-    """Test that pending deposit/redeem state is readable on fork."""
+def test_vault_pending_state_readable_on_fork(monkeypatch):
+    """Pending deposit/redeem state is readable on fork; asserts types and non-negative values."""
 
     with networks.ethereum.sepolia_fork.use_provider("hardhat"):
         config = OrionConfig()
