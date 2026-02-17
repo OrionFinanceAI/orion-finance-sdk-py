@@ -1,0 +1,25 @@
+name: orion-finance-sdk-py
+
+plugins:
+  - name: hardhat
+  - name: alchemy
+  - name: etherscan
+
+ethereum:
+  mainnet_fork:
+    default_provider: hardhat
+  sepolia_fork:
+    default_provider: hardhat
+
+hardhat:
+  host: auto
+  hardhat_config_file: ./hardhat.config.js
+  request_timeout: 60
+  fork_request_timeout: 600
+  fork:
+    ethereum:
+      mainnet:
+        upstream_provider: alchemy
+      sepolia:
+        upstream_provider: alchemy
+        # block_number: set to a valid Sepolia block (chain height ~10M) for reproducibility; omit to use latest

@@ -18,6 +18,22 @@ from .utils import (
 
 load_dotenv()
 
+# Gas limit for eth_call (view) when using Hardhat fork (node cap 16M)
+_VIEW_CALL_GAS = 15_000_000
+_VIEW_CALL_TX = {"gas": _VIEW_CALL_GAS}
+
+
+def _get_view_call_tx():
+    """Return tx dict for view calls: gas override only when ORION_FORCE_VIEW_GAS is set (e.g. fork tests)."""
+    if os.getenv("ORION_FORCE_VIEW_GAS"):
+        return _VIEW_CALL_TX
+    return {}
+
+
+def _call_view(contract_fn):
+    """Execute a view/pure contract call (uses gas override in fork/dev when ORION_FORCE_VIEW_GAS is set)."""
+    return contract_fn.call(_get_view_call_tx())
+
 
 @dataclass
 class TransactionResult:
@@ -60,6 +76,37 @@ class OrionSmartContract:
             # Try loading from current directory explicitly
             load_dotenv(os.getcwd() + "/.env")
             rpc_url = os.getenv("RPC_URL")
+
+        ape_error = None
+        if not rpc_url:
+            # Check if we are in an ape context
+            try:
+                from ape import networks
+
+                if networks.active_provider:
+                    self.w3 = networks.active_provider.web3
+                    self.chain_id = self.w3.eth.chain_id
+                    self.contract_name = contract_name
+                    self.contract_address = contract_address
+                    self.contract = self.w3.eth.contract(
+                        address=self.contract_address,
+                        abi=load_contract_abi(self.contract_name),
+                    )
+                    return
+            except (ImportError, AttributeError):
+                pass
+            except Exception as e:
+                ape_error = e
+
+        if not rpc_url:
+            msg = (
+                "RPC_URL environment variable is missing or invalid. "
+                "Please set RPC_URL in your .env file or as an environment variable. "
+            )
+            if ape_error is not None:
+                msg += f" (Ape provider failed: {ape_error})"
+                raise ValueError(msg) from ape_error
+            raise ValueError(msg)
 
         validate_var(
             rpc_url,
@@ -131,15 +178,19 @@ class OrionConfig(OrionSmartContract):
 
     def __init__(self):
         """Initialize the OrionConfig contract."""
-        # Default to Sepolia if not specified, but prefer env var
-        chain_id = int(os.getenv("CHAIN_ID", "11155111"))
+        # Check for manual address override first
+        contract_address = os.getenv("ORION_CONFIG_ADDRESS")
 
-        if chain_id in CHAIN_CONFIG:
-            contract_address = CHAIN_CONFIG[chain_id]["OrionConfig"]
-        else:
-            raise ValueError(
-                f"Unsupported CHAIN_ID: {chain_id}. Please check CHAIN_CONFIG in types.py or set CHAIN_ID env var correctly."
-            )
+        if not contract_address:
+            # Default to Sepolia if not specified, but prefer env var
+            chain_id = int(os.getenv("CHAIN_ID", "11155111"))
+
+            if chain_id in CHAIN_CONFIG:
+                contract_address = CHAIN_CONFIG[chain_id]["OrionConfig"]
+            else:
+                raise ValueError(
+                    f"Unsupported CHAIN_ID: {chain_id}. Please check CHAIN_CONFIG in types.py or set CHAIN_ID env var correctly."
+                )
 
         super().__init__(
             contract_name="OrionConfig",
@@ -149,12 +200,12 @@ class OrionConfig(OrionSmartContract):
     @property
     def underlying_asset(self) -> str:
         """Fetch the underlying asset address."""
-        return self.contract.functions.underlyingAsset().call()
+        return _call_view(self.contract.functions.underlyingAsset())
 
     @property
     def strategist_intent_decimals(self) -> int:
         """Fetch the strategist intent decimals from the OrionConfig contract."""
-        return self.contract.functions.strategistIntentDecimals().call()
+        return _call_view(self.contract.functions.strategistIntentDecimals())
 
     @property
     def manager_intent_decimals(self) -> int:
@@ -163,22 +214,22 @@ class OrionConfig(OrionSmartContract):
 
     def token_decimals(self, token_address: str) -> int:
         """Fetch the decimals of a token address."""
-        return self.contract.functions.getTokenDecimals(token_address).call()
+        return _call_view(self.contract.functions.getTokenDecimals(token_address))
 
     @property
     def risk_free_rate(self) -> int:
         """Fetch the risk free rate from the OrionConfig contract."""
-        return self.contract.functions.riskFreeRate().call()
+        return _call_view(self.contract.functions.riskFreeRate())
 
     @property
     def whitelisted_assets(self) -> list[str]:
         """Fetch all whitelisted asset addresses from the OrionConfig contract."""
-        return self.contract.functions.getAllWhitelistedAssets().call()
+        return _call_view(self.contract.functions.getAllWhitelistedAssets())
 
     @property
     def whitelisted_asset_names(self) -> list[str]:
         """Fetch all whitelisted asset names from the OrionConfig contract."""
-        return self.contract.functions.getAllWhitelistedAssetNames().call()
+        return _call_view(self.contract.functions.getAllWhitelistedAssetNames())
 
     @property
     def get_investment_universe(self) -> list[str]:
@@ -187,54 +238,66 @@ class OrionConfig(OrionSmartContract):
 
     def is_whitelisted(self, token_address: str) -> bool:
         """Check if a token address is whitelisted."""
-        return self.contract.functions.isWhitelisted(
-            Web3.to_checksum_address(token_address)
-        ).call()
+        return _call_view(
+            self.contract.functions.isWhitelisted(
+                Web3.to_checksum_address(token_address)
+            )
+        )
 
     def is_whitelisted_manager(self, manager_address: str) -> bool:
         """Check if a manager address is whitelisted."""
-        return self.contract.functions.isWhitelistedManager(
-            Web3.to_checksum_address(manager_address)
-        ).call()
+        return _call_view(
+            self.contract.functions.isWhitelistedManager(
+                Web3.to_checksum_address(manager_address)
+            )
+        )
+
+    def is_orion_vault(self, vault_address: str) -> bool:
+        """Check if an address is a registered Orion vault."""
+        return _call_view(
+            self.contract.functions.isOrionVault(
+                Web3.to_checksum_address(vault_address)
+            )
+        )
 
     @property
     def orion_transparent_vaults(self) -> list[str]:
         """Fetch all Orion transparent vault addresses from the OrionConfig contract."""
-        return self.contract.functions.getAllOrionVaults(0).call()
+        return _call_view(self.contract.functions.getAllOrionVaults(0))
 
     @property
     def min_deposit_amount(self) -> int:
         """Fetch the minimum deposit amount from the OrionConfig contract."""
-        return self.contract.functions.minDepositAmount().call()
+        return _call_view(self.contract.functions.minDepositAmount())
 
     @property
     def min_redeem_amount(self) -> int:
         """Fetch the minimum redeem amount from the OrionConfig contract."""
-        return self.contract.functions.minRedeemAmount().call()
+        return _call_view(self.contract.functions.minRedeemAmount())
 
     @property
     def v_fee_coefficient(self) -> int:
         """Fetch the volume fee coefficient from the OrionConfig contract."""
-        return self.contract.functions.vFeeCoefficient().call()
+        return _call_view(self.contract.functions.vFeeCoefficient())
 
     @property
     def rs_fee_coefficient(self) -> int:
         """Fetch the revenue share fee coefficient from the OrionConfig contract."""
-        return self.contract.functions.rsFeeCoefficient().call()
+        return _call_view(self.contract.functions.rsFeeCoefficient())
 
     @property
     def fee_change_cooldown_duration(self) -> int:
         """Fetch the fee change cooldown duration in seconds."""
-        return self.contract.functions.feeChangeCooldownDuration().call()
+        return _call_view(self.contract.functions.feeChangeCooldownDuration())
 
     @property
     def max_fulfill_batch_size(self) -> int:
         """Fetch the maximum fulfill batch size."""
-        return self.contract.functions.maxFulfillBatchSize().call()
+        return _call_view(self.contract.functions.maxFulfillBatchSize())
 
     def is_system_idle(self) -> bool:
         """Check if the system is in idle state, required for vault deployment."""
-        return self.contract.functions.isSystemIdle().call()
+        return _call_view(self.contract.functions.isSystemIdle())
 
 
 class LiquidityOrchestrator(OrionSmartContract):
@@ -243,7 +306,7 @@ class LiquidityOrchestrator(OrionSmartContract):
     def __init__(self):
         """Initialize the LiquidityOrchestrator contract."""
         config = OrionConfig()
-        contract_address = config.contract.functions.liquidityOrchestrator().call()
+        contract_address = _call_view(config.contract.functions.liquidityOrchestrator())
         super().__init__(
             contract_name="LiquidityOrchestrator",
             contract_address=contract_address,
@@ -252,17 +315,17 @@ class LiquidityOrchestrator(OrionSmartContract):
     @property
     def target_buffer_ratio(self) -> int:
         """Fetch the target buffer ratio."""
-        return self.contract.functions.targetBufferRatio().call()
+        return _call_view(self.contract.functions.targetBufferRatio())
 
     @property
     def slippage_tolerance(self) -> int:
         """Fetch the slippage tolerance."""
-        return self.contract.functions.slippageTolerance().call()
+        return _call_view(self.contract.functions.slippageTolerance())
 
     @property
     def epoch_duration(self) -> int:
         """Fetch the epoch duration in seconds."""
-        return self.contract.functions.epochDuration().call()
+        return _call_view(self.contract.functions.epochDuration())
 
 
 class VaultFactory(OrionSmartContract):
@@ -277,8 +340,8 @@ class VaultFactory(OrionSmartContract):
         if contract_address is None:
             config = OrionConfig()
             if vault_type == VaultType.TRANSPARENT:
-                contract_address = (
-                    config.contract.functions.transparentVaultFactory().call()
+                contract_address = _call_view(
+                    config.contract.functions.transparentVaultFactory()
                 )
             else:
                 raise ValueError(f"Unsupported vault type: {vault_type}")
@@ -452,7 +515,7 @@ class OrionVault(OrionSmartContract):
 
         # Validate that the address is a valid Orion Vault
         config = OrionConfig()
-        is_transparent = contract_address in config.orion_transparent_vaults
+        is_transparent = config.is_orion_vault(contract_address)
 
         if not is_transparent:
             raise ValueError(
@@ -465,32 +528,32 @@ class OrionVault(OrionSmartContract):
     @property
     def max_performance_fee(self) -> int:
         """Fetch the maximum performance fee allowed from the vault contract."""
-        return self.contract.functions.MAX_PERFORMANCE_FEE().call()
+        return _call_view(self.contract.functions.MAX_PERFORMANCE_FEE())
 
     @property
     def max_management_fee(self) -> int:
         """Fetch the maximum management fee allowed from the vault contract."""
-        return self.contract.functions.MAX_MANAGEMENT_FEE().call()
+        return _call_view(self.contract.functions.MAX_MANAGEMENT_FEE())
 
     @property
     def manager_address(self) -> str:
         """Fetch the manager address."""
-        return self.contract.functions.manager().call()
+        return _call_view(self.contract.functions.manager())
 
     @property
     def strategist_address(self) -> str:
         """Fetch the strategist address."""
-        return self.contract.functions.strategist().call()
+        return _call_view(self.contract.functions.strategist())
 
     @property
     def is_decommissioning(self) -> bool:
         """Check if the vault is in decommissioning mode."""
-        return self.contract.functions.isDecommissioning().call()
+        return _call_view(self.contract.functions.isDecommissioning())
 
     @property
     def active_fee_model(self) -> dict:
         """Fetch the currently active fee model (struct FeeModel)."""
-        model = self.contract.functions.activeFeeModel().call()
+        model = _call_view(self.contract.functions.activeFeeModel())
         return {
             "feeType": model[0],
             "performanceFee": model[1],
@@ -503,20 +566,21 @@ class OrionVault(OrionSmartContract):
         if fulfill_batch_size is None:
             config = OrionConfig()
             fulfill_batch_size = config.max_fulfill_batch_size
-        return self.contract.functions.pendingDeposit(fulfill_batch_size).call()
+        return _call_view(self.contract.functions.pendingDeposit(fulfill_batch_size))
 
     def pending_redeem(self, fulfill_batch_size: int | None = None) -> int:
         """Get total pending redemption shares across all users."""
         if fulfill_batch_size is None:
             config = OrionConfig()
             fulfill_batch_size = config.max_fulfill_batch_size
-        return self.contract.functions.pendingRedeem(fulfill_batch_size).call()
+        return _call_view(self.contract.functions.pendingRedeem(fulfill_batch_size))
 
     def _execute_vault_tx(
         self,
         contract_fn_call,
         key_env: str = "MANAGER_PRIVATE_KEY",
         error_msg: str = "Private key missing for transaction.",
+        gas_limit: int | None = None,
     ) -> TransactionResult:
         """Execute a vault transaction with the given contract function call.
 
@@ -524,6 +588,7 @@ class OrionVault(OrionSmartContract):
             contract_fn_call: The contract function call (e.g., self.contract.functions.requestDeposit(assets))
             key_env: Environment variable name for the private key (default: "MANAGER_PRIVATE_KEY")
             error_msg: Error message for validation
+            gas_limit: Optional gas limit for the transaction
 
         Returns:
             TransactionResult with transaction hash, receipt, and decoded logs
@@ -532,9 +597,15 @@ class OrionVault(OrionSmartContract):
         validate_var(private_key, error_msg)
         account = self.w3.eth.account.from_key(private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
-        tx = contract_fn_call.build_transaction(
-            {"from": account.address, "nonce": nonce}
-        )
+
+        tx_params = {
+            "from": account.address,
+            "nonce": nonce,
+        }
+        if gas_limit is not None:
+            tx_params["gas"] = gas_limit
+
+        tx = contract_fn_call.build_transaction(tx_params)
         signed = account.sign_transaction(tx)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())
@@ -685,29 +756,28 @@ class OrionVault(OrionSmartContract):
     @property
     def total_assets(self) -> int:
         """Fetch the total assets of the vault."""
-        return self.contract.functions.totalAssets().call()
+        return _call_view(self.contract.functions.totalAssets())
 
     @property
     def pending_vault_fees(self) -> float:
         """Fetch the pending vault fees in the underlying asset."""
         config = OrionConfig()
         decimals = config.token_decimals(config.underlying_asset)
-        return self.contract.functions.pendingVaultFees().call() / 10**decimals
+        return _call_view(self.contract.functions.pendingVaultFees()) / 10**decimals
 
     @property
     def share_price(self) -> int:
         """Fetch the current share price (value of 1 share unit)."""
-        decimals = self.contract.functions.decimals().call()
-        return self.contract.functions.convertToAssets(10**decimals).call()
+        decimals = _call_view(self.contract.functions.decimals())
+        return _call_view(self.contract.functions.convertToAssets(10**decimals))
 
     def convert_to_assets(self, shares: int) -> int:
         """Convert shares to assets."""
-        return self.contract.functions.convertToAssets(shares).call()
+        return _call_view(self.contract.functions.convertToAssets(shares))
 
     def get_portfolio(self) -> dict:
         """Get the vault portfolio."""
-        # This returns a tuple (tokens, values)
-        tokens, values = self.contract.functions.getPortfolio().call()
+        tokens, values = _call_view(self.contract.functions.getPortfolio())
         return dict(zip(tokens, values, strict=True))
 
     def set_deposit_access_control(
@@ -750,9 +820,9 @@ class OrionVault(OrionSmartContract):
 
     def max_deposit(self, receiver: str) -> int:
         """Fetch the maximum deposit amount for a receiver."""
-        return self.contract.functions.maxDeposit(
-            Web3.to_checksum_address(receiver)
-        ).call()
+        return _call_view(
+            self.contract.functions.maxDeposit(Web3.to_checksum_address(receiver))
+        )
 
     def can_request_deposit(self, user: str) -> bool:
         """Check if a user is allowed to request a deposit.
@@ -761,8 +831,8 @@ class OrionVault(OrionSmartContract):
         If no access control is set (zero address), it returns True.
         """
         try:
-            access_control_address = (
-                self.contract.functions.depositAccessControl().call()
+            access_control_address = _call_view(
+                self.contract.functions.depositAccessControl()
             )
         except (AttributeError, ValueError):
             # If function doesn't exist in ABI or call fails due to missing method
@@ -786,9 +856,9 @@ class OrionVault(OrionSmartContract):
         access_control = self.w3.eth.contract(
             address=access_control_address, abi=access_control_abi
         )
-        return access_control.functions.canRequestDeposit(
-            Web3.to_checksum_address(user)
-        ).call()
+        return _call_view(
+            access_control.functions.canRequestDeposit(Web3.to_checksum_address(user))
+        )
 
 
 class OrionTransparentVault(OrionVault):

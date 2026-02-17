@@ -25,7 +25,9 @@ jobs:
         with:
           node-version: 22.x
           cache: 'npm'
-          cache-dependency-path: js/package-lock.json
+          cache-dependency-path: |
+            js/package-lock.json
+            package-lock.json
 
       - name: Cache Python packages
         uses: actions/cache@v4
@@ -44,6 +46,9 @@ jobs:
           make venv
           uv sync --frozen --extra dev --extra docs
           make install
+      - name: Install root Node deps (Hardhat for fork tests)
+        run: |
+          npm ci
 
       - name: Run docstrings checks
         run: |
@@ -54,6 +59,12 @@ jobs:
           make docs
 
       - name: Run tests
+        env:
+          # Fork tests skip unless ALCHEMY_API_KEY or RPC_URL is set
+          ALCHEMY_API_KEY: ${{ secrets.WEB3_ALCHEMY_API_KEY }}
+          # Ape Hardhat fork uses WEB3_* vars to connect to Sepolia
+          WEB3_ALCHEMY_API_KEY: ${{ secrets.WEB3_ALCHEMY_API_KEY }}
+          WEB3_ETHEREUM_SEPOLIA_ALCHEMY_API_KEY: ${{ secrets.WEB3_ALCHEMY_API_KEY }}
         run: |
           make test
 

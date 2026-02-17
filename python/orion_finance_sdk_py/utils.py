@@ -2,7 +2,6 @@
 
 import os
 import random
-import sys
 import uuid
 from pathlib import Path
 
@@ -56,8 +55,7 @@ STRATEGIST_PRIVATE_KEY=
 def validate_var(var: str, error_message: str) -> None:
     """Validate that the environment variable is not zero."""
     if not var or var == ZERO_ADDRESS:
-        print(error_message)
-        sys.exit(1)
+        raise ValueError(error_message)
 
 
 def validate_performance_fee(performance_fee: int) -> None:
