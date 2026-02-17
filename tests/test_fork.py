@@ -139,16 +139,12 @@ def test_vault_pending_ops_on_fork(skip_if_no_ape):
         intent_decimals = config.strategist_intent_decimals
         intent = {whitelisted[0]: 1 * 10**intent_decimals}
 
-        print(f"Vault Pending Deposit before: {vault.pending_deposit(10)}")
-
-        # We need to mock the Account.from_key to return our impersonated manager
-        with patch("eth_account.Account.from_key") as mock_from_key:
-            mock_from_key.return_value = manager
-
-            # Since impersonated accounts in ape handle signing differently than
-            # the SDK's manual sign_transaction flow, we'll just stop here.
-            # The test confirms we can fetch the state.
-            pass
+        pending_dep = vault.pending_deposit(10)
+        pending_red = vault.pending_redeem(10)
+        assert isinstance(pending_dep, int), "pending_deposit should return int"
+        assert isinstance(pending_red, int), "pending_redeem should return int"
+        assert pending_dep >= 0, "pending_deposit should be non-negative"
+        assert pending_red >= 0, "pending_redeem should be non-negative"
 
 
 def test_fork_connection(skip_if_no_ape):

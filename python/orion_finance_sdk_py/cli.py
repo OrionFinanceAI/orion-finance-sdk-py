@@ -423,7 +423,11 @@ def main(ctx: typer.Context):
 
 def entry_point():
     """Entry point for the CLI."""
-    app()
+    try:
+        app()
+    except ValueError as e:
+        Console().print(str(e))
+        sys.exit(1)
 
 
 @app.command()
