@@ -700,20 +700,21 @@ class TestOrionVaults:
 
         vault = OrionTransparentVault()
         vault.contract.functions.requestDeposit.return_value.build_transaction.return_value = {}
-        mock_w3 = vault.w3
-        mock_w3.eth.account.from_key.return_value.address = "0xDeployer"
+        vault_w3 = vault.w3
+        vault_w3.eth.account.from_key.return_value.address = "0xDeployer"
 
+        gas_limit = 500_000
         res = vault._execute_vault_tx(
             vault.contract.functions.requestDeposit(100),
             error_msg="Private key missing.",
-            gas_limit=0,
+            gas_limit=gas_limit,
         )
         assert res.receipt["status"] == 1
-        # build_transaction should have been called with gas=0 in tx_params
+        # build_transaction should have been called with gas=gas_limit in tx_params
         call_args = vault.contract.functions.requestDeposit.return_value.build_transaction.call_args[
             0
         ][0]
-        assert call_args.get("gas") == 0
+        assert call_args.get("gas") == gas_limit
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
