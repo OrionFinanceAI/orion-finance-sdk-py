@@ -60,7 +60,7 @@ jobs:
 
       - name: Run tests
         env:
-          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          WEB3_ALCHEMY_API_KEY: ${{ secrets.WEB3_ALCHEMY_API_KEY }}
         run: |
           make test
 
