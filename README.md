@@ -1,5 +1,3 @@
-# orion-finance-sdk-py
-
 <div align="center">
 
 <img src="./assets/Orion_Logo_white_horizontal.png" alt="Orion" width="75%">
