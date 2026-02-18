@@ -68,11 +68,8 @@ make venv
 source .venv/bin/activate
 make install
 
-# Run tests
+# Run tests (includes coverage)
 make test
-
-# Run tests with coverage
-make test  # Coverage is included automatically
 
 # Run code style checks
 make codestyle
@@ -91,15 +88,16 @@ pip install orion-finance-sdk-py
 
 ## Environment Variables Setup
 
-The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://sdk.orionfinance.ai/) to get one.
+The SDK requires `RPC_URL` in your `.env` (or environment). See [SDK Installation](https://sdk.orionfinance.ai/) to obtain an RPC URL.
 
-Based on the usage, additional environment variables may be required, e.g.:
-- `STRATEGIST_ADDRESS`: The address of the strategist account.
-- `MANAGER_PRIVATE_KEY`: The private key of the vault manager account.
-- `STRATEGIST_PRIVATE_KEY`: The private key of the strategist account.
-- `ORION_VAULT_ADDRESS`: The address of the Orion vault.
+Additional variables depend on what you do:
+- **Deploy a vault:** `STRATEGIST_ADDRESS`, `MANAGER_PRIVATE_KEY`
+- **Submit orders:** `ORION_VAULT_ADDRESS`, `STRATEGIST_PRIVATE_KEY`
+- **Update strategist / fee model / deposit access:** `ORION_VAULT_ADDRESS`, `MANAGER_PRIVATE_KEY`
 
 ## Examples of Usage
+
+The SDK supports **transparent** Orion vaults: deploy, read state, submit order intents, and manage fees/strategist via the CLI or Python API.
 
 ### List available commands
 
@@ -109,10 +107,10 @@ orion deploy-vault --help
 orion submit-order --help
 ```
 
-### Deploy a new Transparent Orion vault
+### Deploy a new Orion vault
 
 ```bash
-orion deploy-vault --vault-type transparent --name "Algorithmic Liquidity Provision & Hedging Agent" --symbol "ALPHA" --fee-type hard_hurdle --performance-fee 10 --management-fee 1
+orion deploy-vault --strategist-address 0x... --name "My Vault" --symbol "MVT" --fee-type hard_hurdle --performance-fee 10 --management-fee 1
 ```
 
 ### Submit an order intent to a vault
