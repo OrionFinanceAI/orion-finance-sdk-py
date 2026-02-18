@@ -2,16 +2,37 @@
 
 <div align="center">
 
-[![codecov][codecov-badge]][codecov] [![Github Actions][gha-badge]][gha]
+<img src="./assets/Orion_Logo_white_horizontal.png" alt="Orion" width="75%">
 
+[![codecov][codecov-badge]][codecov] [![Sourcery][sourcery-badge]][sourcery] [![Github Actions][gha-badge]][gha] [![Ape][ape-badge]][ape]
+
+[![LinkedIn][linkedin-badge]][linkedin] [![X][x-badge]][x] [![Telegram][telegram-badge]][telegram] [![Discord][discord-badge]][discord]
 
 </div>
 
 [gha]: https://github.com/OrionFinanceAI/orion-finance-sdk-py/actions
 [gha-badge]: https://github.com/OrionFinanceAI/orion-finance-sdk-py/actions/workflows/build.yml/badge.svg
 
-[codecov]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/graph/badge.svg?token=SJLL2VVQDS
+[codecov]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py
 [codecov-badge]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/branch/main/graph/badge.svg
+
+[sourcery]: https://sourcery.ai
+[sourcery-badge]: https://img.shields.io/badge/Sourcery-enabled-brightgreen
+
+[ape]: https://docs.apeworx.io/
+[ape-badge]: https://img.shields.io/badge/Built%20with-Ape-8C52FF.svg
+
+[linkedin]: https://www.linkedin.com/company/orionfinance/
+[linkedin-badge]: https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
+
+[x]: https://x.com/OrionFinanceAI
+[x-badge]: https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white
+
+[telegram]: https://t.me/orionfinance_ai
+[telegram-badge]: https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white
+
+[discord]: https://discord.gg/8bAXxPSPdw
+[discord-badge]: https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white
 
 [docs]: https://sdk.orionfinance.ai/
 [docs-badge]: https://img.shields.io/badge/Documentation-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white
