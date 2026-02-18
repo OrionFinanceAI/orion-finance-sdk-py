@@ -108,7 +108,7 @@ orion submit-order --help
 ### Deploy a new Orion vault
 
 ```bash
-orion deploy-vault --strategist-address 0x... --name "My Vault" --symbol "MVT" --fee-type hard_hurdle --performance-fee 10 --management-fee 1
+orion deploy-vault --strategist-address 0x... --name "Algorithmic Liquidity Provision & Hedging Agent" --symbol "ALPHA" --fee-type hard_hurdle --performance-fee 10 --management-fee 1
 ```
 
 ### Submit an order intent to a vault
