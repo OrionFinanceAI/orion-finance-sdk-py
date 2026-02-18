@@ -1,5 +1,3 @@
-# orion-finance-sdk-py
-
 <div align="center">
 
 <img src="./assets/Orion_Logo_white_horizontal.png" alt="Orion" width="75%">
@@ -13,7 +11,7 @@
 [gha]: https://github.com/OrionFinanceAI/orion-finance-sdk-py/actions
 [gha-badge]: https://github.com/OrionFinanceAI/orion-finance-sdk-py/actions/workflows/build.yml/badge.svg
 
-[codecov]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py
+[codecov]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/graph/badge.svg?token=SJLL2VVQDS
 [codecov-badge]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/branch/main/graph/badge.svg
 
 [sourcery]: https://sourcery.ai
