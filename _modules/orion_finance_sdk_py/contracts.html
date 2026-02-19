@@ -1,0 +1,1460 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>orion_finance_sdk_py.contracts &#8212; Orion | SDK</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=00d89a33" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/force_light.js?v=6f406d85"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/orion_finance_sdk_py/contracts';</script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-light" alt="Orion | SDK"/>
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-dark pst-js-only" alt="Orion | SDK"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="ms-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">orion_finance_sdk_py.contracts</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for orion_finance_sdk_py.contracts</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Interactions with the Orion Finance protocol contracts.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">web3</span><span class="w"> </span><span class="kn">import</span> <span class="n">Web3</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">web3.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">TxReceipt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">CHAIN_CONFIG</span><span class="p">,</span> <span class="n">ZERO_ADDRESS</span><span class="p">,</span> <span class="n">VaultType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MAX_MANAGEMENT_FEE</span><span class="p">,</span>
+    <span class="n">MAX_PERFORMANCE_FEE</span><span class="p">,</span>
+    <span class="n">validate_var</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>
+
+<span class="c1"># Gas limit for eth_call (view) when using Hardhat fork (node cap 16M)</span>
+<span class="n">_VIEW_CALL_GAS</span> <span class="o">=</span> <span class="mi">15_000_000</span>
+<span class="n">_VIEW_CALL_TX</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;gas&quot;</span><span class="p">:</span> <span class="n">_VIEW_CALL_GAS</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_view_call_tx</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return tx dict for view calls: gas override only when ORION_FORCE_VIEW_GAS is set (e.g. fork tests).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ORION_FORCE_VIEW_GAS&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_VIEW_CALL_TX</span>
+    <span class="k">return</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_call_view</span><span class="p">(</span><span class="n">contract_fn</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a view/pure contract call (uses gas override in fork/dev when ORION_FORCE_VIEW_GAS is set).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">contract_fn</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">_get_view_call_tx</span><span class="p">())</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransactionResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of a transaction including receipt and extracted logs.&quot;&quot;&quot;</span>
+
+    <span class="n">tx_hash</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">receipt</span><span class="p">:</span> <span class="n">TxReceipt</span>
+    <span class="n">decoded_logs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SystemNotIdleError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the protocol is not idle for the requested operation.&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_contract_abi</span><span class="p">(</span><span class="n">contract_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the ABI for a given contract.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Try to load from package data (when installed from PyPI)</span>
+        <span class="k">with</span> <span class="p">(</span>
+            <span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">&quot;orion_finance_sdk_py&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;abis&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contract_name</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">f</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)[</span><span class="s2">&quot;abi&quot;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+        <span class="c1"># Fallback to local development path</span>
+        <span class="n">script_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+        <span class="n">abi_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">script_dir</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;abis&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">contract_name</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">abi_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)[</span><span class="s2">&quot;abi&quot;</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrionSmartContract</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Orion smart contracts.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">contract_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a smart contract.&quot;&quot;&quot;</span>
+        <span class="n">rpc_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;RPC_URL&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rpc_url</span><span class="p">:</span>
+            <span class="c1"># Try loading from current directory explicitly</span>
+            <span class="n">load_dotenv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/.env&quot;</span><span class="p">)</span>
+            <span class="n">rpc_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;RPC_URL&quot;</span><span class="p">)</span>
+
+        <span class="n">ape_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rpc_url</span><span class="p">:</span>
+            <span class="c1"># Check if we are in an ape context</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">ape</span><span class="w"> </span><span class="kn">import</span> <span class="n">networks</span>
+
+                <span class="k">if</span> <span class="n">networks</span><span class="o">.</span><span class="n">active_provider</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">w3</span> <span class="o">=</span> <span class="n">networks</span><span class="o">.</span><span class="n">active_provider</span><span class="o">.</span><span class="n">web3</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">chain_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">chain_id</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">contract_name</span> <span class="o">=</span> <span class="n">contract_name</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">contract_address</span> <span class="o">=</span> <span class="n">contract_address</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">contract</span><span class="p">(</span>
+                        <span class="n">address</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">contract_address</span><span class="p">,</span>
+                        <span class="n">abi</span><span class="o">=</span><span class="n">load_contract_abi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract_name</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+                <span class="k">pass</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">ape_error</span> <span class="o">=</span> <span class="n">e</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rpc_url</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;RPC_URL environment variable is missing or invalid. &quot;</span>
+                <span class="s2">&quot;Please set RPC_URL in your .env file or as an environment variable. &quot;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">ape_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; (Ape provider failed: </span><span class="si">{</span><span class="n">ape_error</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ape_error</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">rpc_url</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;RPC_URL environment variable is missing or invalid. &quot;</span>
+                <span class="s2">&quot;Please set RPC_URL in your .env file or as an environment variable. &quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">w3</span> <span class="o">=</span> <span class="n">Web3</span><span class="p">(</span><span class="n">Web3</span><span class="o">.</span><span class="n">HTTPProvider</span><span class="p">(</span><span class="n">rpc_url</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chain_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">chain_id</span>
+
+        <span class="n">env_chain_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;CHAIN_ID&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">env_chain_id</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">env_chain_id_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">env_chain_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">env_chain_id_int</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chain_id</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;⚠️ Warning: CHAIN_ID in env (</span><span class="si">{</span><span class="n">env_chain_id</span><span class="si">}</span><span class="s2">) does not match RPC chain ID (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">chain_id</span><span class="si">}</span><span class="s2">)&quot;</span>
+                    <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠️ Warning: Invalid CHAIN_ID in env: </span><span class="si">{</span><span class="n">env_chain_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract_name</span> <span class="o">=</span> <span class="n">contract_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract_address</span> <span class="o">=</span> <span class="n">contract_address</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">contract</span><span class="p">(</span>
+            <span class="n">address</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">contract_address</span><span class="p">,</span> <span class="n">abi</span><span class="o">=</span><span class="n">load_contract_abi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract_name</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wait_for_transaction_receipt</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tx_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">120</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TxReceipt</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wait for a transaction to be processed and return the receipt.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">wait_for_transaction_receipt</span><span class="p">(</span><span class="n">tx_hash</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_decode_logs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">receipt</span><span class="p">:</span> <span class="n">TxReceipt</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode logs from a transaction receipt.&quot;&quot;&quot;</span>
+        <span class="n">decoded_logs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">receipt</span><span class="o">.</span><span class="n">logs</span><span class="p">:</span>
+            <span class="c1"># Only process logs from this contract</span>
+            <span class="k">if</span> <span class="n">log</span><span class="o">.</span><span class="n">address</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract_address</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Try to decode the log with each event in the contract</span>
+            <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">decoded_log</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">process_log</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+                    <span class="n">decoded_logs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">&quot;event&quot;</span><span class="p">:</span> <span class="n">decoded_log</span><span class="o">.</span><span class="n">event</span><span class="p">,</span>
+                            <span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">decoded_log</span><span class="o">.</span><span class="n">args</span><span class="p">),</span>
+                            <span class="s2">&quot;address&quot;</span><span class="p">:</span> <span class="n">decoded_log</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
+                            <span class="s2">&quot;blockHash&quot;</span><span class="p">:</span> <span class="n">decoded_log</span><span class="o">.</span><span class="n">blockHash</span><span class="o">.</span><span class="n">hex</span><span class="p">(),</span>
+                            <span class="s2">&quot;blockNumber&quot;</span><span class="p">:</span> <span class="n">decoded_log</span><span class="o">.</span><span class="n">blockNumber</span><span class="p">,</span>
+                            <span class="s2">&quot;logIndex&quot;</span><span class="p">:</span> <span class="n">decoded_log</span><span class="o">.</span><span class="n">logIndex</span><span class="p">,</span>
+                            <span class="s2">&quot;transactionHash&quot;</span><span class="p">:</span> <span class="n">decoded_log</span><span class="o">.</span><span class="n">transactionHash</span><span class="o">.</span><span class="n">hex</span><span class="p">(),</span>
+                            <span class="s2">&quot;transactionIndex&quot;</span><span class="p">:</span> <span class="n">decoded_log</span><span class="o">.</span><span class="n">transactionIndex</span><span class="p">,</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
+                    <span class="k">break</span>  <span class="c1"># Successfully decoded, move to next log</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="c1"># This event doesn&#39;t match this log, try the next event</span>
+                    <span class="k">continue</span>
+        <span class="k">return</span> <span class="n">decoded_logs</span>
+
+
+<div class="viewcode-block" id="OrionConfig">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrionConfig</span><span class="p">(</span><span class="n">OrionSmartContract</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;OrionConfig contract.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="c1"># Check for manual address override first</span>
+        <span class="n">contract_address</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ORION_CONFIG_ADDRESS&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">contract_address</span><span class="p">:</span>
+            <span class="c1"># Default to Sepolia if not specified, but prefer env var</span>
+            <span class="n">chain_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;CHAIN_ID&quot;</span><span class="p">,</span> <span class="s2">&quot;11155111&quot;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">chain_id</span> <span class="ow">in</span> <span class="n">CHAIN_CONFIG</span><span class="p">:</span>
+                <span class="n">contract_address</span> <span class="o">=</span> <span class="n">CHAIN_CONFIG</span><span class="p">[</span><span class="n">chain_id</span><span class="p">][</span><span class="s2">&quot;OrionConfig&quot;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Unsupported CHAIN_ID: </span><span class="si">{</span><span class="n">chain_id</span><span class="si">}</span><span class="s2">. Please check CHAIN_CONFIG in types.py or set CHAIN_ID env var correctly.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">contract_name</span><span class="o">=</span><span class="s2">&quot;OrionConfig&quot;</span><span class="p">,</span>
+            <span class="n">contract_address</span><span class="o">=</span><span class="n">contract_address</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">underlying_asset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the underlying asset address.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">underlyingAsset</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">strategist_intent_decimals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the strategist intent decimals from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">strategistIntentDecimals</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">manager_intent_decimals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alias for strategist_intent_decimals.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategist_intent_decimals</span>
+
+<div class="viewcode-block" id="OrionConfig.token_decimals">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionConfig.token_decimals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">token_decimals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the decimals of a token address.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">getTokenDecimals</span><span class="p">(</span><span class="n">token_address</span><span class="p">))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">risk_free_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the risk free rate from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">riskFreeRate</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">whitelisted_assets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch all whitelisted asset addresses from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">getAllWhitelistedAssets</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">whitelisted_asset_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch all whitelisted asset names from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">getAllWhitelistedAssetNames</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_investment_universe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alias for whitelisted_assets (Investment Universe).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">whitelisted_assets</span>
+
+<div class="viewcode-block" id="OrionConfig.is_whitelisted">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_whitelisted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if a token address is whitelisted.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">isWhitelisted</span><span class="p">(</span>
+                <span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">token_address</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionConfig.is_whitelisted_manager">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted_manager">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_whitelisted_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if a manager address is whitelisted.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">isWhitelistedManager</span><span class="p">(</span>
+                <span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">manager_address</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionConfig.is_orion_vault">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionConfig.is_orion_vault">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_orion_vault</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vault_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if an address is a registered Orion vault.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">isOrionVault</span><span class="p">(</span>
+                <span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">vault_address</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">orion_transparent_vaults</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch all Orion transparent vault addresses from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">getAllOrionVaults</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">min_deposit_amount</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the minimum deposit amount from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">minDepositAmount</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">min_redeem_amount</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the minimum redeem amount from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">minRedeemAmount</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">v_fee_coefficient</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the volume fee coefficient from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">vFeeCoefficient</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rs_fee_coefficient</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the revenue share fee coefficient from the OrionConfig contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">rsFeeCoefficient</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fee_change_cooldown_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the fee change cooldown duration in seconds.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">feeChangeCooldownDuration</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max_fulfill_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the maximum fulfill batch size.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">maxFulfillBatchSize</span><span class="p">())</span>
+
+<div class="viewcode-block" id="OrionConfig.is_system_idle">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionConfig.is_system_idle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_system_idle</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the system is in idle state, required for vault deployment.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">isSystemIdle</span><span class="p">())</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LiquidityOrchestrator">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LiquidityOrchestrator</span><span class="p">(</span><span class="n">OrionSmartContract</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;LiquidityOrchestrator contract.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the LiquidityOrchestrator contract.&quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+        <span class="n">contract_address</span> <span class="o">=</span> <span class="n">_call_view</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">liquidityOrchestrator</span><span class="p">())</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">contract_name</span><span class="o">=</span><span class="s2">&quot;LiquidityOrchestrator&quot;</span><span class="p">,</span>
+            <span class="n">contract_address</span><span class="o">=</span><span class="n">contract_address</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">target_buffer_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the target buffer ratio.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">targetBufferRatio</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">slippage_tolerance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the slippage tolerance.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">slippageTolerance</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">epoch_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the epoch duration in seconds.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">epochDuration</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="VaultFactory">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.VaultFactory">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VaultFactory</span><span class="p">(</span><span class="n">OrionSmartContract</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;VaultFactory contract.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">vault_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">contract_address</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the VaultFactory contract.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">contract_address</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">vault_type</span> <span class="o">==</span> <span class="n">VaultType</span><span class="o">.</span><span class="n">TRANSPARENT</span><span class="p">:</span>
+                <span class="n">contract_address</span> <span class="o">=</span> <span class="n">_call_view</span><span class="p">(</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">transparentVaultFactory</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported vault type: </span><span class="si">{</span><span class="n">vault_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">contract_name</span><span class="o">=</span><span class="s2">&quot;TransparentVaultFactory&quot;</span><span class="p">,</span>
+            <span class="n">contract_address</span><span class="o">=</span><span class="n">contract_address</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="VaultFactory.create_orion_vault">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.VaultFactory.create_orion_vault">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_orion_vault</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">strategist_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">fee_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">performance_fee</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">management_fee</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">deposit_access_control</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ZERO_ADDRESS</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an Orion vault for a given strategist address.&quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">strategist_address</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;STRATEGIST_ADDRESS is invalid. &quot;</span>
+                <span class="s2">&quot;Please provide a valid strategist address.&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">manager_private_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;MANAGER_PRIVATE_KEY&quot;</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">manager_private_key</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;MANAGER_PRIVATE_KEY environment variable is missing or invalid. &quot;</span>
+                <span class="s2">&quot;Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. &quot;</span>
+                <span class="s2">&quot;Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">manager_private_key</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;Invalid MANAGER_PRIVATE_KEY.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">is_whitelisted_manager</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Manager </span><span class="si">{</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="si">}</span><span class="s2"> is not whitelisted to create vaults. &quot;</span>
+                <span class="s2">&quot;Please contact the Orion Finance team to get whitelisted.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">26</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vault name &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; exceeds maximum length of 26 bytes.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">symbol</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Vault symbol &#39;</span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2">&#39; exceeds maximum length of 4 bytes.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">performance_fee</span> <span class="o">&gt;</span> <span class="n">MAX_PERFORMANCE_FEE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Performance fee </span><span class="si">{</span><span class="n">performance_fee</span><span class="si">}</span><span class="s2"> exceeds maximum </span><span class="si">{</span><span class="n">MAX_PERFORMANCE_FEE</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">management_fee</span> <span class="o">&gt;</span> <span class="n">MAX_MANAGEMENT_FEE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Management fee </span><span class="si">{</span><span class="n">management_fee</span><span class="si">}</span><span class="s2"> exceeds maximum </span><span class="si">{</span><span class="n">MAX_MANAGEMENT_FEE</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">is_system_idle</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">SystemNotIdleError</span><span class="p">(</span>
+                <span class="s2">&quot;System is not idle. Cannot deploy vault at this time.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">manager_private_key</span><span class="p">)</span>
+        <span class="n">nonce</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">get_transaction_count</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="c1"># Estimate gas needed for the transaction</span>
+        <span class="n">gas_estimate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">createVault</span><span class="p">(</span>
+            <span class="n">strategist_address</span><span class="p">,</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">symbol</span><span class="p">,</span>
+            <span class="n">fee_type</span><span class="p">,</span>
+            <span class="n">performance_fee</span><span class="p">,</span>
+            <span class="n">management_fee</span><span class="p">,</span>
+            <span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">deposit_access_control</span><span class="p">),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">estimate_gas</span><span class="p">({</span><span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">})</span>
+
+        <span class="c1"># Add 20% buffer to gas estimate</span>
+        <span class="n">gas_limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">gas_estimate</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">)</span>
+
+        <span class="n">gas_price</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">gas_price</span>
+        <span class="n">estimated_cost</span> <span class="o">=</span> <span class="n">gas_limit</span> <span class="o">*</span> <span class="n">gas_price</span>
+        <span class="n">balance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">get_balance</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">balance</span> <span class="o">&lt;</span> <span class="n">estimated_cost</span><span class="p">:</span>
+            <span class="n">required_eth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">from_wei</span><span class="p">(</span><span class="n">estimated_cost</span><span class="p">,</span> <span class="s2">&quot;ether&quot;</span><span class="p">)</span>
+            <span class="n">available_eth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">from_wei</span><span class="p">(</span><span class="n">balance</span><span class="p">,</span> <span class="s2">&quot;ether&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Insufficient ETH balance. Required: </span><span class="si">{</span><span class="n">required_eth</span><span class="si">}</span><span class="s2"> ETH, Available: </span><span class="si">{</span><span class="n">available_eth</span><span class="si">}</span><span class="s2"> ETH&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">createVault</span><span class="p">(</span>
+            <span class="n">strategist_address</span><span class="p">,</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">symbol</span><span class="p">,</span>
+            <span class="n">fee_type</span><span class="p">,</span>
+            <span class="n">performance_fee</span><span class="p">,</span>
+            <span class="n">management_fee</span><span class="p">,</span>
+            <span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">deposit_access_control</span><span class="p">),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">build_transaction</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
+                <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">,</span>
+                <span class="s2">&quot;gas&quot;</span><span class="p">:</span> <span class="n">gas_limit</span><span class="p">,</span>
+                <span class="s2">&quot;gasPrice&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">gas_price</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="n">signed</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">sign_transaction</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span>
+        <span class="n">tx_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">send_raw_transaction</span><span class="p">(</span><span class="n">signed</span><span class="o">.</span><span class="n">raw_transaction</span><span class="p">)</span>
+        <span class="n">tx_hash_hex</span> <span class="o">=</span> <span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">receipt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_transaction_receipt</span><span class="p">(</span><span class="n">tx_hash_hex</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;0xea8e4eb5&quot;</span> <span class="ow">in</span> <span class="n">error_str</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Transaction reverted: Manager </span><span class="si">{</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="si">}</span><span class="s2"> is not whitelisted to create vaults.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">e</span>
+
+        <span class="c1"># Check if transaction was successful</span>
+        <span class="k">if</span> <span class="n">receipt</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transaction failed with status: </span><span class="si">{</span><span class="n">receipt</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Decode logs from the transaction receipt</span>
+        <span class="n">decoded_logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_logs</span><span class="p">(</span><span class="n">receipt</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TransactionResult</span><span class="p">(</span>
+            <span class="n">tx_hash</span><span class="o">=</span><span class="n">tx_hash_hex</span><span class="p">,</span> <span class="n">receipt</span><span class="o">=</span><span class="n">receipt</span><span class="p">,</span> <span class="n">decoded_logs</span><span class="o">=</span><span class="n">decoded_logs</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VaultFactory.get_vault_address_from_result">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.VaultFactory.get_vault_address_from_result">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_vault_address_from_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">TransactionResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract the vault address from OrionVaultCreated event in the transaction result.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">decoded_logs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">decoded_logs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">log</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;event&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;OrionVaultCreated&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">log</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;vault&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OrionVault">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrionVault</span><span class="p">(</span><span class="n">OrionSmartContract</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;OrionVault contract.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contract_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the OrionVault contract.&quot;&quot;&quot;</span>
+        <span class="n">contract_address</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ORION_VAULT_ADDRESS&quot;</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">contract_address</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;ORION_VAULT_ADDRESS environment variable is missing or invalid. &quot;</span>
+                <span class="s2">&quot;Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. &quot;</span>
+                <span class="s2">&quot;Please follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Validate that the address is a valid Orion Vault</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+        <span class="n">is_transparent</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">is_orion_vault</span><span class="p">(</span><span class="n">contract_address</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_transparent</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The address </span><span class="si">{</span><span class="n">contract_address</span><span class="si">}</span><span class="s2"> is NOT a valid Orion Transparent Vault registered in the OrionConfig contract. &quot;</span>
+                <span class="s2">&quot;Please check your ORION_VAULT_ADDRESS.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">contract_name</span><span class="p">,</span> <span class="n">contract_address</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max_performance_fee</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the maximum performance fee allowed from the vault contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">MAX_PERFORMANCE_FEE</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max_management_fee</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the maximum management fee allowed from the vault contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">MAX_MANAGEMENT_FEE</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">manager_address</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the manager address.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">manager</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">strategist_address</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the strategist address.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">strategist</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_decommissioning</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the vault is in decommissioning mode.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">isDecommissioning</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">active_fee_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the currently active fee model (struct FeeModel).&quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">activeFeeModel</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;feeType&quot;</span><span class="p">:</span> <span class="n">model</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;performanceFee&quot;</span><span class="p">:</span> <span class="n">model</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="s2">&quot;managementFee&quot;</span><span class="p">:</span> <span class="n">model</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="s2">&quot;highWaterMark&quot;</span><span class="p">:</span> <span class="n">model</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="OrionVault.pending_deposit">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.pending_deposit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pending_deposit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fulfill_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get total pending deposit amount across all users.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fulfill_batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+            <span class="n">fulfill_batch_size</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">max_fulfill_batch_size</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">pendingDeposit</span><span class="p">(</span><span class="n">fulfill_batch_size</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.pending_redeem">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.pending_redeem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pending_redeem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fulfill_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get total pending redemption shares across all users.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fulfill_batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+            <span class="n">fulfill_batch_size</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">max_fulfill_batch_size</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">pendingRedeem</span><span class="p">(</span><span class="n">fulfill_batch_size</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_vault_tx</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">contract_fn_call</span><span class="p">,</span>
+        <span class="n">key_env</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;MANAGER_PRIVATE_KEY&quot;</span><span class="p">,</span>
+        <span class="n">error_msg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Private key missing for transaction.&quot;</span><span class="p">,</span>
+        <span class="n">gas_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a vault transaction with the given contract function call.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            contract_fn_call: The contract function call (e.g., self.contract.functions.requestDeposit(assets))</span>
+<span class="sd">            key_env: Environment variable name for the private key (default: &quot;MANAGER_PRIVATE_KEY&quot;)</span>
+<span class="sd">            error_msg: Error message for validation</span>
+<span class="sd">            gas_limit: Optional gas limit for the transaction</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            TransactionResult with transaction hash, receipt, and decoded logs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">private_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="n">key_env</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span><span class="n">private_key</span><span class="p">,</span> <span class="n">error_msg</span><span class="p">)</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">private_key</span><span class="p">)</span>
+        <span class="n">nonce</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">get_transaction_count</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="n">tx_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
+            <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">gas_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tx_params</span><span class="p">[</span><span class="s2">&quot;gas&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gas_limit</span>
+
+        <span class="n">tx</span> <span class="o">=</span> <span class="n">contract_fn_call</span><span class="o">.</span><span class="n">build_transaction</span><span class="p">(</span><span class="n">tx_params</span><span class="p">)</span>
+        <span class="n">signed</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">sign_transaction</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span>
+        <span class="n">tx_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">send_raw_transaction</span><span class="p">(</span><span class="n">signed</span><span class="o">.</span><span class="n">raw_transaction</span><span class="p">)</span>
+        <span class="n">receipt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_transaction_receipt</span><span class="p">(</span><span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">receipt</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transaction failed with status: </span><span class="si">{</span><span class="n">receipt</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">decoded_logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_logs</span><span class="p">(</span><span class="n">receipt</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TransactionResult</span><span class="p">(</span>
+            <span class="n">tx_hash</span><span class="o">=</span><span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">(),</span>
+            <span class="n">receipt</span><span class="o">=</span><span class="n">receipt</span><span class="p">,</span>
+            <span class="n">decoded_logs</span><span class="o">=</span><span class="n">decoded_logs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="OrionVault.request_deposit">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.request_deposit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">request_deposit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assets</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Submit an asynchronous deposit request.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_vault_tx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">requestDeposit</span><span class="p">(</span><span class="n">assets</span><span class="p">),</span>
+            <span class="n">error_msg</span><span class="o">=</span><span class="s2">&quot;Private key missing for deposit request.&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.cancel_deposit_request">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.cancel_deposit_request">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cancel_deposit_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amount</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cancel a previously submitted deposit request.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_vault_tx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">cancelDepositRequest</span><span class="p">(</span><span class="n">amount</span><span class="p">),</span>
+            <span class="n">error_msg</span><span class="o">=</span><span class="s2">&quot;Private key missing for cancellation.&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.request_redeem">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.request_redeem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">request_redeem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shares</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Submit a redemption request.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_vault_tx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">requestRedeem</span><span class="p">(</span><span class="n">shares</span><span class="p">),</span>
+            <span class="n">error_msg</span><span class="o">=</span><span class="s2">&quot;Private key missing for redeem request.&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.cancel_redeem_request">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.cancel_redeem_request">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cancel_redeem_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shares</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cancel a previously submitted redemption request.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_vault_tx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">cancelRedeemRequest</span><span class="p">(</span><span class="n">shares</span><span class="p">),</span>
+            <span class="n">error_msg</span><span class="o">=</span><span class="s2">&quot;Private key missing for cancellation.&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.update_strategist">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.update_strategist">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_strategist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_strategist_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the strategist address for the vault.&quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">is_system_idle</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">SystemNotIdleError</span><span class="p">(</span>
+                <span class="s2">&quot;System is not idle. Cannot update strategist at this time.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">manager_private_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;MANAGER_PRIVATE_KEY&quot;</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">manager_private_key</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;MANAGER_PRIVATE_KEY environment variable is missing or invalid. &quot;</span>
+                <span class="s2">&quot;Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. &quot;</span>
+                <span class="s2">&quot;Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">manager_private_key</span><span class="p">)</span>
+        <span class="c1"># Validate that the signer is the manager</span>
+        <span class="k">if</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager_address</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Signer </span><span class="si">{</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="si">}</span><span class="s2"> is not the vault manager </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">manager_address</span><span class="si">}</span><span class="s2">. Cannot update strategist.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">nonce</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">get_transaction_count</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="n">tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">updateStrategist</span><span class="p">(</span>
+            <span class="n">new_strategist_address</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">build_transaction</span><span class="p">({</span><span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">})</span>
+
+        <span class="n">signed</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">sign_transaction</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span>
+        <span class="n">tx_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">send_raw_transaction</span><span class="p">(</span><span class="n">signed</span><span class="o">.</span><span class="n">raw_transaction</span><span class="p">)</span>
+        <span class="n">tx_hash_hex</span> <span class="o">=</span> <span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+        <span class="n">receipt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_transaction_receipt</span><span class="p">(</span><span class="n">tx_hash_hex</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">receipt</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transaction failed with status: </span><span class="si">{</span><span class="n">receipt</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">decoded_logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_logs</span><span class="p">(</span><span class="n">receipt</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TransactionResult</span><span class="p">(</span>
+            <span class="n">tx_hash</span><span class="o">=</span><span class="n">tx_hash_hex</span><span class="p">,</span> <span class="n">receipt</span><span class="o">=</span><span class="n">receipt</span><span class="p">,</span> <span class="n">decoded_logs</span><span class="o">=</span><span class="n">decoded_logs</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.update_fee_model">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.update_fee_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_fee_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">fee_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">performance_fee</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">management_fee</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the fee model for the vault.&quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">is_system_idle</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">SystemNotIdleError</span><span class="p">(</span>
+                <span class="s2">&quot;System is not idle. Cannot update fee model at this time.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">performance_fee</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_performance_fee</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Performance fee </span><span class="si">{</span><span class="n">performance_fee</span><span class="si">}</span><span class="s2"> exceeds maximum </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_performance_fee</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">management_fee</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_management_fee</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Management fee </span><span class="si">{</span><span class="n">management_fee</span><span class="si">}</span><span class="s2"> exceeds maximum </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_management_fee</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">manager_private_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;MANAGER_PRIVATE_KEY&quot;</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">manager_private_key</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;MANAGER_PRIVATE_KEY environment variable is missing or invalid. &quot;</span>
+                <span class="s2">&quot;Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. &quot;</span>
+                <span class="s2">&quot;Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">manager_private_key</span><span class="p">)</span>
+        <span class="c1"># Validate that the signer is the manager</span>
+        <span class="k">if</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager_address</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Signer </span><span class="si">{</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="si">}</span><span class="s2"> is not the vault manager </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">manager_address</span><span class="si">}</span><span class="s2">. Cannot update fee model.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">nonce</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">get_transaction_count</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="n">tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">updateFeeModel</span><span class="p">(</span>
+            <span class="n">fee_type</span><span class="p">,</span> <span class="n">performance_fee</span><span class="p">,</span> <span class="n">management_fee</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">build_transaction</span><span class="p">({</span><span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">})</span>
+
+        <span class="n">signed</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">sign_transaction</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span>
+        <span class="n">tx_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">send_raw_transaction</span><span class="p">(</span><span class="n">signed</span><span class="o">.</span><span class="n">raw_transaction</span><span class="p">)</span>
+        <span class="n">tx_hash_hex</span> <span class="o">=</span> <span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+        <span class="n">receipt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_transaction_receipt</span><span class="p">(</span><span class="n">tx_hash_hex</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">receipt</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transaction failed with status: </span><span class="si">{</span><span class="n">receipt</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">decoded_logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_logs</span><span class="p">(</span><span class="n">receipt</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TransactionResult</span><span class="p">(</span>
+            <span class="n">tx_hash</span><span class="o">=</span><span class="n">tx_hash_hex</span><span class="p">,</span> <span class="n">receipt</span><span class="o">=</span><span class="n">receipt</span><span class="p">,</span> <span class="n">decoded_logs</span><span class="o">=</span><span class="n">decoded_logs</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_assets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the total assets of the vault.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">totalAssets</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pending_vault_fees</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the pending vault fees in the underlying asset.&quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+        <span class="n">decimals</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">token_decimals</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">underlying_asset</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">pendingVaultFees</span><span class="p">())</span> <span class="o">/</span> <span class="mi">10</span><span class="o">**</span><span class="n">decimals</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">share_price</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the current share price (value of 1 share unit).&quot;&quot;&quot;</span>
+        <span class="n">decimals</span> <span class="o">=</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">decimals</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">convertToAssets</span><span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">decimals</span><span class="p">))</span>
+
+<div class="viewcode-block" id="OrionVault.convert_to_assets">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.convert_to_assets">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_assets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shares</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert shares to assets.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">convertToAssets</span><span class="p">(</span><span class="n">shares</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.get_portfolio">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.get_portfolio">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_portfolio</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the vault portfolio.&quot;&quot;&quot;</span>
+        <span class="n">tokens</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">_call_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">getPortfolio</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.set_deposit_access_control">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.set_deposit_access_control">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_deposit_access_control</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">access_control_address</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the deposit access control contract address.&quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">is_system_idle</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">SystemNotIdleError</span><span class="p">(</span>
+                <span class="s2">&quot;System is not idle. Cannot set deposit access control at this time.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">manager_private_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;MANAGER_PRIVATE_KEY&quot;</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">manager_private_key</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;MANAGER_PRIVATE_KEY environment variable is missing or invalid.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">manager_private_key</span><span class="p">)</span>
+        <span class="c1"># Validate that the signer is the manager</span>
+        <span class="k">if</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager_address</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Signer </span><span class="si">{</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="si">}</span><span class="s2"> is not the vault manager </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">manager_address</span><span class="si">}</span><span class="s2">. Cannot set deposit access control.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">nonce</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">get_transaction_count</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="n">tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">setDepositAccessControl</span><span class="p">(</span>
+            <span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">access_control_address</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">build_transaction</span><span class="p">({</span><span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">})</span>
+
+        <span class="n">signed</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">sign_transaction</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span>
+        <span class="n">tx_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">send_raw_transaction</span><span class="p">(</span><span class="n">signed</span><span class="o">.</span><span class="n">raw_transaction</span><span class="p">)</span>
+        <span class="n">tx_hash_hex</span> <span class="o">=</span> <span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+        <span class="n">receipt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_transaction_receipt</span><span class="p">(</span><span class="n">tx_hash_hex</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">TransactionResult</span><span class="p">(</span>
+            <span class="n">tx_hash</span><span class="o">=</span><span class="n">tx_hash_hex</span><span class="p">,</span>
+            <span class="n">receipt</span><span class="o">=</span><span class="n">receipt</span><span class="p">,</span>
+            <span class="n">decoded_logs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_decode_logs</span><span class="p">(</span><span class="n">receipt</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.max_deposit">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.max_deposit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max_deposit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">receiver</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the maximum deposit amount for a receiver.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">maxDeposit</span><span class="p">(</span><span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">receiver</span><span class="p">))</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionVault.can_request_deposit">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionVault.can_request_deposit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">can_request_deposit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if a user is allowed to request a deposit.</span>
+
+<span class="sd">        This method queries the vault&#39;s depositAccessControl contract.</span>
+<span class="sd">        If no access control is set (zero address), it returns True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">access_control_address</span> <span class="o">=</span> <span class="n">_call_view</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">depositAccessControl</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="c1"># If function doesn&#39;t exist in ABI or call fails due to missing method</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">access_control_address</span> <span class="o">==</span> <span class="n">ZERO_ADDRESS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># Minimal ABI for IOrionAccessControl to check permissions</span>
+        <span class="n">access_control_abi</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span><span class="s2">&quot;internalType&quot;</span><span class="p">:</span> <span class="s2">&quot;address&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;sender&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;address&quot;</span><span class="p">}</span>
+                <span class="p">],</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;canRequestDeposit&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;outputs&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;internalType&quot;</span><span class="p">:</span> <span class="s2">&quot;bool&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;bool&quot;</span><span class="p">}],</span>
+                <span class="s2">&quot;stateMutability&quot;</span><span class="p">:</span> <span class="s2">&quot;view&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;function&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">]</span>
+        <span class="n">access_control</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">contract</span><span class="p">(</span>
+            <span class="n">address</span><span class="o">=</span><span class="n">access_control_address</span><span class="p">,</span> <span class="n">abi</span><span class="o">=</span><span class="n">access_control_abi</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_call_view</span><span class="p">(</span>
+            <span class="n">access_control</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">canRequestDeposit</span><span class="p">(</span><span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">user</span><span class="p">))</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OrionTransparentVault">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionTransparentVault">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrionTransparentVault</span><span class="p">(</span><span class="n">OrionVault</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;OrionTransparentVault contract.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the OrionTransparentVault contract.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;OrionTransparentVault&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OrionTransparentVault.transfer_manager_fees">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionTransparentVault.transfer_manager_fees">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transfer_manager_fees</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amount</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transfer manager fees (claimVaultFees).&quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">is_system_idle</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">SystemNotIdleError</span><span class="p">(</span>
+                <span class="s2">&quot;System is not idle. Cannot transfer manager fees at this time.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">manager_private_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;MANAGER_PRIVATE_KEY&quot;</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">manager_private_key</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;MANAGER_PRIVATE_KEY environment variable is missing or invalid. &quot;</span>
+                <span class="s2">&quot;Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. &quot;</span>
+                <span class="s2">&quot;Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">manager_private_key</span><span class="p">)</span>
+        <span class="c1"># Validate that the signer is the manager</span>
+        <span class="k">if</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager_address</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Signer </span><span class="si">{</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="si">}</span><span class="s2"> is not the vault manager </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">manager_address</span><span class="si">}</span><span class="s2">. Cannot claim fees.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">nonce</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">get_transaction_count</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="n">tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">claimVaultFees</span><span class="p">(</span><span class="n">amount</span><span class="p">)</span><span class="o">.</span><span class="n">build_transaction</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">signed</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">sign_transaction</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span>
+        <span class="n">tx_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">send_raw_transaction</span><span class="p">(</span><span class="n">signed</span><span class="o">.</span><span class="n">raw_transaction</span><span class="p">)</span>
+        <span class="n">receipt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_transaction_receipt</span><span class="p">(</span><span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">TransactionResult</span><span class="p">(</span>
+            <span class="n">tx_hash</span><span class="o">=</span><span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">(),</span>
+            <span class="n">receipt</span><span class="o">=</span><span class="n">receipt</span><span class="p">,</span>
+            <span class="n">decoded_logs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_decode_logs</span><span class="p">(</span><span class="n">receipt</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrionTransparentVault.submit_order_intent">
+<a class="viewcode-back" href="../../api.html#orion_finance_sdk_py.contracts.OrionTransparentVault.submit_order_intent">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submit_order_intent</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">order_intent</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Submit a portfolio order intent.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            order_intent: Dictionary mapping token addresses to values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            TransactionResult</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">is_system_idle</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">SystemNotIdleError</span><span class="p">(</span>
+                <span class="s2">&quot;System is not idle. Cannot submit order intent at this time.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">strategist_private_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;STRATEGIST_PRIVATE_KEY&quot;</span><span class="p">)</span>
+        <span class="n">validate_var</span><span class="p">(</span>
+            <span class="n">strategist_private_key</span><span class="p">,</span>
+            <span class="n">error_message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;STRATEGIST_PRIVATE_KEY environment variable is missing or invalid. &quot;</span>
+                <span class="s2">&quot;Please set STRATEGIST_PRIVATE_KEY in your .env file or as an environment variable. &quot;</span>
+                <span class="s2">&quot;Follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">strategist_private_key</span><span class="p">)</span>
+        <span class="c1"># Validate that the signer is the strategist</span>
+        <span class="k">if</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategist_address</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Signer </span><span class="si">{</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="si">}</span><span class="s2"> is not the vault strategist </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">strategist_address</span><span class="si">}</span><span class="s2">. Cannot submit order.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">nonce</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">get_transaction_count</span><span class="p">(</span><span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">Web3</span><span class="o">.</span><span class="n">to_checksum_address</span><span class="p">(</span><span class="n">token</span><span class="p">),</span> <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">order_intent</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Estimate gas needed for the transaction</span>
+        <span class="n">gas_estimate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">submitIntent</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="o">.</span><span class="n">estimate_gas</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add 20% buffer to gas estimate</span>
+        <span class="n">gas_limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">gas_estimate</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">)</span>
+
+        <span class="n">tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">submitIntent</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="o">.</span><span class="n">build_transaction</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">account</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
+                <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">,</span>
+                <span class="s2">&quot;gas&quot;</span><span class="p">:</span> <span class="n">gas_limit</span><span class="p">,</span>
+                <span class="s2">&quot;gasPrice&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">gas_price</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="n">signed</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">sign_transaction</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span>
+        <span class="n">tx_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">send_raw_transaction</span><span class="p">(</span><span class="n">signed</span><span class="o">.</span><span class="n">raw_transaction</span><span class="p">)</span>
+        <span class="n">tx_hash_hex</span> <span class="o">=</span> <span class="n">tx_hash</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+        <span class="n">receipt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_transaction_receipt</span><span class="p">(</span><span class="n">tx_hash_hex</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">receipt</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transaction failed with status: </span><span class="si">{</span><span class="n">receipt</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">decoded_logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_logs</span><span class="p">(</span><span class="n">receipt</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TransactionResult</span><span class="p">(</span>
+            <span class="n">tx_hash</span><span class="o">=</span><span class="n">tx_hash_hex</span><span class="p">,</span> <span class="n">receipt</span><span class="o">=</span><span class="n">receipt</span><span class="p">,</span> <span class="n">decoded_logs</span><span class="o">=</span><span class="n">decoded_logs</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Orion Finance.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

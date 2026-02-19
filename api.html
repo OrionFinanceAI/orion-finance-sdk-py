@@ -1,0 +1,1042 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>API Reference &#8212; Orion | SDK</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=00d89a33" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/force_light.js?v=6f406d85"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
+    <link rel="icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Orion Finance SDK" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-light" alt="Orion | SDK"/>
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-dark pst-js-only" alt="Orion | SDK"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="ms-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">API Reference</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">#</a></h1>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">orion_finance_sdk_py.contracts.</span></span><span class="sig-name descname"><span class="pre">OrionConfig</span></span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OrionSmartContract</span></code></p>
+<p>OrionConfig contract.</p>
+<p>Initialize the OrionConfig contract.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.fee_change_cooldown_duration">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">fee_change_cooldown_duration</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.fee_change_cooldown_duration" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the fee change cooldown duration in seconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.get_investment_universe">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_investment_universe</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.get_investment_universe" title="Link to this definition">#</a></dt>
+<dd><p>Alias for whitelisted_assets (Investment Universe).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.is_orion_vault">
+<span class="sig-name descname"><span class="pre">is_orion_vault</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vault_address</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionConfig.is_orion_vault"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.is_orion_vault" title="Link to this definition">#</a></dt>
+<dd><p>Check if an address is a registered Orion vault.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>vault_address</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.is_system_idle">
+<span class="sig-name descname"><span class="pre">is_system_idle</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionConfig.is_system_idle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.is_system_idle" title="Link to this definition">#</a></dt>
+<dd><p>Check if the system is in idle state, required for vault deployment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted">
+<span class="sig-name descname"><span class="pre">is_whitelisted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">token_address</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionConfig.is_whitelisted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted" title="Link to this definition">#</a></dt>
+<dd><p>Check if a token address is whitelisted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>token_address</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted_manager">
+<span class="sig-name descname"><span class="pre">is_whitelisted_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">manager_address</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionConfig.is_whitelisted_manager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted_manager" title="Link to this definition">#</a></dt>
+<dd><p>Check if a manager address is whitelisted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>manager_address</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.manager_intent_decimals">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">manager_intent_decimals</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.manager_intent_decimals" title="Link to this definition">#</a></dt>
+<dd><p>Alias for strategist_intent_decimals.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.max_fulfill_batch_size">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">max_fulfill_batch_size</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.max_fulfill_batch_size" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the maximum fulfill batch size.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.min_deposit_amount">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">min_deposit_amount</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.min_deposit_amount" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the minimum deposit amount from the OrionConfig contract.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.min_redeem_amount">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">min_redeem_amount</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.min_redeem_amount" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the minimum redeem amount from the OrionConfig contract.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.orion_transparent_vaults">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">orion_transparent_vaults</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.orion_transparent_vaults" title="Link to this definition">#</a></dt>
+<dd><p>Fetch all Orion transparent vault addresses from the OrionConfig contract.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.risk_free_rate">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">risk_free_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.risk_free_rate" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the risk free rate from the OrionConfig contract.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.rs_fee_coefficient">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">rs_fee_coefficient</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.rs_fee_coefficient" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the revenue share fee coefficient from the OrionConfig contract.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.strategist_intent_decimals">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">strategist_intent_decimals</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.strategist_intent_decimals" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the strategist intent decimals from the OrionConfig contract.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.token_decimals">
+<span class="sig-name descname"><span class="pre">token_decimals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">token_address</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionConfig.token_decimals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.token_decimals" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the decimals of a token address.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>token_address</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.underlying_asset">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">underlying_asset</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.underlying_asset" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the underlying asset address.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.v_fee_coefficient">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">v_fee_coefficient</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.v_fee_coefficient" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the volume fee coefficient from the OrionConfig contract.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.whitelisted_asset_names">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">whitelisted_asset_names</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.whitelisted_asset_names" title="Link to this definition">#</a></dt>
+<dd><p>Fetch all whitelisted asset names from the OrionConfig contract.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionConfig.whitelisted_assets">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">whitelisted_assets</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionConfig.whitelisted_assets" title="Link to this definition">#</a></dt>
+<dd><p>Fetch all whitelisted asset addresses from the OrionConfig contract.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="vaults">
+<h2>Vaults<a class="headerlink" href="#vaults" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">orion_finance_sdk_py.contracts.</span></span><span class="sig-name descname"><span class="pre">OrionVault</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">contract_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OrionSmartContract</span></code></p>
+<p>OrionVault contract.</p>
+<p>Initialize the OrionVault contract.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>contract_name</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.active_fee_model">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">active_fee_model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.active_fee_model" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the currently active fee model (struct FeeModel).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.can_request_deposit">
+<span class="sig-name descname"><span class="pre">can_request_deposit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.can_request_deposit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.can_request_deposit" title="Link to this definition">#</a></dt>
+<dd><p>Check if a user is allowed to request a deposit.</p>
+<p>This method queries the vault’s depositAccessControl contract.
+If no access control is set (zero address), it returns True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>user</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.cancel_deposit_request">
+<span class="sig-name descname"><span class="pre">cancel_deposit_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amount</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.cancel_deposit_request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.cancel_deposit_request" title="Link to this definition">#</a></dt>
+<dd><p>Cancel a previously submitted deposit request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>amount</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.cancel_redeem_request">
+<span class="sig-name descname"><span class="pre">cancel_redeem_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shares</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.cancel_redeem_request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.cancel_redeem_request" title="Link to this definition">#</a></dt>
+<dd><p>Cancel a previously submitted redemption request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>shares</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.convert_to_assets">
+<span class="sig-name descname"><span class="pre">convert_to_assets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shares</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.convert_to_assets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.convert_to_assets" title="Link to this definition">#</a></dt>
+<dd><p>Convert shares to assets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>shares</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.get_portfolio">
+<span class="sig-name descname"><span class="pre">get_portfolio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.get_portfolio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.get_portfolio" title="Link to this definition">#</a></dt>
+<dd><p>Get the vault portfolio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.is_decommissioning">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">is_decommissioning</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.is_decommissioning" title="Link to this definition">#</a></dt>
+<dd><p>Check if the vault is in decommissioning mode.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.manager_address">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">manager_address</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.manager_address" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the manager address.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.max_deposit">
+<span class="sig-name descname"><span class="pre">max_deposit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">receiver</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.max_deposit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.max_deposit" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the maximum deposit amount for a receiver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>receiver</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.max_management_fee">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">max_management_fee</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.max_management_fee" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the maximum management fee allowed from the vault contract.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.max_performance_fee">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">max_performance_fee</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.max_performance_fee" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the maximum performance fee allowed from the vault contract.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.pending_deposit">
+<span class="sig-name descname"><span class="pre">pending_deposit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fulfill_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.pending_deposit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.pending_deposit" title="Link to this definition">#</a></dt>
+<dd><p>Get total pending deposit amount across all users.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fulfill_batch_size</strong> (<em>int</em><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.pending_redeem">
+<span class="sig-name descname"><span class="pre">pending_redeem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fulfill_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.pending_redeem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.pending_redeem" title="Link to this definition">#</a></dt>
+<dd><p>Get total pending redemption shares across all users.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fulfill_batch_size</strong> (<em>int</em><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.pending_vault_fees">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pending_vault_fees</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.pending_vault_fees" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the pending vault fees in the underlying asset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.request_deposit">
+<span class="sig-name descname"><span class="pre">request_deposit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.request_deposit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.request_deposit" title="Link to this definition">#</a></dt>
+<dd><p>Submit an asynchronous deposit request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>assets</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.request_redeem">
+<span class="sig-name descname"><span class="pre">request_redeem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shares</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.request_redeem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.request_redeem" title="Link to this definition">#</a></dt>
+<dd><p>Submit a redemption request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>shares</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.set_deposit_access_control">
+<span class="sig-name descname"><span class="pre">set_deposit_access_control</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">access_control_address</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.set_deposit_access_control"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.set_deposit_access_control" title="Link to this definition">#</a></dt>
+<dd><p>Set the deposit access control contract address.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>access_control_address</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.share_price">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">share_price</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.share_price" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the current share price (value of 1 share unit).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.strategist_address">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">strategist_address</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.strategist_address" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the strategist address.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.total_assets">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">total_assets</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.total_assets" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the total assets of the vault.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.update_fee_model">
+<span class="sig-name descname"><span class="pre">update_fee_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fee_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_fee</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">management_fee</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.update_fee_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.update_fee_model" title="Link to this definition">#</a></dt>
+<dd><p>Update the fee model for the vault.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>fee_type</strong> (<em>int</em>)</p></li>
+<li><p><strong>performance_fee</strong> (<em>int</em>)</p></li>
+<li><p><strong>management_fee</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionVault.update_strategist">
+<span class="sig-name descname"><span class="pre">update_strategist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_strategist_address</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionVault.update_strategist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionVault.update_strategist" title="Link to this definition">#</a></dt>
+<dd><p>Update the strategist address for the vault.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_strategist_address</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionTransparentVault">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">orion_finance_sdk_py.contracts.</span></span><span class="sig-name descname"><span class="pre">OrionTransparentVault</span></span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionTransparentVault"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionTransparentVault" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#orion_finance_sdk_py.contracts.OrionVault" title="orion_finance_sdk_py.contracts.OrionVault"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrionVault</span></code></a></p>
+<p>OrionTransparentVault contract.</p>
+<p>Initialize the OrionTransparentVault contract.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionTransparentVault.submit_order_intent">
+<span class="sig-name descname"><span class="pre">submit_order_intent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_intent</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionTransparentVault.submit_order_intent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionTransparentVault.submit_order_intent" title="Link to this definition">#</a></dt>
+<dd><p>Submit a portfolio order intent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>order_intent</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – Dictionary mapping token addresses to values</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TransactionResult</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.OrionTransparentVault.transfer_manager_fees">
+<span class="sig-name descname"><span class="pre">transfer_manager_fees</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amount</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#OrionTransparentVault.transfer_manager_fees"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.OrionTransparentVault.transfer_manager_fees" title="Link to this definition">#</a></dt>
+<dd><p>Transfer manager fees (claimVaultFees).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>amount</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="factory">
+<h2>Factory<a class="headerlink" href="#factory" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.VaultFactory">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">orion_finance_sdk_py.contracts.</span></span><span class="sig-name descname"><span class="pre">VaultFactory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vault_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract_address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#VaultFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.VaultFactory" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OrionSmartContract</span></code></p>
+<p>VaultFactory contract.</p>
+<p>Initialize the VaultFactory contract.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vault_type</strong> (<em>str</em>)</p></li>
+<li><p><strong>contract_address</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.VaultFactory.create_orion_vault">
+<span class="sig-name descname"><span class="pre">create_orion_vault</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategist_address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fee_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_fee</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">management_fee</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deposit_access_control</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0x0000000000000000000000000000000000000000'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#VaultFactory.create_orion_vault"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.VaultFactory.create_orion_vault" title="Link to this definition">#</a></dt>
+<dd><p>Create an Orion vault for a given strategist address.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionResult</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>strategist_address</strong> (<em>str</em>)</p></li>
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>symbol</strong> (<em>str</em>)</p></li>
+<li><p><strong>fee_type</strong> (<em>int</em>)</p></li>
+<li><p><strong>performance_fee</strong> (<em>int</em>)</p></li>
+<li><p><strong>management_fee</strong> (<em>int</em>)</p></li>
+<li><p><strong>deposit_access_control</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.VaultFactory.get_vault_address_from_result">
+<span class="sig-name descname"><span class="pre">get_vault_address_from_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#VaultFactory.get_vault_address_from_result"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.VaultFactory.get_vault_address_from_result" title="Link to this definition">#</a></dt>
+<dd><p>Extract the vault address from OrionVaultCreated event in the transaction result.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>result</strong> (<em>TransactionResult</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="liquidity-orchestrator">
+<h2>Liquidity Orchestrator<a class="headerlink" href="#liquidity-orchestrator" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.LiquidityOrchestrator">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">orion_finance_sdk_py.contracts.</span></span><span class="sig-name descname"><span class="pre">LiquidityOrchestrator</span></span><a class="reference internal" href="_modules/orion_finance_sdk_py/contracts.html#LiquidityOrchestrator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#orion_finance_sdk_py.contracts.LiquidityOrchestrator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OrionSmartContract</span></code></p>
+<p>LiquidityOrchestrator contract.</p>
+<p>Initialize the LiquidityOrchestrator contract.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.LiquidityOrchestrator.epoch_duration">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">epoch_duration</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.LiquidityOrchestrator.epoch_duration" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the epoch duration in seconds.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.LiquidityOrchestrator.slippage_tolerance">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">slippage_tolerance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.LiquidityOrchestrator.slippage_tolerance" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the slippage tolerance.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="orion_finance_sdk_py.contracts.LiquidityOrchestrator.target_buffer_ratio">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">target_buffer_ratio</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#orion_finance_sdk_py.contracts.LiquidityOrchestrator.target_buffer_ratio" title="Link to this definition">#</a></dt>
+<dd><p>Fetch the target buffer ratio.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration">Configuration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig"><code class="docutils literal notranslate"><span class="pre">OrionConfig</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.fee_change_cooldown_duration"><code class="docutils literal notranslate"><span class="pre">OrionConfig.fee_change_cooldown_duration</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.get_investment_universe"><code class="docutils literal notranslate"><span class="pre">OrionConfig.get_investment_universe</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.is_orion_vault"><code class="docutils literal notranslate"><span class="pre">OrionConfig.is_orion_vault()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.is_system_idle"><code class="docutils literal notranslate"><span class="pre">OrionConfig.is_system_idle()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted"><code class="docutils literal notranslate"><span class="pre">OrionConfig.is_whitelisted()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted_manager"><code class="docutils literal notranslate"><span class="pre">OrionConfig.is_whitelisted_manager()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.manager_intent_decimals"><code class="docutils literal notranslate"><span class="pre">OrionConfig.manager_intent_decimals</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.max_fulfill_batch_size"><code class="docutils literal notranslate"><span class="pre">OrionConfig.max_fulfill_batch_size</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.min_deposit_amount"><code class="docutils literal notranslate"><span class="pre">OrionConfig.min_deposit_amount</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.min_redeem_amount"><code class="docutils literal notranslate"><span class="pre">OrionConfig.min_redeem_amount</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.orion_transparent_vaults"><code class="docutils literal notranslate"><span class="pre">OrionConfig.orion_transparent_vaults</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.risk_free_rate"><code class="docutils literal notranslate"><span class="pre">OrionConfig.risk_free_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.rs_fee_coefficient"><code class="docutils literal notranslate"><span class="pre">OrionConfig.rs_fee_coefficient</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.strategist_intent_decimals"><code class="docutils literal notranslate"><span class="pre">OrionConfig.strategist_intent_decimals</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.token_decimals"><code class="docutils literal notranslate"><span class="pre">OrionConfig.token_decimals()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.underlying_asset"><code class="docutils literal notranslate"><span class="pre">OrionConfig.underlying_asset</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.v_fee_coefficient"><code class="docutils literal notranslate"><span class="pre">OrionConfig.v_fee_coefficient</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.whitelisted_asset_names"><code class="docutils literal notranslate"><span class="pre">OrionConfig.whitelisted_asset_names</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionConfig.whitelisted_assets"><code class="docutils literal notranslate"><span class="pre">OrionConfig.whitelisted_assets</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vaults">Vaults</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault"><code class="docutils literal notranslate"><span class="pre">OrionVault</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.active_fee_model"><code class="docutils literal notranslate"><span class="pre">OrionVault.active_fee_model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.can_request_deposit"><code class="docutils literal notranslate"><span class="pre">OrionVault.can_request_deposit()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.cancel_deposit_request"><code class="docutils literal notranslate"><span class="pre">OrionVault.cancel_deposit_request()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.cancel_redeem_request"><code class="docutils literal notranslate"><span class="pre">OrionVault.cancel_redeem_request()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.convert_to_assets"><code class="docutils literal notranslate"><span class="pre">OrionVault.convert_to_assets()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.get_portfolio"><code class="docutils literal notranslate"><span class="pre">OrionVault.get_portfolio()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.is_decommissioning"><code class="docutils literal notranslate"><span class="pre">OrionVault.is_decommissioning</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.manager_address"><code class="docutils literal notranslate"><span class="pre">OrionVault.manager_address</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.max_deposit"><code class="docutils literal notranslate"><span class="pre">OrionVault.max_deposit()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.max_management_fee"><code class="docutils literal notranslate"><span class="pre">OrionVault.max_management_fee</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.max_performance_fee"><code class="docutils literal notranslate"><span class="pre">OrionVault.max_performance_fee</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.pending_deposit"><code class="docutils literal notranslate"><span class="pre">OrionVault.pending_deposit()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.pending_redeem"><code class="docutils literal notranslate"><span class="pre">OrionVault.pending_redeem()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.pending_vault_fees"><code class="docutils literal notranslate"><span class="pre">OrionVault.pending_vault_fees</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.request_deposit"><code class="docutils literal notranslate"><span class="pre">OrionVault.request_deposit()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.request_redeem"><code class="docutils literal notranslate"><span class="pre">OrionVault.request_redeem()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.set_deposit_access_control"><code class="docutils literal notranslate"><span class="pre">OrionVault.set_deposit_access_control()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.share_price"><code class="docutils literal notranslate"><span class="pre">OrionVault.share_price</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.strategist_address"><code class="docutils literal notranslate"><span class="pre">OrionVault.strategist_address</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.total_assets"><code class="docutils literal notranslate"><span class="pre">OrionVault.total_assets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.update_fee_model"><code class="docutils literal notranslate"><span class="pre">OrionVault.update_fee_model()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionVault.update_strategist"><code class="docutils literal notranslate"><span class="pre">OrionVault.update_strategist()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionTransparentVault"><code class="docutils literal notranslate"><span class="pre">OrionTransparentVault</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionTransparentVault.submit_order_intent"><code class="docutils literal notranslate"><span class="pre">OrionTransparentVault.submit_order_intent()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.OrionTransparentVault.transfer_manager_fees"><code class="docutils literal notranslate"><span class="pre">OrionTransparentVault.transfer_manager_fees()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#factory">Factory</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.VaultFactory"><code class="docutils literal notranslate"><span class="pre">VaultFactory</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.VaultFactory.create_orion_vault"><code class="docutils literal notranslate"><span class="pre">VaultFactory.create_orion_vault()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.VaultFactory.get_vault_address_from_result"><code class="docutils literal notranslate"><span class="pre">VaultFactory.get_vault_address_from_result()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#liquidity-orchestrator">Liquidity Orchestrator</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.LiquidityOrchestrator"><code class="docutils literal notranslate"><span class="pre">LiquidityOrchestrator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.LiquidityOrchestrator.epoch_duration"><code class="docutils literal notranslate"><span class="pre">LiquidityOrchestrator.epoch_duration</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.LiquidityOrchestrator.slippage_tolerance"><code class="docutils literal notranslate"><span class="pre">LiquidityOrchestrator.slippage_tolerance</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#orion_finance_sdk_py.contracts.LiquidityOrchestrator.target_buffer_ratio"><code class="docutils literal notranslate"><span class="pre">LiquidityOrchestrator.target_buffer_ratio</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Orion Finance.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

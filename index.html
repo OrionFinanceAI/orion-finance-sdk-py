@@ -1,0 +1,643 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Orion Finance SDK &#8212; Orion | SDK</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=00d89a33" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/force_light.js?v=6f406d85"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <link rel="icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="#">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-light" alt="Orion | SDK"/>
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-dark pst-js-only" alt="Orion | SDK"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="ms-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="orion-finance-sdk">
+<h1>Orion Finance SDK<a class="headerlink" href="#orion-finance-sdk" title="Link to this heading">#</a></h1>
+<p>This guide shows how to install the <a class="reference external" href="https://pypi.org/project/orion-finance-sdk-py/">Orion SDK</a> locally. The source code is publicly available on <a class="reference external" href="https://github.com/OrionFinanceAI/orion-finance-sdk-py">GitHub</a>.</p>
+<hr class="docutils" />
+<section id="workflow-overview">
+<h2>Workflow Overview<a class="headerlink" href="#workflow-overview" title="Link to this heading">#</a></h2>
+<p>The typical workflow for using the Orion Finance SDK:</p>
+<ol class="arabic simple">
+<li><p><strong>Install SDK</strong> - Install the Orion Finance SDK package (see below);</p></li>
+<li><p><strong>Deploy Vault</strong> - Create a new vault using <code class="docutils literal notranslate"><span class="pre">orion</span> <span class="pre">deploy-vault</span></code>;</p></li>
+<li><p><strong>Set Strategist</strong> (if needed) - If you want to submit intents as a manager, set yourself as the strategist for your vault;</p></li>
+<li><p><strong>Submit Intents</strong> - Submit portfolio allocation intents using <code class="docutils literal notranslate"><span class="pre">orion</span> <span class="pre">submit-order</span></code>.</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="install-from-pypi">
+<h2>Install from PyPI<a class="headerlink" href="#install-from-pypi" title="Link to this heading">#</a></h2>
+<p>Install the latest stable version from PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;orion-finance-sdk-py&gt;=1.2.0&quot;</span>
+</pre></div>
+</div>
+<p>Check available CLI commands any time:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>--help
+</pre></div>
+</div>
+</section>
+<section id="configure-environment">
+<h2>Configure Environment<a class="headerlink" href="#configure-environment" title="Link to this heading">#</a></h2>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file in your project directory with the following variables:</p>
+<section id="required-for-vault-deployment">
+<h3>Required for Vault Deployment<a class="headerlink" href="#required-for-vault-deployment" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">RPC_URL</span></code></strong> - Chain RPC endpoint;</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">MANAGER_PRIVATE_KEY</span></code></strong> - Manager private key for signing vault deployment transactions;</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">MANAGER_ADDRESS</span></code></strong> - Manager address for fees/ownership (must match the address derived from <code class="docutils literal notranslate"><span class="pre">MANAGER_PRIVATE_KEY</span></code>).</p></li>
+</ul>
+</section>
+<section id="quick-start">
+<h3>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h3>
+<p>Example usage of the Orion Finance SDK:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrionConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Risk-free Rate: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">risk_free_rate</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="required-for-intent-submission">
+<h3>Required for Intent Submission<a class="headerlink" href="#required-for-intent-submission" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">ORION_VAULT_ADDRESS</span></code></strong> - Address of the deployed Orion vault to interact with (obtained after vault deployment);</p></li>
+</ul>
+<blockquote>
+<div><p><strong>Note:</strong> Keep your <code class="docutils literal notranslate"><span class="pre">.env</span></code> file private and never commit it to version control.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="vault-deployment">
+<h2>Vault Deployment<a class="headerlink" href="#vault-deployment" title="Link to this heading">#</a></h2>
+<p>Deploy a new vault using the Orion CLI.</p>
+</section>
+<section id="who-can-create-vaults">
+<h2>Who Can Create Vaults?<a class="headerlink" href="#who-can-create-vaults" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Managers</strong> can create vaults using the Orion CLI.</p></li>
+</ul>
+</section>
+<section id="what-is-an-rpc-url">
+<h2>What is an RPC URL?<a class="headerlink" href="#what-is-an-rpc-url" title="Link to this heading">#</a></h2>
+<p>An <strong>RPC URL</strong> is the endpoint the SDK uses to communicate with contracts on the blockchain network.</p>
+<p>It’s provided by a node or node service provider (e.g., <a class="reference external" href="https://alchemy.com/">Alchemy</a>) and allows the SDK to send transactions and query blockchain data.</p>
+</section>
+<section id="getting-an-rpc-url">
+<h2>Getting an RPC URL<a class="headerlink" href="#getting-an-rpc-url" title="Link to this heading">#</a></h2>
+<p>You can get an RPC URL from multiple providers. Below are two popular options:</p>
+<section id="alchemy">
+<h3><strong>1. Alchemy</strong><a class="headerlink" href="#alchemy" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p>Go to <a class="reference external" href="https://alchemy.com/">Alchemy</a> and create a free account.</p></li>
+<li><p>Click <strong>“Create App”</strong> in your dashboard.</p></li>
+<li><p>Select:</p>
+<ul class="simple">
+<li><p><strong>Chain</strong> - Ethereum;</p></li>
+<li><p><strong>Network</strong> - Sepolia Testnet.</p></li>
+</ul>
+</li>
+<li><p>Once created, click your app and copy the <strong>HTTP URL</strong> — this is your RPC URL.</p></li>
+<li><p>Paste it into your <code class="docutils literal notranslate"><span class="pre">.env</span></code> file:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">RPC_URL</span><span class="o">=</span>https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
+</pre></div>
+</div>
+</section>
+<section id="infura">
+<h3><strong>2. Infura</strong><a class="headerlink" href="#infura" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p>Go to <a class="reference external" href="https://infura.io/">Infura</a> and sign up.</p></li>
+<li><p>Create a new project in your dashboard.</p></li>
+<li><p>Select the Sepolia network.</p></li>
+<li><p>Copy the HTTPS endpoint and paste it into your <code class="docutils literal notranslate"><span class="pre">.env</span></code> file:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">RPC_URL</span><span class="o">=</span>https://sepolia.infura.io/v3/YOUR_API_KEY
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="deploy-a-transparent-vault">
+<h2>Deploy a Transparent Vault<a class="headerlink" href="#deploy-a-transparent-vault" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>deploy-vault<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span><span class="s2">&quot;Algorithmic Liquidity Provision &amp; Hedging Agent&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--symbol<span class="w"> </span><span class="s2">&quot;ALPHA&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--fee-type<span class="w"> </span>hard_hurdle<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--performance-fee<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--management-fee<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--strategist-address<span class="w"> </span>0x...
+</pre></div>
+</div>
+<p><strong>What this does:</strong></p>
+<ul class="simple">
+<li><p>Deploys an ERC-7540 vault smart contract;</p></li>
+<li><p>Registers the manager address set in your <code class="docutils literal notranslate"><span class="pre">.env</span></code>;</p></li>
+<li><p>Sets the fee type and fees amounts;</p></li>
+<li><p>Makes allocations visible onchain.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="verify-deployment">
+<h2>Verify Deployment<a class="headerlink" href="#verify-deployment" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>The CLI outputs the <strong>vault contract address</strong>;</p></li>
+<li><p>Add it to your manager records and share it with users.</p></li>
+</ul>
+</section>
+<section id="submit-rebalancing-order-intents">
+<h2>Submit Rebalancing Order Intents<a class="headerlink" href="#submit-rebalancing-order-intents" title="Link to this heading">#</a></h2>
+<p>Submit portfolio allocation intents that the protocol executes on the next rebalancing cycle.</p>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>A deployed vault;</p></li>
+<li><p>Portfolio file generated by your strategy.</p></li>
+</ul>
+</section>
+<section id="who-can-submit-intents">
+<h3>Who Can Submit Intents?<a class="headerlink" href="#who-can-submit-intents" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Strategists</strong> can submit portfolio intents for vaults they are assigned to.</p></li>
+<li><p><strong>Managers</strong> who have set themselves as the strategist for their vault can also submit intents directly.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="intent-submission">
+<h3>Intent Submission<a class="headerlink" href="#intent-submission" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>submit-order<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--order-intent-path<span class="w"> </span>order_intent.json
+</pre></div>
+</div>
+</section>
+<section id="notes">
+<h3>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Intents are collected and executed at the <strong>next rebalance</strong>, enabling bundling, batching, and netting.</p></li>
+<li><p>Ensure portfolio inputs match the <strong>expected schema</strong> for your strategy/vault.</p></li>
+</ul>
+</section>
+<section id="expected-portfolio-file-schema">
+<h3>Expected Portfolio File Schema<a class="headerlink" href="#expected-portfolio-file-schema" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column Name</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">address</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Token contract address (checksummed).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">percentage_of_tvl</span></code></p></td>
+<td><p>decimal</p></td>
+<td><p>Percentage of total vault value to allocate (0-100).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;0x...&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0x...&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.02</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0x...&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.015</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0x...&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0255</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0x...&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.06</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0x...&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0x...&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.22</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0x...&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0095</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong></p>
+<ul class="simple">
+<li><p>For <strong>transparent vaults</strong>, these values will be visible onchain once submitted.</p></li>
+<li><p>For <strong>private vaults</strong>, values are encrypted and only known to managers.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="api-reference">
+<h3>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">#</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#vaults">Vaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#factory">Factory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#liquidity-orchestrator">Liquidity Orchestrator</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-overview">Workflow Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#install-from-pypi">Install from PyPI</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configure-environment">Configure Environment</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#required-for-vault-deployment">Required for Vault Deployment</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">Quick Start</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#required-for-intent-submission">Required for Intent Submission</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vault-deployment">Vault Deployment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#who-can-create-vaults">Who Can Create Vaults?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-an-rpc-url">What is an RPC URL?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-an-rpc-url">Getting an RPC URL</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alchemy"><strong>1. Alchemy</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infura"><strong>2. Infura</strong></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deploy-a-transparent-vault">Deploy a Transparent Vault</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verify-deployment">Verify Deployment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submit-rebalancing-order-intents">Submit Rebalancing Order Intents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#who-can-submit-intents">Who Can Submit Intents?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#intent-submission">Intent Submission</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expected-portfolio-file-schema">Expected Portfolio File Schema</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api-reference">API Reference</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Orion Finance.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
