@@ -1,9 +1,10 @@
-# orion-finance-sdk-py
-
 <div align="center">
 
-[![codecov][codecov-badge]][codecov] [![Github Actions][gha-badge]][gha]
+<img src="./assets/Orion_Logo_white_horizontal.png" alt="Orion" width="75%">
 
+[![codecov][codecov-badge]][codecov] [![Sourcery][sourcery-badge]][sourcery] [![Github Actions][gha-badge]][gha] [![Ape][ape-badge]][ape]
+
+[![LinkedIn][linkedin-badge]][linkedin] [![X][x-badge]][x] [![Telegram][telegram-badge]][telegram] [![Discord][discord-badge]][discord]
 
 </div>
 
@@ -12,6 +13,24 @@
 
 [codecov]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/graph/badge.svg?token=SJLL2VVQDS
 [codecov-badge]: https://codecov.io/gh/OrionFinanceAI/orion-finance-sdk-py/branch/main/graph/badge.svg
+
+[sourcery]: https://sourcery.ai
+[sourcery-badge]: https://img.shields.io/badge/Sourcery-enabled-brightgreen
+
+[ape]: https://docs.apeworx.io/
+[ape-badge]: https://img.shields.io/badge/Built%20with-Ape-8C52FF.svg
+
+[linkedin]: https://www.linkedin.com/company/orionfinance/
+[linkedin-badge]: https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
+
+[x]: https://x.com/OrionFinanceAI
+[x-badge]: https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white
+
+[telegram]: https://t.me/orionfinance_ai
+[telegram-badge]: https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white
+
+[discord]: https://discord.gg/8bAXxPSPdw
+[discord-badge]: https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white
 
 [docs]: https://sdk.orionfinance.ai/
 [docs-badge]: https://img.shields.io/badge/Documentation-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white
@@ -47,11 +66,8 @@ make venv
 source .venv/bin/activate
 make install
 
-# Run tests
+# Run tests (includes coverage)
 make test
-
-# Run tests with coverage
-make test  # Coverage is included automatically
 
 # Run code style checks
 make codestyle
@@ -70,15 +86,16 @@ pip install orion-finance-sdk-py
 
 ## Environment Variables Setup
 
-The SDK requires the user to specify an `RPC_URL` environment variable in the `.env` file of the project. Follow the [SDK Installation](https://sdk.orionfinance.ai/) to get one.
+The SDK requires `RPC_URL` in your `.env` (or environment). See [SDK Installation](https://sdk.orionfinance.ai/) to obtain an RPC URL.
 
-Based on the usage, additional environment variables may be required, e.g.:
-- `STRATEGIST_ADDRESS`: The address of the strategist account.
-- `MANAGER_PRIVATE_KEY`: The private key of the vault manager account.
-- `STRATEGIST_PRIVATE_KEY`: The private key of the strategist account.
-- `ORION_VAULT_ADDRESS`: The address of the Orion vault.
+Additional variables depend on what you do:
+- **Deploy a vault:** `STRATEGIST_ADDRESS`, `MANAGER_PRIVATE_KEY`
+- **Submit orders:** `ORION_VAULT_ADDRESS`, `STRATEGIST_PRIVATE_KEY`
+- **Update strategist / fee model / deposit access:** `ORION_VAULT_ADDRESS`, `MANAGER_PRIVATE_KEY`
 
 ## Examples of Usage
+
+The SDK supports **transparent** Orion vaults: deploy, read state, submit order intents, and manage fees/strategist via the CLI or Python API.
 
 ### List available commands
 
@@ -88,10 +105,10 @@ orion deploy-vault --help
 orion submit-order --help
 ```
 
-### Deploy a new Transparent Orion vault
+### Deploy a new Orion vault
 
 ```bash
-orion deploy-vault --vault-type transparent --name "Algorithmic Liquidity Provision & Hedging Agent" --symbol "ALPHA" --fee-type hard_hurdle --performance-fee 10 --management-fee 1
+orion deploy-vault --strategist-address 0x... --name "Algorithmic Liquidity Provision & Hedging Agent" --symbol "ALPHA" --fee-type hard_hurdle --performance-fee 10 --management-fee 1
 ```
 
 ### Submit an order intent to a vault
