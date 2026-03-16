@@ -86,7 +86,7 @@ pip install orion-finance-sdk-py
 
 ## Environment Variables Setup
 
-The SDK requires `RPC_URL` in your `.env` (or environment). See [SDK Installation](https://sdk.orionfinance.ai/) to obtain an RPC URL.
+The SDK uses `RPC_URL` from your `.env` if set; otherwise it uses a default public RPC. See [SDK Installation](https://sdk.orionfinance.ai/) for optional RPC setup.
 
 Additional variables depend on what you do:
 - **Deploy a vault:** `STRATEGIST_ADDRESS`, `MANAGER_PRIVATE_KEY`
