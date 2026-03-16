@@ -1,6 +1,5 @@
 #!/bin/sh
 # Orion Finance SDK installer
-# Usage: curl -sSfL https://raw.githubusercontent.com/OrionFinanceAI/orion-finance-sdk-py/dev/install.sh | sh
 #
 # Environment variables:
 #   VERSION     — specific version to install (default: latest from PyPI)

@@ -15,18 +15,26 @@ The typical workflow for using the Orion Finance SDK:
 
 ---
 
-## Install from PyPI
-
-Install the latest stable version from PyPI:
+## Install 
+​
+The package CLI can be installed simply running:
 
 ```bash
-pip install "orion-finance-sdk-py>=1.2.0"
+curl -sSfL https://orionfinance.ai/cli/install.sh | sh
 ```
 
 Check available CLI commands any time:
 
 ```bash
 orion --help
+```
+
+### Install from PyPI
+
+Alternatively, install the latest stable version from PyPI:
+
+```bash
+pip install "orion-finance-sdk-py>=1.2.2"
 ```
 
 ## Configure Environment
