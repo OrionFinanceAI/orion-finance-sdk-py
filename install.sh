@@ -112,6 +112,36 @@ verify_binary() {
     log "   Then run:  source ~/.zshrc  (or open a new terminal)"
 }
 
+# ─── default Sepolia RPC endpoints (tried in order until one works) ────────────
+
+DEFAULT_RPC_1="https://1rpc.io/sepolia"
+DEFAULT_RPC_2="https://0xrpc.io/sep"
+DEFAULT_RPC_3="https://ethereum-sepolia-rpc.publicnode.com"
+
+# Test if an RPC URL responds to eth_blockNumber.
+rpc_works() {
+    url="$1"
+    if has curl; then
+        resp=$(curl -sSf -m 5 -X POST -H "Content-Type: application/json" \
+            --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
+            "$url" 2>/dev/null) || return 1
+    else
+        resp=$(wget -qO- --timeout=5 --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
+            --header="Content-Type: application/json" "$url" 2>/dev/null) || return 1
+    fi
+    case "$resp" in *result*) return 0 ;; *) return 1 ;; esac
+}
+
+# Try default RPCs in order; echo first that works, or empty.
+pick_default_rpc() {
+    log "Trying default Sepolia RPCs..."
+    if rpc_works "$DEFAULT_RPC_1"; then log_ok "Using $DEFAULT_RPC_1"; echo "$DEFAULT_RPC_1"; return; fi
+    if rpc_works "$DEFAULT_RPC_2"; then log_ok "Using $DEFAULT_RPC_2"; echo "$DEFAULT_RPC_2"; return; fi
+    if rpc_works "$DEFAULT_RPC_3"; then log_ok "Using $DEFAULT_RPC_3"; echo "$DEFAULT_RPC_3"; return; fi
+    log_err "None of the default RPCs responded. You can set RPC_URL manually in .env later."
+    echo ""
+}
+
 # ─── step 5: interactive post-install setup ──────────────────────────────────
 
 post_install() {
@@ -129,40 +159,75 @@ post_install() {
     case "$answer" in
         [nN]*)
             echo "" >&2
-            log "Skipped. Required .env keys:"
-            log "   RPC_URL                — your Sepolia/mainnet RPC endpoint"
-            log "   MANAGER_PRIVATE_KEY    — manager wallet private key"
-            log "   STRATEGIST_PRIVATE_KEY — strategist wallet private key"
-            log "   ORION_VAULT_ADDRESS    — set after running 'orion deploy-vault'"
-            ;;
-        *)
-            env_file="./.env"
-            if [ -f "$env_file" ]; then
-                log ".env already exists — leaving it untouched."
-            else
-                cat > "$env_file" << 'EOF'
-# Orion Finance SDK — Environment Variables
-# Docs: https://sdk.orionfinance.ai/
-
-# RPC URL for blockchain connection
-RPC_URL=
-
-# Chain ID (default: 11155111 = Sepolia)
-# CHAIN_ID=11155111
-
-# Private key for manager operations
-MANAGER_PRIVATE_KEY=
-
-# Private key for strategist operations (can be same as manager)
-STRATEGIST_PRIVATE_KEY=
-
-# Vault address — populated after running: orion deploy-vault
-# ORION_VAULT_ADDRESS=
-EOF
-                log_ok ".env created — fill in RPC_URL and your private keys before use."
-            fi
+            log "Skipped. Create .env manually with: RPC_URL, MANAGER_PRIVATE_KEY, STRATEGIST_PRIVATE_KEY."
+            log "Run 'orion' when ready. Docs: https://sdk.orionfinance.ai/"
+            echo "" >&2
+            return
             ;;
     esac
+
+    env_file="./.env"
+    if [ -f "$env_file" ]; then
+        log ".env already exists — leaving it untouched."
+        echo "" >&2
+        return
+    fi
+
+    # ─── RPC_URL ───────────────────────────────────────────────────────────
+    echo "" >&2
+    log "RPC_URL (Sepolia or mainnet):"
+    log "  [1] Use default (we try: 1rpc.io → 0xrpc.io → publicnode)"
+    log "  [2] Paste your own URL"
+    printf "  Choice [1/2]: " >&2
+    read -r rpc_choice < /dev/tty || rpc_choice="1"
+
+    rpc_url=""
+    case "$rpc_choice" in
+        2)
+            printf "  RPC_URL=(paste here): " >&2
+            read -r rpc_url < /dev/tty
+            [ -n "$rpc_url" ] || { log_err "RPC_URL cannot be empty."; rpc_url=""; }
+            ;;
+        *)
+            rpc_url=$(pick_default_rpc)
+            ;;
+    esac
+
+    # ─── MANAGER_PRIVATE_KEY (required) ─────────────────────────────────────
+    echo "" >&2
+    while [ -z "$manager_key" ]; do
+        printf "  MANAGER_PRIVATE_KEY=(paste here, required): " >&2
+        read -r manager_key < /dev/tty
+        [ -n "$manager_key" ] || log_err "Private key is required. Try again."
+    done
+
+    # ─── STRATEGIST_PRIVATE_KEY (optional, default same as manager) ──────────
+    printf "  STRATEGIST_PRIVATE_KEY=(paste here, or Enter = same as manager): " >&2
+    read -r strategist_key < /dev/tty
+    [ -n "$strategist_key" ] || strategist_key="$manager_key"
+
+    # ─── write .env ─────────────────────────────────────────────────────────
+    {
+        echo "# Orion Finance SDK — Environment Variables"
+        echo "# Docs: https://sdk.orionfinance.ai/"
+        echo ""
+        echo "# RPC URL for blockchain connection"
+        [ -n "$rpc_url" ] && echo "RPC_URL=$rpc_url" || echo "RPC_URL="
+        echo ""
+        echo "# Chain ID (default: 11155111 = Sepolia)"
+        echo "# CHAIN_ID=11155111"
+        echo ""
+        echo "# Private key for manager operations"
+        echo "MANAGER_PRIVATE_KEY=$manager_key"
+        echo ""
+        echo "# Private key for strategist operations"
+        echo "STRATEGIST_PRIVATE_KEY=$strategist_key"
+        echo ""
+        echo "# Vault address — set after running: orion deploy-vault"
+        echo "# ORION_VAULT_ADDRESS="
+    } > "$env_file"
+
+    log_ok ".env created at $env_file"
 
     echo "" >&2
     log "Get started:"
