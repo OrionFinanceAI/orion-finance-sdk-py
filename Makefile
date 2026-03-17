@@ -22,6 +22,10 @@ codestyle:
 
 	cd js && npm run prettier
 
+.PHONY: typecheck
+typecheck:
+	uv run ty check python/
+
 .PHONY: docstyle
 docstyle:
 	uv run pydocstyle

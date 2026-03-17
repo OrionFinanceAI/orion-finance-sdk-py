@@ -54,6 +54,10 @@ jobs:
         run: |
           make docstyle
 
+      - name: Run type checker (ty)
+        run: |
+          make typecheck
+
       - name: Build documentation (dry run)
         run: |
           make docs

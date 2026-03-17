@@ -30,6 +30,7 @@ dev = [
     "ape-etherscan>=0.8.0,<2.0.0",
     "pre-commit>=4.1.0,<4.6.0",
     "ruff>=0.9.10,<1.0.0",
+    "ty>=0.0.1",
     "pydocstyle>=6.3.0,<6.4.0",
     "pytest>=8.3.5,<9.1.0",
     "pytest-cov>=6.0.0,<8.0.0",
@@ -70,6 +71,10 @@ omit = [
     "*/tests/*",
     "*/test_*.py",
 ]
+
+[tool.ty]
+# Use project requires-python; check the package and tests
+# https://docs.astral.sh/ty/configuration/
 
 [tool.coverage.report]
 exclude_lines = [

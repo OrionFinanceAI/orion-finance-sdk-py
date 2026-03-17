@@ -28,3 +28,11 @@ repos:
     rev: 6.3.0
     hooks:
       - id: pydocstyle
+
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty (type checker)
+        entry: bash -c "uv run ty check python/"
+        language: system
+        pass_filenames: false
