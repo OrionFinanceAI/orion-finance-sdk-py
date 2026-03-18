@@ -194,15 +194,21 @@ post_install() {
 
     # ─── MANAGER_PRIVATE_KEY (required) ─────────────────────────────────────
     echo "" >&2
+    trap 'stty echo 2>/dev/null' EXIT INT TERM
     while [ -z "$manager_key" ]; do
         printf "  MANAGER_PRIVATE_KEY=(paste here, required): " >&2
+        stty -echo 2>/dev/null || true
         read -r manager_key < /dev/tty
+        stty echo 2>/dev/null || true
         [ -n "$manager_key" ] || log_err "Private key is required. Try again."
     done
 
     # ─── STRATEGIST_PRIVATE_KEY (optional, default same as manager) ──────────
     printf "  STRATEGIST_PRIVATE_KEY=(paste here, or Enter = same as manager): " >&2
+    stty -echo 2>/dev/null || true
     read -r strategist_key < /dev/tty
+    stty echo 2>/dev/null || true
+    trap - EXIT INT TERM
     [ -n "$strategist_key" ] || strategist_key="$manager_key"
 
     # ─── write .env ─────────────────────────────────────────────────────────
@@ -225,6 +231,7 @@ post_install() {
         echo "# Vault address — set after running: orion deploy-vault"
         echo "# ORION_VAULT_ADDRESS="
     } > "$env_file"
+    chmod 600 "$env_file"
 
     log_ok ".env created at $env_file"
 
