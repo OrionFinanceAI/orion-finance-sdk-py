@@ -15,8 +15,8 @@ The typical workflow for using the Orion Finance SDK:
 
 ---
 
-## Install 
-​
+## Install
+
 The package CLI can be installed simply running:
 
 ```bash
