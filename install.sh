@@ -115,10 +115,13 @@ verify_binary() {
     log "⚠  '${BINARY}' was installed but is not yet on your PATH."
     log "   Add uv's tool bin directory to your shell profile:"
     echo "" >&2
-    log "   bash/zsh:  echo 'export PATH=\"\$(uv tool dir --bin):\$PATH\"' >> ~/.zshrc"
-    log "   fish:      fish_add_path \$(uv tool dir --bin)"
+    log "   bash:  echo 'export PATH=\"\$(uv tool dir --bin):\$PATH\"' >> ~/.bashrc"
+    log "        (or use ~/.bash_profile on macOS if you prefer login shells)"
+    log "   zsh:   echo 'export PATH=\"\$(uv tool dir --bin):\$PATH\"' >> ~/.zshrc"
+    log "   fish:  fish_add_path \$(uv tool dir --bin)"
     echo "" >&2
-    log "   Then run:  source ~/.zshrc  (or open a new terminal)"
+    log "   Then run:  source ~/.bashrc or source ~/.bash_profile (bash),"
+    log "              source ~/.zshrc (zsh), or open a new terminal"
 }
 
 # ─── default Sepolia RPC endpoints (tried in order until one works) ────────────
