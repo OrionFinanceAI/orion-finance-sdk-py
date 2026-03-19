@@ -59,13 +59,23 @@ resolve_version() {
     fi
 
     if has curl; then
-        curl -sSfL "https://pypi.org/pypi/${PACKAGE}/json" \
-            | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-            | head -1
+        if has jq; then
+            curl -sSfL "https://pypi.org/pypi/${PACKAGE}/json" \
+                | jq -r '.info.version'
+        else
+            curl -sSfL "https://pypi.org/pypi/${PACKAGE}/json" \
+                | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+                | head -1
+        fi
     elif has wget; then
-        wget -qO- "https://pypi.org/pypi/${PACKAGE}/json" \
-            | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-            | head -1
+        if has jq; then
+            wget -qO- "https://pypi.org/pypi/${PACKAGE}/json" \
+                | jq -r '.info.version'
+        else
+            wget -qO- "https://pypi.org/pypi/${PACKAGE}/json" \
+                | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+                | head -1
+        fi
     fi
 }
 
