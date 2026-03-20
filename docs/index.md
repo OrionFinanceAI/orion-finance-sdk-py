@@ -20,7 +20,7 @@ The typical workflow for using the Orion Finance SDK:
 The package CLI can be installed simply running:
 
 ```bash
-curl -sSfL https://orionfinance.ai/cli/install.sh | sh
+curl -sSfL https://sdk.orionfinance.ai/cli/install.sh | sh
 ```
 
 Check available CLI commands any time:

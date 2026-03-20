@@ -26,6 +26,11 @@ jobs:
       - name: Build Sphinx docs
         run: uv run sphinx-build -b html docs docs/_build/html
 
+      - name: Add CLI install script
+        run: |
+          mkdir -p docs/_build/html/cli
+          cp install.sh docs/_build/html/cli/install.sh
+
       - name: Create CNAME file for custom domain
         run: |
             echo "sdk.orionfinance.ai" > docs/_build/html/CNAME
