@@ -277,3 +277,4 @@ docs-config/
 
 /cache*
 /.cursor*
+intent.json

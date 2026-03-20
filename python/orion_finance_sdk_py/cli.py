@@ -76,9 +76,8 @@ def _deploy_vault_logic(
 
 def _submit_order_logic(order_intent_path: str):
     """Logic for submitting an order."""
-    vault_address = os.getenv("ORION_VAULT_ADDRESS")
-    validate_var(
-        vault_address,
+    vault_address = validate_var(
+        os.getenv("ORION_VAULT_ADDRESS"),
         error_message=(
             "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
             "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
@@ -102,9 +101,8 @@ def _submit_order_logic(order_intent_path: str):
 
 def _update_strategist_logic(new_strategist_address: str):
     """Logic for updating strategist."""
-    vault_address = os.getenv("ORION_VAULT_ADDRESS")
-    validate_var(
-        vault_address,
+    vault_address = validate_var(
+        os.getenv("ORION_VAULT_ADDRESS"),
         error_message=(
             "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
             "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
@@ -125,9 +123,8 @@ def _update_fee_model_logic(
     fee_type_value: int, performance_fee_bp: int, management_fee_bp: int
 ):
     """Logic for updating fee model."""
-    vault_address = os.getenv("ORION_VAULT_ADDRESS")
-    validate_var(
-        vault_address,
+    vault_address = validate_var(
+        os.getenv("ORION_VAULT_ADDRESS"),
         error_message=(
             "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
             "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
@@ -150,9 +147,8 @@ def _update_fee_model_logic(
 
 def _update_deposit_access_control_logic(new_dac_address: str):
     """Logic for updating deposit access control."""
-    vault_address = os.getenv("ORION_VAULT_ADDRESS")
-    validate_var(
-        vault_address,
+    vault_address = validate_var(
+        os.getenv("ORION_VAULT_ADDRESS"),
         error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
     )
 
@@ -168,9 +164,8 @@ def _update_deposit_access_control_logic(new_dac_address: str):
 
 def _claim_fees_logic(amount: int):
     """Logic for claiming fees."""
-    vault_address = os.getenv("ORION_VAULT_ADDRESS")
-    validate_var(
-        vault_address,
+    vault_address = validate_var(
+        os.getenv("ORION_VAULT_ADDRESS"),
         error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
     )
 
@@ -186,9 +181,8 @@ def _claim_fees_logic(amount: int):
 
 def _get_pending_fees_logic():
     """Logic for fetching pending vault fees."""
-    vault_address = os.getenv("ORION_VAULT_ADDRESS")
-    validate_var(
-        vault_address,
+    vault_address = validate_var(
+        os.getenv("ORION_VAULT_ADDRESS"),
         error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
     )
 

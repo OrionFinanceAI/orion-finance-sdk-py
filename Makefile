@@ -10,7 +10,7 @@ venv:
 
 .PHONY: install
 install:
-	uv pip install -e ."[dev]"
+	uv pip install -e ."[dev,docs]"
 	uv run pre-commit install
 	cd js && npm install && npm run build
 	./scripts/build_js.sh
@@ -21,6 +21,10 @@ codestyle:
 	uv run ruff check --select I --fix
 
 	cd js && npm run prettier
+
+.PHONY: typecheck
+typecheck:
+	uv run ty check python/
 
 .PHONY: docstyle
 docstyle:

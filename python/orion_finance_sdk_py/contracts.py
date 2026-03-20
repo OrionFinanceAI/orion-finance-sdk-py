@@ -4,10 +4,11 @@ import json
 import os
 from dataclasses import dataclass
 from importlib import resources
+from typing import Any, Iterable, cast
 
 from dotenv import load_dotenv
 from web3 import Web3
-from web3.types import TxReceipt
+from web3.types import HexStr, TxReceipt
 
 from .types import CHAIN_CONFIG, ZERO_ADDRESS, VaultType
 from .utils import (
@@ -108,7 +109,7 @@ class OrionSmartContract:
                 raise ValueError(msg) from ape_error
             raise ValueError(msg)
 
-        validate_var(
+        rpc_url = validate_var(
             rpc_url,
             error_message=(
                 "RPC_URL environment variable is missing or invalid. "
@@ -133,14 +134,17 @@ class OrionSmartContract:
         self.contract_name = contract_name
         self.contract_address = contract_address
         self.contract = self.w3.eth.contract(
-            address=self.contract_address, abi=load_contract_abi(self.contract_name)
+            address=Web3.to_checksum_address(self.contract_address),
+            abi=load_contract_abi(self.contract_name),
         )
 
     def _wait_for_transaction_receipt(
         self, tx_hash: str, timeout: int = 120
     ) -> TxReceipt:
         """Wait for a transaction to be processed and return the receipt."""
-        return self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=timeout)
+        return self.w3.eth.wait_for_transaction_receipt(
+            cast(HexStr, tx_hash), timeout=timeout
+        )
 
     def _decode_logs(self, receipt: TxReceipt) -> list[dict]:
         """Decode logs from a transaction receipt."""
@@ -151,7 +155,7 @@ class OrionSmartContract:
                 continue
 
             # Try to decode the log with each event in the contract
-            for event in self.contract.events:
+            for event in cast(Iterable[Any], self.contract.events):
                 try:
                     decoded_log = event.process_log(log)
                     decoded_logs.append(
@@ -364,7 +368,7 @@ class VaultFactory(OrionSmartContract):
         """Create an Orion vault for a given strategist address."""
         config = OrionConfig()
 
-        validate_var(
+        strategist_address = validate_var(
             strategist_address,
             error_message=(
                 "STRATEGIST_ADDRESS is invalid. "
@@ -372,9 +376,8 @@ class VaultFactory(OrionSmartContract):
             ),
         )
 
-        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
-        validate_var(
-            manager_private_key,
+        manager_private_key = validate_var(
+            os.getenv("MANAGER_PRIVATE_KEY"),
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
@@ -503,9 +506,8 @@ class OrionVault(OrionSmartContract):
 
     def __init__(self, contract_name: str):
         """Initialize the OrionVault contract."""
-        contract_address = os.getenv("ORION_VAULT_ADDRESS")
-        validate_var(
-            contract_address,
+        contract_address = validate_var(
+            os.getenv("ORION_VAULT_ADDRESS"),
             error_message=(
                 "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
                 "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
@@ -593,8 +595,7 @@ class OrionVault(OrionSmartContract):
         Returns:
             TransactionResult with transaction hash, receipt, and decoded logs
         """
-        private_key = os.getenv(key_env)
-        validate_var(private_key, error_msg)
+        private_key = validate_var(os.getenv(key_env), error_msg)
         account = self.w3.eth.account.from_key(private_key)
         nonce = self.w3.eth.get_transaction_count(account.address)
 
@@ -657,9 +658,8 @@ class OrionVault(OrionSmartContract):
                 "System is not idle. Cannot update strategist at this time."
             )
 
-        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
-        validate_var(
-            manager_private_key,
+        manager_private_key = validate_var(
+            os.getenv("MANAGER_PRIVATE_KEY"),
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
@@ -715,9 +715,8 @@ class OrionVault(OrionSmartContract):
                 f"Management fee {management_fee} exceeds maximum {self.max_management_fee}"
             )
 
-        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
-        validate_var(
-            manager_private_key,
+        manager_private_key = validate_var(
+            os.getenv("MANAGER_PRIVATE_KEY"),
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
@@ -790,9 +789,8 @@ class OrionVault(OrionSmartContract):
                 "System is not idle. Cannot set deposit access control at this time."
             )
 
-        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
-        validate_var(
-            manager_private_key,
+        manager_private_key = validate_var(
+            os.getenv("MANAGER_PRIVATE_KEY"),
             error_message="MANAGER_PRIVATE_KEY environment variable is missing or invalid.",
         )
         account = self.w3.eth.account.from_key(manager_private_key)
@@ -876,9 +874,8 @@ class OrionTransparentVault(OrionVault):
                 "System is not idle. Cannot transfer manager fees at this time."
             )
 
-        manager_private_key = os.getenv("MANAGER_PRIVATE_KEY")
-        validate_var(
-            manager_private_key,
+        manager_private_key = validate_var(
+            os.getenv("MANAGER_PRIVATE_KEY"),
             error_message=(
                 "MANAGER_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set MANAGER_PRIVATE_KEY in your .env file or as an environment variable. "
@@ -924,9 +921,8 @@ class OrionTransparentVault(OrionVault):
                 "System is not idle. Cannot submit order intent at this time."
             )
 
-        strategist_private_key = os.getenv("STRATEGIST_PRIVATE_KEY")
-        validate_var(
-            strategist_private_key,
+        strategist_private_key = validate_var(
+            os.getenv("STRATEGIST_PRIVATE_KEY"),
             error_message=(
                 "STRATEGIST_PRIVATE_KEY environment variable is missing or invalid. "
                 "Please set STRATEGIST_PRIVATE_KEY in your .env file or as an environment variable. "

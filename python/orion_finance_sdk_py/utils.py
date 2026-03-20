@@ -52,10 +52,11 @@ STRATEGIST_PRIVATE_KEY=
             pass
 
 
-def validate_var(var: str, error_message: str) -> None:
-    """Validate that the environment variable is not zero."""
+def validate_var(var: str | None, error_message: str) -> str:
+    """Validate that the environment variable is not None or zero; return the value."""
     if not var or var == ZERO_ADDRESS:
         raise ValueError(error_message)
+    return var
 
 
 def validate_performance_fee(performance_fee: int) -> None:
@@ -114,16 +115,16 @@ def round_with_fixed_sum(
     values: list[float], target_sum: int | None = None
 ) -> list[int]:
     """Round a list of values to a fixed sum."""
-    values = np.asarray(values, dtype=np.float64)
+    arr = np.asarray(values, dtype=np.float64)
 
     if target_sum is None:
-        target_sum = int(round(np.sum(values)))
+        target_sum = int(round(np.sum(arr)))
 
-    floored = np.floor(values).astype(int)
+    floored = np.floor(arr).astype(int)
     remainder = int(round(target_sum - np.sum(floored)))
 
     # Get the fractional parts and their indices
-    fractional_parts = values - floored
+    fractional_parts = arr - floored
     indices = np.argsort(-fractional_parts)  # Descending order
 
     # Allocate the remaining units

@@ -15,12 +15,12 @@ The typical workflow for using the Orion Finance SDK:
 
 ---
 
-## Install from PyPI
+## Install
 
-Install the latest stable version from PyPI:
+The package CLI can be installed simply running:
 
 ```bash
-pip install "orion-finance-sdk-py>=1.2.0"
+curl -sSfL https://orionfinance.ai/cli/install.sh | sh
 ```
 
 Check available CLI commands any time:
@@ -29,13 +29,21 @@ Check available CLI commands any time:
 orion --help
 ```
 
+### Install from PyPI
+
+Alternatively, install the latest stable version from PyPI:
+
+```bash
+pip install "orion-finance-sdk-py>=1.2.2"
+```
+
 ## Configure Environment
 
 Create a `.env` file in your project directory with the following variables:
 
 ### Required for Vault Deployment
 
-- **`RPC_URL`** - Chain RPC endpoint;
+- **`RPC_URL`** (optional) - Chain RPC endpoint. If not set, the SDK uses a default public RPC (e.g. 1rpc.io, 0xrpc.io, or publicnode). Set this only if you want to use your own endpoint.
 - **`MANAGER_PRIVATE_KEY`** - Manager private key for signing vault deployment transactions;
 - **`MANAGER_ADDRESS`** - Manager address for fees/ownership (must match the address derived from `MANAGER_PRIVATE_KEY`).
 
@@ -68,11 +76,11 @@ Deploy a new vault using the Orion CLI.
 
 An **RPC URL** is the endpoint the SDK uses to communicate with contracts on the blockchain network.
 
-It’s provided by a node or node service provider (e.g., [Alchemy](https://alchemy.com/)) and allows the SDK to send transactions and query blockchain data.
+It’s provided by a node or node service provider (e.g., [Alchemy](https://alchemy.com/)) and allows the SDK to send transactions and query blockchain data. **You do not have to set one** — if `RPC_URL` is omitted, the SDK uses a default public RPC. Set it only if you want to use your own endpoint (e.g. for higher rate limits or a specific chain).
 
-## Getting an RPC URL
+## Getting an RPC URL (optional)
 
-You can get an RPC URL from multiple providers. Below are two popular options:
+If you want to use your own RPC endpoint, you can get one from multiple providers. Below are two popular options:
 
 ### **1. Alchemy**
 
@@ -82,7 +90,7 @@ You can get an RPC URL from multiple providers. Below are two popular options:
    - **Chain** - Ethereum;
    - **Network** - Sepolia Testnet.
 4. Once created, click your app and copy the **HTTP URL** — this is your RPC URL.
-5. Paste it into your `.env` file:
+5. Add it to your `.env` file (optional):
 
 ```bash
 RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
@@ -93,7 +101,7 @@ RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 1. Go to [Infura](https://infura.io/) and sign up.
 2. Create a new project in your dashboard.
 3. Select the Sepolia network.
-4. Copy the HTTPS endpoint and paste it into your `.env` file:
+4. Copy the HTTPS endpoint and add it to your `.env` file (optional):
 
 ```bash
 RPC_URL=https://sepolia.infura.io/v3/YOUR_API_KEY

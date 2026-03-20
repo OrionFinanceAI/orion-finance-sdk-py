@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orion-finance-sdk-py"
-version = "1.2.1"
-requires-python = ">=3.11"
+version = "1.2.2"
+requires-python = ">=3.11,<3.14"
 readme = "README.md"
 authors = [
     { name = "Orion Finance" },
@@ -30,6 +30,7 @@ dev = [
     "ape-etherscan>=0.8.0,<2.0.0",
     "pre-commit>=4.1.0,<4.6.0",
     "ruff>=0.9.10,<1.0.0",
+    "ty>=0.0.1",
     "pydocstyle>=6.3.0,<6.4.0",
     "pytest>=8.3.5,<9.1.0",
     "pytest-cov>=6.0.0,<8.0.0",
@@ -43,6 +44,7 @@ docs = [
     "sphinx-copybutton>=0.5.0,<1.0.0",
     "sphinx-design>=0.6.0,<1.0.0",
     "sphinx-autodoc-typehints>=3.0.0,<4.0.0",
+    "sphinx-llms-txt>=0.7.0",
 ]
 
 [project.scripts]
@@ -69,6 +71,10 @@ omit = [
     "*/tests/*",
     "*/test_*.py",
 ]
+
+[tool.ty]
+# Use project requires-python; check the package and tests
+# https://docs.astral.sh/ty/configuration/
 
 [tool.coverage.report]
 exclude_lines = [
