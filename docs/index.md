@@ -34,7 +34,7 @@ orion --help
 Alternatively, install the latest stable version from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=1.2.2"
+pip install "orion-finance-sdk-py>=1.3.0"
 ```
 
 ## Configure Environment
@@ -153,9 +153,16 @@ Submit portfolio allocation intents that the protocol executes on the next rebal
 
 ### Intent Submission
 
+Use **`--order-intent`** (alias **`--order-intent-path`**) with either a **file** or an **inline** intent:
+
+- **JSON file:** a single object mapping token addresses to weights (fractions that sum to **1**).
+- **CSV / Parquet:** tabular format; see column names below. Parquet needs **pyarrow** (`pip install 'orion-finance-sdk-py[parquet]'`).
+- **Inline string:** same object as JSON, or a Python `dict` literal, e.g. `'{"0x...": 0.5, "0x...": 0.5}'`.
+
 ```bash
-orion submit-order \
-  --order-intent-path order_intent.json
+orion submit-order --order-intent order_intent.json
+
+orion submit-order --order-intent '{"0x...": 0.5, "0x...": 0.5}'
 ```
 
 ### Notes
@@ -169,6 +176,8 @@ orion submit-order \
 | ------------------- | ------- | ---------------------------------------------------- |
 | `address`           | string  | Token contract address (checksummed).                |
 | `percentage_of_tvl` | decimal | Percentage of total vault value to allocate (0-100). |
+
+For CSV/Parquet you can also use **`token`** / **`addr`** for the address column, and **`weight`**, **`value`**, or **`percentage`** for weights. Weights in a **`percentage_of_tvl`** (or **`percentage`**) column are treated as **0–100** and normalized to fractions.
 
 ```json
 {

@@ -3,6 +3,7 @@
 import os
 import random
 import uuid
+from collections.abc import Mapping
 from pathlib import Path
 
 import numpy as np
@@ -75,8 +76,10 @@ def validate_management_fee(management_fee: int) -> None:
         )
 
 
-def validate_order(order_intent: dict[str, int]) -> dict[str, int]:
-    """Validate an order intent."""
+def validate_order(
+    order_intent: Mapping[str, int | float],
+) -> dict[str, int]:
+    """Validate an order intent (fractional weights per token, summing to ~1)."""
     from .contracts import OrionConfig
 
     orion_config = OrionConfig()

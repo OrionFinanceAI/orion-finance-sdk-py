@@ -106,7 +106,7 @@ def test_interactive_menu_submit_order(mock_submit_logic, mock_questionary, mock
     iterator = iter(ask_side_effect)
 
     mock_questionary.select.return_value.ask.side_effect = lambda: next(iterator)
-    mock_questionary.path.return_value.ask.side_effect = lambda: next(iterator)
+    mock_questionary.text.return_value.ask.side_effect = lambda: next(iterator)
 
     interactive_menu()
 
