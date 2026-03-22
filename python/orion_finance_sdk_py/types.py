@@ -7,7 +7,7 @@ ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 # Configuration for supported chains
 CHAIN_CONFIG = {
     11155111: {  # Sepolia
-        "OrionConfig": "0xc9e19770B9Ba4bC41795698Da777d04417513FE0",
+        "OrionConfig": "0x80fdF5E20e565E1345DC9eE1dbc36Edb3f292f2E",
         "Explorer": "https://sepolia.etherscan.io",
     }
 }

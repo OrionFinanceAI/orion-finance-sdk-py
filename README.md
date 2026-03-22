@@ -113,13 +113,21 @@ orion deploy-vault --strategist-address 0x... --name "Algorithmic Liquidity Prov
 
 ### Submit an order intent to a vault
 
-```bash
-# Use off-chain stack to generate an order intent
-echo '{"0x...": 0.4, "0x...": 0.2, "0x...": 0.15, "0x...": 0.15, "0x...": 0.1}' > order_intent.json
+`submit-order` accepts **`--order-intent`** (alias **`--order-intent-path`**):
 
-# Submit the order intent to the Orion vault
-orion submit-order --order-intent-path order_intent.json
+- **File:** `.json` (object mapping addresses → weights that sum to 1), `.csv` / `.parquet` (tabular; see [docs](https://sdk.orionfinance.ai/))
+- **Inline:** a JSON object or Python `dict` literal string (no file needed)
+
+```bash
+# From a JSON file
+echo '{"0x...": 0.4, "0x...": 0.2, "0x...": 0.15, "0x...": 0.15, "0x...": 0.1}' > order_intent.json
+orion submit-order --order-intent order_intent.json
+
+# Inline
+orion submit-order --order-intent '{"0x...": 0.4, "0x...": 0.6}'
 ```
+
+Parquet support requires **pyarrow** (`pip install 'orion-finance-sdk-py[parquet]'` or it is included in the dev extra).
 
 ### Update the strategist address for a vault
 

@@ -86,6 +86,28 @@ def test_submit_order_transparent(
 @patch("orion_finance_sdk_py.cli.OrionTransparentVault")
 @patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
+@patch("orion_finance_sdk_py.cli.validate_order")
+def test_submit_order_inline_json(mock_validate, mock_ensure, MockConfig, MockVault):
+    """Inline JSON object (no file) for order intent."""
+    mock_config = MockConfig.return_value
+    mock_config.orion_transparent_vaults = ["0xTransVault"]
+
+    mock_vault = MockVault.return_value
+    mock_vault.submit_order_intent.return_value = MagicMock(decoded_logs=[])
+
+    result = runner.invoke(
+        app,
+        ["submit-order", "--order-intent", '{"0xA": 1.0}'],
+        env={"ORION_VAULT_ADDRESS": "0xTransVault", "CHAIN_ID": "11155111"},
+    )
+
+    assert result.exit_code == 0
+    assert "Order intent submitted successfully" in result.stdout
+
+
+@patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
 def test_update_strategist(mock_ensure, MockConfig, MockVault):
     """Test update strategist."""
     mock_config = MockConfig.return_value

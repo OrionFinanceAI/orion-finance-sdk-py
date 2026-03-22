@@ -1,6 +1,5 @@
 """Command line interface for the Orion Finance Python SDK."""
 
-import json
 import os
 import sys
 
@@ -14,6 +13,7 @@ from .contracts import (
     OrionTransparentVault,
     VaultFactory,
 )
+from .order_intent_io import load_order_intent
 from .types import (
     ZERO_ADDRESS,
     FeeType,
@@ -74,8 +74,12 @@ def _deploy_vault_logic(
         print("\n❌ Could not extract vault address from transaction")
 
 
-def _submit_order_logic(order_intent_path: str):
-    """Logic for submitting an order."""
+def _submit_order_logic(order_intent_source: str):
+    """Logic for submitting an order.
+
+    ``order_intent_source`` may be a path to ``.json`` / ``.csv`` / ``.parquet``, or an
+    inline JSON / Python dict literal string mapping addresses to weights.
+    """
     vault_address = validate_var(
         os.getenv("ORION_VAULT_ADDRESS"),
         error_message=(
@@ -84,8 +88,7 @@ def _submit_order_logic(order_intent_path: str):
         ),
     )
 
-    with open(order_intent_path, "r") as f:
-        order_intent = json.load(f)
+    order_intent = load_order_intent(order_intent_source)
 
     config = OrionConfig()
 
@@ -201,9 +204,7 @@ def _list_whitelisted_assets_logic():
     console = Console()
     config = OrionConfig()
 
-    with console.status(
-        "[bold green]Fetching whitelisted assets from chain..."
-    ) as status:
+    with console.status("[bold green]Fetching whitelisted assets from chain..."):
         assets = config.whitelisted_assets
         try:
             names = [n.strip() for n in config.whitelisted_asset_names]
@@ -340,7 +341,11 @@ def interactive_menu():
                 )
 
             elif choice == "Submit Order":
-                path = ask_or_exit(questionary.path("Path to Order Intent JSON:"))
+                path = ask_or_exit(
+                    questionary.text(
+                        "Order intent: path to .json/.csv/.parquet or inline JSON object:",
+                    )
+                )
                 _submit_order_logic(path)
 
             elif choice == "Update Strategist":
@@ -458,12 +463,18 @@ def deploy_vault(
 
 @app.command()
 def submit_order(
-    order_intent_path: str = typer.Option(
-        ..., help="Path to JSON file containing order intent"
+    order_intent: str = typer.Option(
+        ...,
+        "--order-intent",
+        "--order-intent-path",
+        help=(
+            "Path to .json (object), .csv, or .parquet order intent; or inline JSON / "
+            "Python dict literal, e.g. '{\"0xabc...\": 0.5, ...}'"
+        ),
     ),
 ) -> None:
-    """Submit an order intent to an Orion vault. The order intent can be either transparent or encrypted."""
-    _submit_order_logic(order_intent_path)
+    """Submit an order intent to an Orion vault (transparent vaults: JSON/CSV/Parquet file or inline dict)."""
+    _submit_order_logic(order_intent)
 
 
 @app.command()
