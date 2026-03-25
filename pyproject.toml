@@ -24,11 +24,11 @@ dependencies = [
 
 [project.optional-dependencies]
 parquet = [
-    "pyarrow>=14.0.0,<20.0.0",
+    "pyarrow>=14.0.0,<24.0.0",
 ]
 
 dev = [
-    "pyarrow>=14.0.0,<20.0.0",
+    "pyarrow>=14.0.0,<24.0.0",
     "eth-ape>=0.8.0",
     "ape-hardhat>=0.8.0,<2.0.0",
     "ape-alchemy>=0.8.0,<2.0.0",
