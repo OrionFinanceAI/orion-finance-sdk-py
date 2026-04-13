@@ -6,7 +6,7 @@ import os
 import sys
 import types
 from io import StringIO
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from orion_finance_sdk_py.contracts import (
@@ -296,9 +296,13 @@ class TestOrionSmartContract:
         nets = MagicMock()
         nets.active_provider = MagicMock()
         nets.active_provider.web3 = MagicMock()
-        type(nets.active_provider.web3.eth).chain_id = PropertyMock(
-            side_effect=RuntimeError("chain boom")
-        )
+
+        class _EthBoom:
+            @property
+            def chain_id(self):
+                raise RuntimeError("chain boom")
+
+        nets.active_provider.web3.eth = _EthBoom()
         ape_mod.networks = nets
         saved = sys.modules.get("ape")
         sys.modules["ape"] = ape_mod
@@ -351,10 +355,10 @@ class TestOrionSmartContract:
         """No RPC_URL and ape import fails: plain ValueError (lines 166–173)."""
         real_import = builtins.__import__
 
-        def _deny_ape(name, globals=None, locals=None, fromlist=(), level=0):
+        def _deny_ape(name, _globals=None, _locals=None, fromlist=(), level=0):
             if name == "ape":
                 raise ImportError("no ape")
-            return real_import(name, globals, locals, fromlist, level)
+            return real_import(name, _globals, _locals, fromlist, level)
 
         saved_env = dict(os.environ)
         try:
