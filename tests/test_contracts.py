@@ -170,19 +170,17 @@ class TestOrionSmartContract:
         )
         contract.contract.events = [event_mock]
 
-        receipt = MagicMock()
-        log_mock = MagicMock()
-        log_mock.address = "0xAddress"  # Matching address
-        receipt.logs = [log_mock]
+        # TxReceipt / LogReceipt are dict-like (TypedDict); production uses receipt["logs"] and log["address"].
+        log_entry = {"address": "0xAddress"}
+        receipt = {"logs": [log_entry]}
 
         logs = contract._decode_logs(receipt)
         assert len(logs) == 1
         assert logs[0]["event"] == "TestEvent"
 
         # Test ignoring logs from other contracts
-        log_mock_other = MagicMock()
-        log_mock_other.address = "0xOther"
-        receipt.logs = [log_mock_other]
+        log_entry_other = {"address": "0xOther"}
+        receipt = {"logs": [log_entry_other]}
         logs = contract._decode_logs(receipt)
         assert len(logs) == 0
 
