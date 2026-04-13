@@ -70,7 +70,15 @@ def sepolia_fork():
         try:
             with networks.ethereum.sepolia_fork.use_provider("hardhat"):
                 prov = networks.active_provider
-                if prov is None or not getattr(prov, "web3", None):
+                w3 = getattr(prov, "web3", None) if prov is not None else None
+                if prov is None or w3 is None:
+                    pytest.skip(
+                        "Ape active provider is not connected (cannot run fork tests)"
+                    )
+                _is_conn = getattr(w3, "is_connected", None) or getattr(
+                    w3, "isConnected", None
+                )
+                if _is_conn is not None and not _is_conn():
                     pytest.skip(
                         "Ape active provider is not connected (cannot run fork tests)"
                     )
