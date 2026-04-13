@@ -5,8 +5,10 @@
   "main": "src/index.js",
   "author": "Orion Finance",
   "license": "BSD-3-Clause",
+  "packageManager": "npm@11.12.1",
   "engines": {
-    "node": ">=16.0.0"
+    "node": "^20.17.0 || >=22.9.0",
+    "npm": ">=11.10.0"
   },
   "repository": {
     "type": "git",
