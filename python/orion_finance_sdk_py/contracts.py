@@ -149,9 +149,9 @@ class OrionSmartContract:
     def _decode_logs(self, receipt: TxReceipt) -> list[dict]:
         """Decode logs from a transaction receipt."""
         decoded_logs = []
-        for log in receipt.logs:
+        for log in receipt["logs"]:
             # Only process logs from this contract
-            if log.address.lower() != self.contract_address.lower():
+            if log["address"].lower() != self.contract_address.lower():
                 continue
 
             # Try to decode the log with each event in the contract
