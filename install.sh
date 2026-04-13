@@ -337,7 +337,8 @@ if [ "${1:-}" = "--test-secret-read" ]; then
     printf "  Test: type or paste (shown as **), Enter to finish: " >&2
     _t=$(read_secret_line)
     echo "" >&2
-    log_ok "Read ${_t} characters (secret not printed)"
+    _len=${#_t}
+    log_ok "Read ${_len} characters (secret not printed)"
     exit 0
 fi
 
