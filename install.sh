@@ -4,6 +4,8 @@
 # Environment variables:
 #   VERSION     — specific version to install (default: latest from PyPI)
 #   INSTALL_DIR — override directory to put the 'orion' binary (default: auto-detected)
+#
+# Local test only (no install):  sh install.sh --test-secret-read
 
 set -e
 
@@ -19,6 +21,43 @@ log_err() { printf "  ✗ %s\n" "$*" >&2; }
 err()     { log_err "$*"; exit 1; }
 has()     { command -v "$1" > /dev/null 2>&1; }
 has_tty() { [ -t 0 ] || [ -t 1 ] || [ -t 2 ]; }
+
+# stty must target the real tty (e.g. when stdin is a pipe: curl ... | sh).
+tty_echo_off() { stty -echo < /dev/tty 2>/dev/null || true; }
+tty_echo_on()  { stty echo  < /dev/tty 2>/dev/null || true; }
+
+# Bash: read from /dev/tty one char at a time; print * to stderr (stdout is only the secret).
+# Use bash -s + heredoc (not bash -c "$(cat ...)") so /bin/sh does not mangle $'..' or quotes on macOS.
+# Falls back to stty+read when bash is missing.
+read_secret_line() {
+    if has bash; then
+        bash -s <<'EOS'
+line=""
+while IFS= read -r -s -n1 char; do
+  # Enter: newline, CR (macOS), or empty (some terminals send nothing for newline with read -n1)
+  case "$char" in
+    $'\n'|$'\r'|"") break ;;
+  esac
+  if [ "$char" = $'\177' ] || [ "$char" = $'\b' ]; then
+    if [ -n "$line" ]; then
+      line="${line%?}"
+      printf '\b \b\b \b' >&2
+    fi
+    continue
+  fi
+  line="${line}${char}"
+  printf '**' >&2
+done < /dev/tty
+printf '\n' >&2
+printf %s "$line"
+EOS
+        return
+    fi
+    tty_echo_off
+    read -r line < /dev/tty
+    tty_echo_on
+    printf %s "$line"
+}
 
 # ─── step 1: ensure uv is installed ──────────────────────────────────────────
 
@@ -207,20 +246,16 @@ post_install() {
 
     # ─── MANAGER_PRIVATE_KEY (required) ─────────────────────────────────────
     echo "" >&2
-    trap 'stty echo 2>/dev/null' EXIT INT TERM
+    trap 'tty_echo_on' EXIT INT TERM
     while [ -z "$manager_key" ]; do
-        printf "  MANAGER_PRIVATE_KEY=(paste here, required): " >&2
-        stty -echo 2>/dev/null || true
-        read -r manager_key < /dev/tty
-        stty echo 2>/dev/null || true
+        printf "  MANAGER_PRIVATE_KEY=(required, each char is hidden): " >&2
+        manager_key=$(read_secret_line)
         [ -n "$manager_key" ] || log_err "Private key is required. Try again."
     done
 
     # ─── STRATEGIST_PRIVATE_KEY (optional, default same as manager) ──────────
-    printf "  STRATEGIST_PRIVATE_KEY=(paste here, or Enter = same as manager): " >&2
-    stty -echo 2>/dev/null || true
-    read -r strategist_key < /dev/tty
-    stty echo 2>/dev/null || true
+    printf "  STRATEGIST_PRIVATE_KEY=(Enter = same as manager, each char is hidden): " >&2
+    strategist_key=$(read_secret_line)
     trap - EXIT INT TERM
     [ -n "$strategist_key" ] || strategist_key="$manager_key"
 
@@ -292,5 +327,18 @@ main() {
         echo "" >&2
     fi
 }
+
+# Minimal local test (no uv / PyPI): masked TTY read only
+if [ "${1:-}" = "--test-secret-read" ]; then
+    if ! has_tty; then
+        err "Need an interactive terminal (not piped). Run: sh install.sh --test-secret-read"
+    fi
+    echo "" >&2
+    printf "  Test: type or paste (shown as **), Enter to finish: " >&2
+    _t=$(read_secret_line)
+    echo "" >&2
+    log_ok "Read ${_t} characters (secret not printed)"
+    exit 0
+fi
 
 main "$@"
