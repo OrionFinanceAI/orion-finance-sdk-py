@@ -78,9 +78,16 @@ class OrionSmartContract:
             load_dotenv(os.getcwd() + "/.env")
             rpc_url = os.getenv("RPC_URL")
 
-        ape_error = None
-        if not rpc_url:
-            # Check if we are in an ape context
+        # Fork tests: load_dotenv() above can restore RPC_URL from disk; ORION_USE_APE_PROVIDER
+        # forces Ape's Hardhat web3 before the HTTP branch (see tests/test_fork.py sepolia_fork).
+        use_ape_provider = os.getenv("ORION_USE_APE_PROVIDER", "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+        )
+
+        if use_ape_provider:
+            ape_error = None
             try:
                 from ape import networks
 
@@ -90,7 +97,7 @@ class OrionSmartContract:
                     self.contract_name = contract_name
                     self.contract_address = contract_address
                     self.contract = self.w3.eth.contract(
-                        address=self.contract_address,
+                        address=Web3.to_checksum_address(self.contract_address),
                         abi=load_contract_abi(self.contract_name),
                     )
                     return
@@ -98,45 +105,72 @@ class OrionSmartContract:
                 pass
             except Exception as e:
                 ape_error = e
-
-        if not rpc_url:
             msg = (
-                "RPC_URL environment variable is missing or invalid. "
-                "Please set RPC_URL in your .env file or as an environment variable. "
+                "ORION_USE_APE_PROVIDER is set but Ape has no usable active_provider. "
+                "Run inside an Ape network context (e.g. sepolia_fork Hardhat)."
             )
             if ape_error is not None:
-                msg += f" (Ape provider failed: {ape_error})"
-                raise ValueError(msg) from ape_error
+                msg += f" ({ape_error})"
             raise ValueError(msg)
 
-        rpc_url = validate_var(
-            rpc_url,
-            error_message=(
-                "RPC_URL environment variable is missing or invalid. "
-                "Please set RPC_URL in your .env file or as an environment variable. "
-            ),
+        if rpc_url:
+            rpc_url = validate_var(
+                rpc_url,
+                error_message=(
+                    "RPC_URL environment variable is missing or invalid. "
+                    "Please set RPC_URL in your .env file or as an environment variable. "
+                ),
+            )
+
+            self.w3 = Web3(Web3.HTTPProvider(rpc_url))
+            self.chain_id = self.w3.eth.chain_id
+
+            env_chain_id = os.getenv("CHAIN_ID")
+            if env_chain_id:
+                try:
+                    env_chain_id_int = int(env_chain_id)
+                    if env_chain_id_int != self.chain_id:
+                        print(
+                            f"⚠️ Warning: CHAIN_ID in env ({env_chain_id}) does not match RPC chain ID ({self.chain_id})"
+                        )
+                except ValueError:
+                    print(f"⚠️ Warning: Invalid CHAIN_ID in env: {env_chain_id}")
+
+            self.contract_name = contract_name
+            self.contract_address = contract_address
+            self.contract = self.w3.eth.contract(
+                address=Web3.to_checksum_address(self.contract_address),
+                abi=load_contract_abi(self.contract_name),
+            )
+            return
+
+        ape_error = None
+        try:
+            from ape import networks
+
+            if networks.active_provider:
+                self.w3 = networks.active_provider.web3
+                self.chain_id = self.w3.eth.chain_id
+                self.contract_name = contract_name
+                self.contract_address = contract_address
+                self.contract = self.w3.eth.contract(
+                    address=Web3.to_checksum_address(self.contract_address),
+                    abi=load_contract_abi(self.contract_name),
+                )
+                return
+        except (ImportError, AttributeError):
+            pass
+        except Exception as e:
+            ape_error = e
+
+        msg = (
+            "RPC_URL environment variable is missing or invalid. "
+            "Please set RPC_URL in your .env file or as an environment variable. "
         )
-
-        self.w3 = Web3(Web3.HTTPProvider(rpc_url))
-        self.chain_id = self.w3.eth.chain_id
-
-        env_chain_id = os.getenv("CHAIN_ID")
-        if env_chain_id:
-            try:
-                env_chain_id_int = int(env_chain_id)
-                if env_chain_id_int != self.chain_id:
-                    print(
-                        f"⚠️ Warning: CHAIN_ID in env ({env_chain_id}) does not match RPC chain ID ({self.chain_id})"
-                    )
-            except ValueError:
-                print(f"⚠️ Warning: Invalid CHAIN_ID in env: {env_chain_id}")
-
-        self.contract_name = contract_name
-        self.contract_address = contract_address
-        self.contract = self.w3.eth.contract(
-            address=Web3.to_checksum_address(self.contract_address),
-            abi=load_contract_abi(self.contract_name),
-        )
+        if ape_error is not None:
+            msg += f" (Ape provider failed: {ape_error})"
+            raise ValueError(msg) from ape_error
+        raise ValueError(msg)
 
     def _wait_for_transaction_receipt(
         self, tx_hash: str, timeout: int = 120
@@ -149,9 +183,9 @@ class OrionSmartContract:
     def _decode_logs(self, receipt: TxReceipt) -> list[dict]:
         """Decode logs from a transaction receipt."""
         decoded_logs = []
-        for log in receipt.logs:
+        for log in receipt["logs"]:
             # Only process logs from this contract
-            if log.address.lower() != self.contract_address.lower():
+            if log["address"].lower() != self.contract_address.lower():
                 continue
 
             # Try to decode the log with each event in the contract

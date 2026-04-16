@@ -1,0 +1,5 @@
+# Supply-chain: only consider distributions uploaded before this cutoff (relative window).
+# Merged with user config ~/.config/uv/uv.toml; project wins for overlapping keys.
+# Override for one shot: UV_NO_CONFIG=1 uv sync  OR  uv sync --no-config
+# https://docs.astral.sh/uv/reference/settings/#exclude-newer
+exclude-newer = "7 days"

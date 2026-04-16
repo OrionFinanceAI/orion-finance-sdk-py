@@ -29,6 +29,11 @@ jobs:
             js/package-lock.json
             package-lock.json
 
+      - name: Enable Corepack (respect packageManager / npm min-release-age)
+        run: |
+          corepack enable
+          corepack prepare "$(node -p "require('./package.json').packageManager")" --activate
+
       - name: Cache Python packages
         uses: actions/cache@v4
         with:

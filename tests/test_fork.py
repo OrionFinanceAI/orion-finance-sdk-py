@@ -24,17 +24,26 @@ for _env_path in (
         load_dotenv(_env_path, override=True)
         break
 
+# Snapshot at import: sepolia_fork pops RPC_URL later, so skip logic cannot rely on env then.
+_HAS_FORK_UPSTREAM = bool(
+    (os.getenv("ALCHEMY_API_KEY") or "").strip()
+    or (os.getenv("RPC_URL") or "").strip()
+    or (os.getenv("WEB3_ETHEREUM_SEPOLIA_ALCHEMY_API_KEY") or "").strip()
+    or (os.getenv("WEB3_ALCHEMY_API_KEY") or "").strip()
+)
+
 try:
     from ape import accounts, networks
 
     HAS_APE = True
 except ImportError:
     HAS_APE = False
+    accounts = networks = None  # type: ignore[assignment]
 
-
-def _has_fork_config() -> bool:
-    """True if any RPC/fork env var is set (after .env loaded)."""
-    return bool(os.getenv("ALCHEMY_API_KEY") or os.getenv("RPC_URL"))
+try:
+    from ape_hardhat.exceptions import HardhatSubprocessError
+except ImportError:
+    HardhatSubprocessError = None  # type: ignore[misc,assignment]
 
 
 @pytest.fixture(autouse=True)
@@ -42,15 +51,56 @@ def _require_ape_and_fork_config():
     """Skip fork tests when ape is not installed or fork env is not set."""
     if not HAS_APE:
         pytest.skip("ape not installed")
-    if not _has_fork_config():
-        pytest.skip("Fork not configured: set ALCHEMY_API_KEY or RPC_URL in .env")
+    if not _HAS_FORK_UPSTREAM:
+        pytest.skip(
+            "Fork not configured: set ALCHEMY_API_KEY or RPC_URL in .env "
+            "(or rely on tests/conftest.py mirroring from an Alchemy RPC_URL)"
+        )
 
 
 @pytest.fixture(scope="module")
 def sepolia_fork():
-    """Shared Hardhat Sepolia fork; started once per module to avoid repeated subprocess cost."""
-    with networks.ethereum.sepolia_fork.use_provider("hardhat"):
-        yield
+    """Shared Hardhat Sepolia fork (module-scoped). Sets ORION_USE_APE_PROVIDER=1 because
+    OrionSmartContract.load_dotenv can restore RPC_URL and bypass the fork; pops RPC_URL
+    then restores both in finally."""
+    _prev_rpc = os.environ.pop("RPC_URL", None)
+    _prev_use_ape = os.environ.get("ORION_USE_APE_PROVIDER")
+    os.environ["ORION_USE_APE_PROVIDER"] = "1"
+    try:
+        try:
+            with networks.ethereum.sepolia_fork.use_provider("hardhat"):
+                prov = networks.active_provider
+                w3 = getattr(prov, "web3", None) if prov is not None else None
+                if prov is None or w3 is None:
+                    pytest.skip(
+                        "Ape active provider is not connected (cannot run fork tests)"
+                    )
+                _is_conn = getattr(w3, "is_connected", None) or getattr(
+                    w3, "isConnected", None
+                )
+                if _is_conn is not None and not _is_conn():
+                    pytest.skip(
+                        "Ape active provider is not connected (cannot run fork tests)"
+                    )
+                yield
+        except Exception as exc:
+            if (
+                HardhatSubprocessError is not None
+                and isinstance(exc, HardhatSubprocessError)
+                and "Unable to find Hardhat binary" in str(exc)
+            ):
+                pytest.skip(
+                    "Hardhat CLI not found. From the repository root run: npm ci "
+                    "(same as CI 'Install root Node deps'); fork tests need node_modules/hardhat."
+                )
+            raise
+    finally:
+        if _prev_use_ape is None:
+            os.environ.pop("ORION_USE_APE_PROVIDER", None)
+        else:
+            os.environ["ORION_USE_APE_PROVIDER"] = _prev_use_ape
+        if _prev_rpc is not None:
+            os.environ["RPC_URL"] = _prev_rpc
 
 
 def test_comprehensive_config_on_fork(sepolia_fork):

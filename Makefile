@@ -44,5 +44,6 @@ test:
 	uv run pytest -c pyproject.toml --cov=orion_finance_sdk_py --cov-report=xml --cov-report=term tests/
 
 .PHONY: sepolia-fork
+# Prefer pytest: `ape test --network` connects during collection (extra Hardhat boot + 20s quirks).
 sepolia-fork:
-	uv run ape test tests/test_fork.py --network ethereum:sepolia-fork:hardhat -s
+	uv run pytest tests/test_fork.py -v -s
