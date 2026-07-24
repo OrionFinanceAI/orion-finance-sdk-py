@@ -34,7 +34,7 @@ orion --help
 Alternatively, install the latest stable version from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=1.3.1"
+pip install "orion-finance-sdk-py>=1.4.0"
 ```
 
 ## Configure Environment
