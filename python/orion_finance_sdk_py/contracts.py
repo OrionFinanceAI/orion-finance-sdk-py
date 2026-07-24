@@ -711,6 +711,21 @@ class OrionVault(OrionSmartContract):
         super().__init__(contract_name, contract_address)
 
     @property
+    def name(self) -> str:
+        """Fetch the vault ERC-20 name."""
+        return _call_view(self.contract.functions.name())
+
+    @property
+    def symbol(self) -> str:
+        """Fetch the vault ERC-20 symbol."""
+        return _call_view(self.contract.functions.symbol())
+
+    @property
+    def decimals(self) -> int:
+        """Fetch the vault share token decimals."""
+        return _call_view(self.contract.functions.decimals())
+
+    @property
     def max_performance_fee(self) -> int:
         """Fetch the maximum performance fee allowed from the vault contract."""
         return _call_view(self.contract.functions.MAX_PERFORMANCE_FEE())
@@ -1209,6 +1224,23 @@ class OrionTransparentVault(OrionVault):
             contract_address: Vault address. If omitted, uses ``ORION_VAULT_ADDRESS``.
         """
         super().__init__("OrionTransparentVault", contract_address=contract_address)
+
+    def get_intent(self) -> dict[str, float]:
+        """Fetch the current strategist intent as fractional weights (sum ≈ 1).
+
+        On-chain weights are scaled by ``OrionConfig.strategist_intent_decimals``.
+        Returns an empty dict when no intent is set. Compare with
+        ``get_portfolio_pct_tvl()`` to see expected rebalancing.
+        """
+        tokens, weights = _call_view(self.contract.functions.getIntent())
+        if not tokens:
+            return {}
+        config = OrionConfig()
+        scale = 10**config.strategist_intent_decimals
+        return {
+            Web3.to_checksum_address(token): int(weight) / scale
+            for token, weight in zip(tokens, weights, strict=True)
+        }
 
     def transfer_manager_fees(self, amount: int) -> TransactionResult:
         """Transfer manager fees (claimVaultFees)."""

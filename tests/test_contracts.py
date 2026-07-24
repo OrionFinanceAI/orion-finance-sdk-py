@@ -1119,6 +1119,38 @@ class TestOrionVaults:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_vault_name_symbol_decimals(self, MockConfig):
+        """Vault name, symbol, and decimals are readable view properties."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        vault.contract.functions.name().call.return_value = "Alpha Vault"
+        vault.contract.functions.symbol().call.return_value = "ALPH"
+        vault.contract.functions.decimals().call.return_value = 18
+
+        assert vault.name == "Alpha Vault"
+        assert vault.symbol == "ALPH"
+        assert vault.decimals == 18
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_get_intent_normalizes_weights(self, MockConfig):
+        """get_intent returns fractional weights scaled by strategist_intent_decimals."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        MockConfig.return_value.strategist_intent_decimals = 4
+        vault = OrionTransparentVault()
+        vault.contract.functions.getIntent().call.return_value = (
+            ["0xA", "0xB"],
+            [6000, 4000],
+        )
+
+        intent = vault.get_intent()
+        assert intent == {"0xA": 0.6, "0xB": 0.4}
+
+        vault.contract.functions.getIntent().call.return_value = ([], [])
+        assert vault.get_intent() == {}
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_orion_vault_v2_features(self, MockConfig, mock_w3):
         """Test v2.0.0 vault features: async operations and new getters."""
         # Setup config

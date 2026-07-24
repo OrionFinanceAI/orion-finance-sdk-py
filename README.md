@@ -146,6 +146,20 @@ vault = OrionTransparentVault()
 weights = vault.get_portfolio_pct_tvl()  # portfolio as fractions of PIT TVL
 ```
 
+### Discover vaults, metadata, and intent (Python)
+
+```python
+from orion_finance_sdk_py import OrionConfig, OrionTransparentVault
+
+config = OrionConfig()
+for addr in config.orion_transparent_vaults:
+    vault = OrionTransparentVault(contract_address=addr)
+    print(vault.name, vault.symbol, vault.share_price)
+    intent = vault.get_intent()  # target weights (fractions, sum ≈ 1)
+    current = vault.get_portfolio_pct_tvl()  # PIT allocation
+    # Compare intent vs current for expected rebalancing (in your notebook)
+```
+
 ### Vault share price history (notebook)
 
 The SDK reads on-chain share prices (live or historical). Use pandas in your notebook for correlation analysis:

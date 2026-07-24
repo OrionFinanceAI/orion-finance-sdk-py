@@ -301,6 +301,24 @@ def test_vault_share_price_at_recent_block_on_fork(sepolia_fork):
     assert vault.share_price_at(latest) == at_latest
 
 
+def test_vault_name_symbol_and_intent_on_fork(sepolia_fork):
+    """Vault name/symbol are non-empty; get_intent returns a weight dict."""
+    config = OrionConfig()
+    vaults = config.orion_transparent_vaults
+    if not vaults:
+        pytest.skip("No Orion Transparent Vaults found")
+
+    vault = OrionTransparentVault(contract_address=vaults[0])
+    assert isinstance(vault.name, str) and len(vault.name) > 0
+    assert isinstance(vault.symbol, str) and len(vault.symbol) > 0
+    assert vault.decimals > 0
+
+    intent = vault.get_intent()
+    assert isinstance(intent, dict)
+    if intent:
+        assert abs(sum(intent.values()) - 1.0) < 1e-6
+
+
 def test_vault_can_request_deposit_and_max_deposit_on_fork(sepolia_fork, monkeypatch):
     """Vault can_request_deposit and max_deposit for a receiver on fork."""
     config = OrionConfig()

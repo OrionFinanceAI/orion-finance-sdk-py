@@ -219,9 +219,28 @@ share_price = vault.share_price  # value of 1 full share in underlying units
 
 `PriceAdapterRegistry` is resolved from `OrionConfig.price_adapter_registry`.
 
+## Vault metadata and strategist intent
+
+Transparent vaults expose ERC-20 metadata and the current on-chain intent:
+
+```python
+from orion_finance_sdk_py import OrionConfig, OrionTransparentVault
+
+config = OrionConfig()
+for addr in config.orion_transparent_vaults:
+    vault = OrionTransparentVault(contract_address=addr)
+    print(vault.name, vault.symbol, vault.decimals)
+    print(vault.manager_address, vault.strategist_address)
+    intent = vault.get_intent()  # address -> fraction (sum ≈ 1); {} if unset
+    current = vault.get_portfolio_pct_tvl()
+    # Diff intent vs current to reason about expected rebalancing
+```
+
+`get_intent()` scales on-chain weights by `OrionConfig.strategist_intent_decimals` so they match the fractional weights used when submitting intents.
+
 ## Vault share price history (manager notebooks)
 
-The SDK owns **on-chain reads** (live and historical `eth_call`). Correlation / DataFrame work stays in your notebook (e.g. pandas — not an SDK dependency).
+The SDK owns **on-chain reads** (live and historical `eth_call`). Correlation / DataFrame / plotting work belongs in your own notebook project — install the SDK there with `uv pip install orion-finance-sdk-py` (pandas and matplotlib are not SDK dependencies).
 
 ```python
 from datetime import datetime, timezone, timedelta
