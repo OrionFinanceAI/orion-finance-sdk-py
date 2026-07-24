@@ -17,6 +17,7 @@ def test_abi_loading():
         "OrionConfig",
         "TransparentVaultFactory",
         "OrionTransparentVault",
+        "PriceAdapterRegistry",
     ]
 
     for abi_name in abis:

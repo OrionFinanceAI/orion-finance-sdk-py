@@ -197,6 +197,26 @@ For CSV/Parquet you can also use **`token`** / **`addr`** for the address column
 > - For **transparent vaults**, these values will be visible onchain once submitted.
 > - For **private vaults**, values are encrypted and only known to managers.
 
+## PIT prices and portfolio %TVL
+
+Managers can read point-in-time (PIT) oracle prices for the full investment universe and combine them with the vault portfolio to estimate current portfolio weights:
+
+```python
+from orion_finance_sdk_py.contracts import (
+    OrionTransparentVault,
+    PriceAdapterRegistry,
+)
+
+registry = PriceAdapterRegistry()
+prices = registry.get_prices()  # address -> price for every whitelisted asset
+
+vault = OrionTransparentVault()
+portfolio = vault.get_portfolio()  # address -> shares
+pct_tvl = vault.get_portfolio_pct_tvl()  # address -> weight (sums to ~1)
+pit_tvl = vault.point_in_time_total_assets()
+```
+
+`PriceAdapterRegistry` is resolved from `OrionConfig.price_adapter_registry`.
 
 ### API Reference
 

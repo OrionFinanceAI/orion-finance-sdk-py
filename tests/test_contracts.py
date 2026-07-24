@@ -15,6 +15,7 @@ from orion_finance_sdk_py.contracts import (
     OrionSmartContract,
     OrionTransparentVault,
     OrionVault,
+    PriceAdapterRegistry,
     SystemNotIdleError,
     TransactionResult,
     VaultFactory,
@@ -512,6 +513,14 @@ class TestOrionConfig:
         ]
         assert config.whitelisted_asset_names == ["USDC", "WETH"]
 
+        config.contract.functions.priceAdapterRegistry().call.return_value = (
+            "0xPriceRegistry"
+        )
+        assert config.price_adapter_registry == "0xPriceRegistry"
+
+        config.contract.functions.priceAdapterDecimals().call.return_value = 8
+        assert config.price_adapter_decimals == 8
+
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_init_invalid_chain(self):
         """Test init with invalid chain ID (chain 1 not in CHAIN_CONFIG)."""
@@ -589,6 +598,47 @@ class TestLiquidityOrchestrator:
 
         lo.contract.functions.epochDuration().call.return_value = 3600
         assert lo.epoch_duration == 3600
+
+
+class TestPriceAdapterRegistry:
+    """Tests for PriceAdapterRegistry."""
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_init_from_config_and_get_price(self, MockConfig):
+        MockConfig.return_value.price_adapter_registry = "0xRegistry"
+
+        registry = PriceAdapterRegistry()
+        assert registry.contract_address == "0xRegistry"
+
+        registry.contract.functions.getPrice("0xA").call.return_value = 1_000_000
+        assert registry.get_price("0xA") == 1_000_000
+
+        registry.contract.functions.priceAdapterDecimals().call.return_value = 8
+        assert registry.price_adapter_decimals == 8
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_get_prices_full_universe(self, MockConfig):
+        MockConfig.return_value.price_adapter_registry = "0xRegistry"
+        MockConfig.return_value.whitelisted_assets = ["0xA", "0xB"]
+
+        registry = PriceAdapterRegistry()
+
+        def get_price_side_effect(asset):
+            mock_call = MagicMock()
+            mock_call.call.return_value = {"0xA": 100, "0xB": 200}[asset]
+            return mock_call
+
+        registry.contract.functions.getPrice.side_effect = get_price_side_effect
+
+        prices = registry.get_prices()
+        assert prices == {"0xA": 100, "0xB": 200}
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_init_with_explicit_address(self):
+        registry = PriceAdapterRegistry(contract_address="0xExplicit")
+        assert registry.contract_address == "0xExplicit"
 
 
 class TestVaultFactory:
@@ -887,6 +937,37 @@ class TestOrionVaults:
         assert vault.get_portfolio() == {"0xA": 100, "0xB": 200}
         assert vault.max_deposit("0xReceiver") == 5000
         assert vault.share_price == 10**18
+
+        with patch(
+            "orion_finance_sdk_py.contracts.PriceAdapterRegistry"
+        ) as MockRegistry:
+            reg = MockRegistry.return_value
+            reg.get_prices.return_value = {"0xA": 10**8, "0xB": 10**8}
+            reg.price_adapter_decimals = 8
+            # values: 100*1e8/1e8=100, 200*1e8/1e8=200 → total 300 → 1/3, 2/3
+            assert vault.point_in_time_total_assets() == 300
+            pct = vault.get_portfolio_pct_tvl()
+            assert abs(pct["0xA"] - 100 / 300) < 1e-9
+            assert abs(pct["0xB"] - 200 / 300) < 1e-9
+
+        with patch(
+            "orion_finance_sdk_py.contracts.PriceAdapterRegistry"
+        ) as MockRegistry:
+            reg = MockRegistry.return_value
+            reg.get_prices.return_value = {"0xA": 10**8}  # missing 0xB
+            reg.price_adapter_decimals = 8
+            with pytest.raises(ValueError, match="No PIT price"):
+                vault.point_in_time_total_assets()
+
+        with patch(
+            "orion_finance_sdk_py.contracts.PriceAdapterRegistry"
+        ) as MockRegistry:
+            vault.contract.functions.getPortfolio().call.return_value = ([], [])
+            reg = MockRegistry.return_value
+            reg.get_prices.return_value = {}
+            reg.price_adapter_decimals = 8
+            assert vault.point_in_time_total_assets() == 0
+            assert vault.get_portfolio_pct_tvl() == {}
 
         config_instance.token_decimals = MagicMock(return_value=6)
         config_instance.underlying_asset = "0xUnderlying"

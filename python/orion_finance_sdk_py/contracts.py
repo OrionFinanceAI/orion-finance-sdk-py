@@ -337,6 +337,66 @@ class OrionConfig(OrionSmartContract):
         """Check if the system is in idle state, required for vault deployment."""
         return _call_view(self.contract.functions.isSystemIdle())
 
+    @property
+    def price_adapter_registry(self) -> str:
+        """Fetch the PriceAdapterRegistry contract address."""
+        return _call_view(self.contract.functions.priceAdapterRegistry())
+
+    @property
+    def price_adapter_decimals(self) -> int:
+        """Fetch the price adapter decimals from OrionConfig."""
+        return _call_view(self.contract.functions.priceAdapterDecimals())
+
+
+class PriceAdapterRegistry(OrionSmartContract):
+    """PriceAdapterRegistry contract for point-in-time asset prices."""
+
+    def __init__(self, contract_address: str | None = None):
+        """Initialize the PriceAdapterRegistry contract.
+
+        Args:
+            contract_address: Optional registry address. If omitted, resolved from
+                ``OrionConfig.price_adapter_registry``.
+        """
+        if contract_address is None:
+            config = OrionConfig()
+            contract_address = config.price_adapter_registry
+        super().__init__(
+            contract_name="PriceAdapterRegistry",
+            contract_address=contract_address,
+        )
+
+    @property
+    def price_adapter_decimals(self) -> int:
+        """Fetch the price adapter decimals from the registry."""
+        return _call_view(self.contract.functions.priceAdapterDecimals())
+
+    def get_price(self, asset: str) -> int:
+        """Fetch the point-in-time price for a single asset.
+
+        Args:
+            asset: Token contract address.
+
+        Returns:
+            Price scaled by ``price_adapter_decimals``.
+        """
+        return _call_view(
+            self.contract.functions.getPrice(Web3.to_checksum_address(asset))
+        )
+
+    def get_prices(self) -> dict[str, int]:
+        """Fetch point-in-time prices for the full investment universe.
+
+        Returns:
+            Mapping of checksummed asset address to price (scaled by
+            ``price_adapter_decimals``).
+        """
+        config = OrionConfig()
+        assets = config.whitelisted_assets
+        return {
+            Web3.to_checksum_address(asset): self.get_price(asset) for asset in assets
+        }
+
 
 class LiquidityOrchestrator(OrionSmartContract):
     """LiquidityOrchestrator contract."""
@@ -809,9 +869,69 @@ class OrionVault(OrionSmartContract):
         return _call_view(self.contract.functions.convertToAssets(shares))
 
     def get_portfolio(self) -> dict:
-        """Get the vault portfolio."""
+        """Get the vault portfolio.
+
+        Returns:
+            Mapping of token address to shares held per asset.
+        """
         tokens, values = _call_view(self.contract.functions.getPortfolio())
         return dict(zip(tokens, values, strict=True))
+
+    def _portfolio_position_values(
+        self, portfolio: dict[str, int] | None = None
+    ) -> dict[str, int]:
+        """Value each portfolio position using PIT prices from the registry.
+
+        Position value (underlying units) is ``shares * price / 10**decimals``.
+        """
+        if portfolio is None:
+            portfolio = self.get_portfolio()
+        if not portfolio:
+            return {}
+
+        registry = PriceAdapterRegistry()
+        prices = registry.get_prices()
+        decimals = registry.price_adapter_decimals
+        scale = 10**decimals
+
+        # Normalize price keys for lookup (checksum + lowercase)
+        price_by_lower = {addr.lower(): price for addr, price in prices.items()}
+
+        values: dict[str, int] = {}
+        for token, shares in portfolio.items():
+            checksum = Web3.to_checksum_address(token)
+            if checksum.lower() not in price_by_lower:
+                raise ValueError(
+                    f"No PIT price for portfolio token {checksum}. "
+                    "Token may not be in the investment universe."
+                )
+            price = price_by_lower[checksum.lower()]
+            values[checksum] = (int(shares) * int(price)) // scale
+        return values
+
+    def point_in_time_total_assets(self) -> int:
+        """Estimate vault TVL from portfolio shares and PIT oracle prices.
+
+        Returns:
+            Sum of position values in underlying units (same scaling as registry
+            prices after dividing by ``price_adapter_decimals``).
+        """
+        return sum(self._portfolio_position_values().values())
+
+    def get_portfolio_pct_tvl(self) -> dict[str, float]:
+        """Portfolio weights as fractions of PIT TVL (sum to ~1.0).
+
+        Combines ``get_portfolio()`` with ``PriceAdapterRegistry.get_prices()``.
+
+        Returns:
+            Mapping of checksummed token address to weight in [0, 1]. Empty if
+            the portfolio is empty or PIT total is zero.
+        """
+        position_values = self._portfolio_position_values()
+        total = sum(position_values.values())
+        if total <= 0:
+            return {}
+        return {token: value / total for token, value in position_values.items()}
 
     def set_deposit_access_control(
         self, access_control_address: str

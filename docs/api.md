@@ -40,3 +40,12 @@
    :undoc-members:
    :show-inheritance:
 ```
+
+## Price Adapter Registry
+
+```{eval-rst}
+.. autoclass:: orion_finance_sdk_py.contracts.PriceAdapterRegistry
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```

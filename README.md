@@ -135,6 +135,16 @@ Parquet support requires **pyarrow** (`pip install 'orion-finance-sdk-py[parquet
 orion update-strategist --new-strategist-address 0x...
 ```
 
+### PIT prices and portfolio %TVL (Python)
+
+```python
+from orion_finance_sdk_py.contracts import OrionTransparentVault, PriceAdapterRegistry
+
+prices = PriceAdapterRegistry().get_prices()  # full investment universe
+vault = OrionTransparentVault()
+weights = vault.get_portfolio_pct_tvl()  # portfolio as fractions of PIT TVL
+```
+
 ### Update the fee model for a vault
 
 ```bash
