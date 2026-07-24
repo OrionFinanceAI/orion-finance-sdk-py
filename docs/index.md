@@ -43,7 +43,7 @@ Create a `.env` file in your project directory with the following variables:
 
 ### Required for Vault Deployment
 
-- **`RPC_URL`** (optional) - Chain RPC endpoint. If not set, the SDK uses a default public RPC (e.g. 1rpc.io, 0xrpc.io, or publicnode). Set this only if you want to use your own endpoint.
+- **`RPC_URL`** (optional) - Chain RPC endpoint. If not set, the SDK probes default public Sepolia RPCs in order (`1rpc.io` → `0xrpc.io` → `publicnode`) until one responds. Set this if you want your own endpoint (recommended for long historical queries).
 - **`MANAGER_PRIVATE_KEY`** - Manager private key for signing vault deployment transactions;
 - **`MANAGER_ADDRESS`** - Manager address for fees/ownership (must match the address derived from `MANAGER_PRIVATE_KEY`).
 
@@ -76,7 +76,7 @@ Deploy a new vault using the Orion CLI.
 
 An **RPC URL** is the endpoint the SDK uses to communicate with contracts on the blockchain network.
 
-It’s provided by a node or node service provider (e.g., [Alchemy](https://alchemy.com/)) and allows the SDK to send transactions and query blockchain data. **You do not have to set one** — if `RPC_URL` is omitted, the SDK uses a default public RPC. Set it only if you want to use your own endpoint (e.g. for higher rate limits or a specific chain).
+It’s provided by a node or node service provider (e.g., [Alchemy](https://alchemy.com/)) and allows the SDK to send transactions and query blockchain data. **You do not have to set one** — if `RPC_URL` is omitted, the SDK probes the same default public Sepolia RPCs as `install.sh`. Set it if you want your own endpoint (higher rate limits, mainnet, or long historical `eth_call` series).
 
 ## Getting an RPC URL (optional)
 
@@ -202,7 +202,7 @@ For CSV/Parquet you can also use **`token`** / **`addr`** for the address column
 Managers can read point-in-time (PIT) oracle prices for the full investment universe and combine them with the vault portfolio to estimate current portfolio weights:
 
 ```python
-from orion_finance_sdk_py.contracts import (
+from orion_finance_sdk_py import (
     OrionTransparentVault,
     PriceAdapterRegistry,
 )
@@ -210,13 +210,38 @@ from orion_finance_sdk_py.contracts import (
 registry = PriceAdapterRegistry()
 prices = registry.get_prices()  # address -> price for every whitelisted asset
 
-vault = OrionTransparentVault()
+vault = OrionTransparentVault()  # or OrionTransparentVault(contract_address="0x...")
 portfolio = vault.get_portfolio()  # address -> shares
 pct_tvl = vault.get_portfolio_pct_tvl()  # address -> weight (sums to ~1)
 pit_tvl = vault.point_in_time_total_assets()
+share_price = vault.share_price  # value of 1 full share in underlying units
 ```
 
 `PriceAdapterRegistry` is resolved from `OrionConfig.price_adapter_registry`.
+
+## Vault share price history (manager notebooks)
+
+The SDK owns **on-chain reads** (live and historical `eth_call`). Correlation / DataFrame work stays in your notebook (e.g. pandas — not an SDK dependency).
+
+```python
+from datetime import datetime, timezone, timedelta
+
+from orion_finance_sdk_py import OrionConfig, OrionTransparentVault
+
+config = OrionConfig()
+for addr in config.orion_transparent_vaults:
+    vault = OrionTransparentVault(contract_address=addr)
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=30)
+    series = vault.share_price_history(start=start, end=end, interval="1d")
+    # [{"timestamp": int, "block": int, "share_price": int}, ...]
+
+# Optional notebook analytics:
+# import pandas as pd
+# df = pd.DataFrame(series).set_index("timestamp")
+```
+
+You can also query a single past block with `vault.share_price_at(block)` or `registry.get_price(asset, block=...)`. For long series, set a dedicated `RPC_URL` — public endpoints are rate-limited.
 
 ### API Reference
 

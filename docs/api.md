@@ -49,3 +49,11 @@
    :undoc-members:
    :show-inheritance:
 ```
+
+## RPC defaults
+
+```{eval-rst}
+.. automodule:: orion_finance_sdk_py.rpc
+   :members:
+   :undoc-members:
+```

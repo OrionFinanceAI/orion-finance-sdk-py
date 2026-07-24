@@ -353,7 +353,7 @@ class TestOrionSmartContract:
 
     @pytest.mark.usefixtures("mock_load_abi")
     def test_init_no_rpc_ape_import_error(self):
-        """No RPC_URL and ape import fails: plain ValueError (lines 166–173)."""
+        """No RPC_URL, no ape, and public RPC cascade fails: ValueError."""
         real_import = builtins.__import__
 
         def _deny_ape(name, _globals=None, _locals=None, fromlist=(), level=0):
@@ -366,18 +366,22 @@ class TestOrionSmartContract:
             os.environ.pop("RPC_URL", None)
             os.environ.pop("ORION_USE_APE_PROVIDER", None)
             with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with patch("builtins.__import__", side_effect=_deny_ape):
-                    with pytest.raises(
-                        ValueError, match="RPC_URL environment variable"
-                    ):
-                        OrionSmartContract("TestContract", "0xAddress")
+                with patch(
+                    "orion_finance_sdk_py.contracts.pick_default_rpc",
+                    return_value=None,
+                ):
+                    with patch("builtins.__import__", side_effect=_deny_ape):
+                        with pytest.raises(
+                            ValueError, match="RPC_URL environment variable"
+                        ):
+                            OrionSmartContract("TestContract", "0xAddress")
         finally:
             os.environ.clear()
             os.environ.update(saved_env)
 
     @pytest.mark.usefixtures("mock_load_abi")
     def test_init_no_rpc_ape_other_exception_chained(self):
-        """No RPC_URL: unexpected error from ape path chains ValueError (lines 163–172)."""
+        """No RPC_URL: unexpected error from ape path chains ValueError."""
         ape_mod = types.ModuleType("ape")
 
         class _Ns:
@@ -393,10 +397,14 @@ class TestOrionSmartContract:
             os.environ.pop("RPC_URL", None)
             os.environ.pop("ORION_USE_APE_PROVIDER", None)
             with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with pytest.raises(
-                    ValueError, match="RPC_URL environment variable"
-                ) as exc:
-                    OrionSmartContract("TestContract", "0xAddress")
+                with patch(
+                    "orion_finance_sdk_py.contracts.pick_default_rpc",
+                    return_value=None,
+                ):
+                    with pytest.raises(
+                        ValueError, match="RPC_URL environment variable"
+                    ) as exc:
+                        OrionSmartContract("TestContract", "0xAddress")
             assert isinstance(exc.value.__cause__, RuntimeError)
         finally:
             os.environ.clear()
@@ -405,6 +413,33 @@ class TestOrionSmartContract:
                 sys.modules.pop("ape", None)
             else:
                 sys.modules["ape"] = saved
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
+    def test_init_uses_default_public_rpc_when_no_rpc_url(self):
+        """When RPC_URL is unset and ape is unavailable, use pick_default_rpc()."""
+        real_import = builtins.__import__
+
+        def _deny_ape(name, _globals=None, _locals=None, fromlist=(), level=0):
+            if name == "ape":
+                raise ImportError("no ape")
+            return real_import(name, _globals, _locals, fromlist, level)
+
+        saved_env = dict(os.environ)
+        try:
+            os.environ.pop("RPC_URL", None)
+            os.environ.pop("ORION_USE_APE_PROVIDER", None)
+            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
+                with patch(
+                    "orion_finance_sdk_py.contracts.pick_default_rpc",
+                    return_value="https://1rpc.io/sepolia",
+                ) as mock_pick:
+                    with patch("builtins.__import__", side_effect=_deny_ape):
+                        c = OrionSmartContract("TestContract", "0xAddress")
+            mock_pick.assert_called_once()
+            assert c.w3 is not None
+        finally:
+            os.environ.clear()
+            os.environ.update(saved_env)
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_decode_logs_skips_non_matching_event_then_decodes(self):
@@ -634,6 +669,21 @@ class TestPriceAdapterRegistry:
 
         prices = registry.get_prices()
         assert prices == {"0xA": 100, "0xB": 200}
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_get_price_at_block_passes_block_identifier(self, MockConfig):
+        MockConfig.return_value.price_adapter_registry = "0xRegistry"
+        registry = PriceAdapterRegistry()
+
+        call_mock = MagicMock()
+        call_mock.call.return_value = 42
+        registry.contract.functions.getPrice.return_value = call_mock
+
+        assert registry.get_price("0xA", block=1_000_000) == 42
+        call_mock.call.assert_called()
+        _, kwargs = call_mock.call.call_args
+        assert kwargs.get("block_identifier") == 1_000_000
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_init_with_explicit_address(self):
@@ -938,6 +988,12 @@ class TestOrionVaults:
         assert vault.max_deposit("0xReceiver") == 5000
         assert vault.share_price == 10**18
 
+        # Historical share price uses block_identifier
+        assert vault.share_price_at(50) == 10**18
+        assert vault.total_assets_at(50) == 1000
+        assert vault.convert_to_assets(10, block=50) == 100
+        assert vault.get_portfolio(block=50) == {"0xA": 100, "0xB": 200}
+
         with patch(
             "orion_finance_sdk_py.contracts.PriceAdapterRegistry"
         ) as MockRegistry:
@@ -986,6 +1042,80 @@ class TestOrionVaults:
             assert vault.can_request_deposit("0xUser") is True
             mock_ac_instance.functions.canRequestDeposit().call.return_value = False
             assert vault.can_request_deposit("0xUser") is False
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_orion_vault_explicit_contract_address(self, MockConfig):
+        """OrionTransparentVault accepts contract_address without ORION_VAULT_ADDRESS."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        saved = os.environ.pop("ORION_VAULT_ADDRESS", None)
+        try:
+            vault = OrionTransparentVault(contract_address="0xExplicitVault")
+        finally:
+            if saved is not None:
+                os.environ["ORION_VAULT_ADDRESS"] = saved
+        assert vault.contract_address == "0xExplicitVault"
+        MockConfig.return_value.is_orion_vault.assert_called()
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_block_at_timestamp_binary_search(self):
+        """block_at_timestamp returns the latest block with timestamp <= target."""
+        contract = OrionSmartContract("TestContract", "0xAddress")
+
+        timestamps = {0: 1000, 1: 1100, 2: 1200, 3: 1300, 4: 1400}
+        contract.w3.eth.block_number = 4
+
+        def get_block(n):
+            return {"timestamp": timestamps[n]}
+
+        contract.w3.eth.get_block.side_effect = get_block
+
+        assert contract.block_at_timestamp(1250) == 2
+        assert contract.block_at_timestamp(1400) == 4
+        assert contract.block_at_timestamp(1500) == 4
+
+        with pytest.raises(ValueError, match="before the earliest"):
+            contract.block_at_timestamp(500)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_share_price_history_daily(self, MockConfig):
+        """share_price_history samples daily and returns timestamp/block/share_price."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+
+        start_ts = 1_700_000_000
+        day = 86_400
+        blocks = {
+            10: {"timestamp": start_ts},
+            20: {"timestamp": start_ts + day},
+            30: {"timestamp": start_ts + 2 * day},
+        }
+        vault.w3.eth.block_number = 30
+
+        def get_block(n):
+            if n in blocks:
+                return blocks[n]
+            return {"timestamp": start_ts + (n - 10) * (2 * day) // 20}
+
+        vault.w3.eth.get_block.side_effect = get_block
+        vault.block_at_timestamp = MagicMock(
+            side_effect=lambda ts: {
+                start_ts: 10,
+                start_ts + day: 20,
+                start_ts + 2 * day: 30,
+            }.get(ts, 10)
+        )
+        vault.share_price_at = MagicMock(side_effect=lambda b: b * 100)
+
+        series = vault.share_price_history(start=10, end=30, interval="1d")
+        assert len(series) >= 2
+        assert set(series[0].keys()) == {"timestamp", "block", "share_price"}
+        assert series[0]["block"] == 10
+        assert series[-1]["block"] == 30
+
+        with pytest.raises(ValueError, match="Unsupported interval"):
+            vault.share_price_history(start=10, end=30, interval="1h")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")

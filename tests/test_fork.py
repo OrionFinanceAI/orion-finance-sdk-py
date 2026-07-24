@@ -283,6 +283,24 @@ def test_vault_share_price_convert_consistency_on_fork(sepolia_fork, monkeypatch
     assert vault.share_price == vault.convert_to_assets(one_share)
 
 
+def test_vault_share_price_at_recent_block_on_fork(sepolia_fork):
+    """share_price_at(past block) is readable and consistent with convert_to_assets."""
+    config = OrionConfig()
+    vaults = config.orion_transparent_vaults
+    if not vaults:
+        pytest.skip("No Orion Transparent Vaults found")
+
+    vault = OrionTransparentVault(contract_address=vaults[0])
+    latest = vault.w3.eth.block_number
+    past = max(0, latest - 10)
+    at_past = vault.share_price_at(past)
+    at_latest = vault.share_price
+    assert at_past > 0
+    assert at_latest > 0
+    # Same block should match the live property when querying latest
+    assert vault.share_price_at(latest) == at_latest
+
+
 def test_vault_can_request_deposit_and_max_deposit_on_fork(sepolia_fork, monkeypatch):
     """Vault can_request_deposit and max_deposit for a receiver on fork."""
     config = OrionConfig()

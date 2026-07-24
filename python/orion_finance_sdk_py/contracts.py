@@ -3,6 +3,7 @@
 import json
 import os
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from importlib import resources
 from typing import Any, Iterable, cast
 
@@ -10,6 +11,7 @@ from dotenv import load_dotenv
 from web3 import Web3
 from web3.types import HexStr, TxReceipt
 
+from .rpc import pick_default_rpc
 from .types import CHAIN_CONFIG, ZERO_ADDRESS, VaultType
 from .utils import (
     MAX_MANAGEMENT_FEE,
@@ -23,6 +25,9 @@ load_dotenv()
 _VIEW_CALL_GAS = 15_000_000
 _VIEW_CALL_TX = {"gas": _VIEW_CALL_GAS}
 
+_TIMESTAMP_THRESHOLD = 1_000_000_000
+_SECONDS_PER_DAY = 86_400
+
 
 def _get_view_call_tx():
     """Return tx dict for view calls: gas override only when ORION_FORCE_VIEW_GAS is set (e.g. fork tests)."""
@@ -31,9 +36,17 @@ def _get_view_call_tx():
     return {}
 
 
-def _call_view(contract_fn):
-    """Execute a view/pure contract call (uses gas override in fork/dev when ORION_FORCE_VIEW_GAS is set)."""
-    return contract_fn.call(_get_view_call_tx())
+def _call_view(contract_fn, block_identifier: int | str | None = None):
+    """Execute a view/pure contract call (uses gas override in fork/dev when ORION_FORCE_VIEW_GAS is set).
+
+    Args:
+        contract_fn: Bound contract function call (e.g. ``contract.functions.foo()``).
+        block_identifier: Optional block number or tag (default: ``"latest"``).
+    """
+    tx = _get_view_call_tx()
+    if block_identifier is None:
+        return contract_fn.call(tx)
+    return contract_fn.call(tx, block_identifier=block_identifier)
 
 
 @dataclass
@@ -163,14 +176,73 @@ class OrionSmartContract:
         except Exception as e:
             ape_error = e
 
+        default_rpc = pick_default_rpc()
+        if default_rpc:
+            self.w3 = Web3(Web3.HTTPProvider(default_rpc))
+            self.chain_id = self.w3.eth.chain_id
+            self.contract_name = contract_name
+            self.contract_address = contract_address
+            self.contract = self.w3.eth.contract(
+                address=Web3.to_checksum_address(self.contract_address),
+                abi=load_contract_abi(self.contract_name),
+            )
+            return
+
         msg = (
-            "RPC_URL environment variable is missing or invalid. "
-            "Please set RPC_URL in your .env file or as an environment variable. "
+            "RPC_URL environment variable is missing or invalid, and no default "
+            "public RPC responded. Please set RPC_URL in your .env file or as an "
+            "environment variable."
         )
         if ape_error is not None:
             msg += f" (Ape provider failed: {ape_error})"
             raise ValueError(msg) from ape_error
         raise ValueError(msg)
+
+    def block_at_timestamp(self, timestamp: int) -> int:
+        """Return the latest block number whose timestamp is <= ``timestamp``.
+
+        Uses binary search over ``eth_getBlockByNumber``. For long historical
+        series prefer a dedicated ``RPC_URL`` (public endpoints are rate-limited).
+        """
+        if timestamp < 0:
+            raise ValueError("timestamp must be non-negative")
+
+        latest = self.w3.eth.block_number
+        latest_block = self.w3.eth.get_block(latest)
+        if timestamp >= latest_block["timestamp"]:
+            return latest
+
+        earliest = 0
+        earliest_block = self.w3.eth.get_block(earliest)
+        if timestamp < earliest_block["timestamp"]:
+            raise ValueError(
+                f"timestamp {timestamp} is before the earliest block "
+                f"({earliest_block['timestamp']})"
+            )
+
+        lo, hi = earliest, latest
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            mid_ts = self.w3.eth.get_block(mid)["timestamp"]
+            if mid_ts <= timestamp:
+                lo = mid
+            else:
+                hi = mid - 1
+        return lo
+
+    def _resolve_block(self, value: datetime | int) -> int:
+        """Resolve a datetime, unix timestamp, or block number to a block number."""
+        if isinstance(value, datetime):
+            ts = (
+                value
+                if value.tzinfo is not None
+                else value.replace(tzinfo=timezone.utc)
+            )
+            return self.block_at_timestamp(int(ts.timestamp()))
+        if isinstance(value, int):
+            if value >= _TIMESTAMP_THRESHOLD:
+                return self.block_at_timestamp(value)
+            return value
 
     def _wait_for_transaction_receipt(
         self, tx_hash: str, timeout: int = 120
@@ -371,21 +443,26 @@ class PriceAdapterRegistry(OrionSmartContract):
         """Fetch the price adapter decimals from the registry."""
         return _call_view(self.contract.functions.priceAdapterDecimals())
 
-    def get_price(self, asset: str) -> int:
+    def get_price(self, asset: str, block: int | None = None) -> int:
         """Fetch the point-in-time price for a single asset.
 
         Args:
             asset: Token contract address.
+            block: Optional block number for a historical ``eth_call``.
 
         Returns:
             Price scaled by ``price_adapter_decimals``.
         """
         return _call_view(
-            self.contract.functions.getPrice(Web3.to_checksum_address(asset))
+            self.contract.functions.getPrice(Web3.to_checksum_address(asset)),
+            block_identifier=block,
         )
 
-    def get_prices(self) -> dict[str, int]:
+    def get_prices(self, block: int | None = None) -> dict[str, int]:
         """Fetch point-in-time prices for the full investment universe.
+
+        Args:
+            block: Optional block number for historical prices.
 
         Returns:
             Mapping of checksummed asset address to price (scaled by
@@ -394,7 +471,8 @@ class PriceAdapterRegistry(OrionSmartContract):
         config = OrionConfig()
         assets = config.whitelisted_assets
         return {
-            Web3.to_checksum_address(asset): self.get_price(asset) for asset in assets
+            Web3.to_checksum_address(asset): self.get_price(asset, block=block)
+            for asset in assets
         }
 
 
@@ -598,16 +676,27 @@ class VaultFactory(OrionSmartContract):
 class OrionVault(OrionSmartContract):
     """OrionVault contract."""
 
-    def __init__(self, contract_name: str):
-        """Initialize the OrionVault contract."""
-        contract_address = validate_var(
-            os.getenv("ORION_VAULT_ADDRESS"),
-            error_message=(
-                "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
-                "Please set ORION_VAULT_ADDRESS in your .env file or as an environment variable. "
-                "Please follow the SDK Installation instructions to get one: https://sdk.orionfinance.ai/"
-            ),
-        )
+    def __init__(self, contract_name: str, contract_address: str | None = None):
+        """Initialize the OrionVault contract.
+
+        Args:
+            contract_name: On-chain contract name (ABI key).
+            contract_address: Vault address. If omitted, uses ``ORION_VAULT_ADDRESS``.
+        """
+        if contract_address is None:
+            contract_address = validate_var(
+                os.getenv("ORION_VAULT_ADDRESS"),
+                error_message=(
+                    "ORION_VAULT_ADDRESS environment variable is missing or invalid. "
+                    "Pass contract_address=... or set ORION_VAULT_ADDRESS in your .env. "
+                    "Please follow the SDK Installation instructions: https://sdk.orionfinance.ai/"
+                ),
+            )
+        else:
+            contract_address = validate_var(
+                contract_address,
+                error_message="Vault contract_address is missing or invalid.",
+            )
 
         # Validate that the address is a valid Orion Vault
         config = OrionConfig()
@@ -851,6 +940,10 @@ class OrionVault(OrionSmartContract):
         """Fetch the total assets of the vault."""
         return _call_view(self.contract.functions.totalAssets())
 
+    def total_assets_at(self, block: int) -> int:
+        """Fetch ``totalAssets`` at a historical block."""
+        return _call_view(self.contract.functions.totalAssets(), block_identifier=block)
+
     @property
     def pending_vault_fees(self) -> float:
         """Fetch the pending vault fees in the underlying asset."""
@@ -864,18 +957,111 @@ class OrionVault(OrionSmartContract):
         decimals = _call_view(self.contract.functions.decimals())
         return _call_view(self.contract.functions.convertToAssets(10**decimals))
 
-    def convert_to_assets(self, shares: int) -> int:
-        """Convert shares to assets."""
-        return _call_view(self.contract.functions.convertToAssets(shares))
+    def share_price_at(self, block: int) -> int:
+        """Fetch the share price (value of 1 full share) at a historical block."""
+        decimals = _call_view(
+            self.contract.functions.decimals(), block_identifier=block
+        )
+        return _call_view(
+            self.contract.functions.convertToAssets(10**decimals),
+            block_identifier=block,
+        )
 
-    def get_portfolio(self) -> dict:
+    def convert_to_assets(self, shares: int, block: int | None = None) -> int:
+        """Convert shares to assets.
+
+        Args:
+            shares: Share amount in vault share units.
+            block: Optional block number for a historical ``eth_call``.
+        """
+        return _call_view(
+            self.contract.functions.convertToAssets(shares),
+            block_identifier=block,
+        )
+
+    def get_portfolio(self, block: int | None = None) -> dict:
         """Get the vault portfolio.
+
+        Args:
+            block: Optional block number for a historical ``eth_call``.
 
         Returns:
             Mapping of token address to shares held per asset.
         """
-        tokens, values = _call_view(self.contract.functions.getPortfolio())
+        tokens, values = _call_view(
+            self.contract.functions.getPortfolio(), block_identifier=block
+        )
         return dict(zip(tokens, values, strict=True))
+
+    def share_price_history(
+        self,
+        start: datetime | int,
+        end: datetime | int | None = None,
+        interval: str = "1d",
+    ) -> list[dict]:
+        """Sample vault share price over a time range (on-chain ``eth_call`` at each point).
+
+        The SDK returns plain dicts; wrap in pandas in your notebook for correlation
+        analysis. Public RPCs are rate-limited — use a dedicated ``RPC_URL`` for
+        long series.
+
+        Args:
+            start: Start as ``datetime``, unix timestamp, or block number
+                (ints ``>= 1_000_000_000`` are treated as timestamps).
+            end: End bound (same types as ``start``). Defaults to latest block.
+            interval: Sampling interval. Only ``"1d"`` (daily) is supported for now.
+
+        Returns:
+            List of ``{"timestamp", "block", "share_price"}`` dicts (unix timestamp,
+            block number, share price in underlying units).
+        """
+        if interval != "1d":
+            raise ValueError(
+                f"Unsupported interval {interval!r}. Only '1d' is supported."
+            )
+
+        start_block = self._resolve_block(start)
+        end_block = (
+            self.w3.eth.block_number if end is None else self._resolve_block(end)
+        )
+        if end_block < start_block:
+            raise ValueError(
+                f"end block ({end_block}) is before start block ({start_block})"
+            )
+
+        start_ts = int(self.w3.eth.get_block(start_block)["timestamp"])
+        end_ts = int(self.w3.eth.get_block(end_block)["timestamp"])
+
+        results: list[dict] = []
+        sample_ts = start_ts
+        while sample_ts <= end_ts:
+            block = self.block_at_timestamp(sample_ts)
+            # Clamp to the requested window (binary search can land slightly outside
+            # if the chain has gaps, but keep samples within [start_block, end_block]).
+            block = max(start_block, min(block, end_block))
+            block_data = self.w3.eth.get_block(block)
+            results.append(
+                {
+                    "timestamp": int(block_data["timestamp"]),
+                    "block": block,
+                    "share_price": self.share_price_at(block),
+                }
+            )
+            sample_ts += _SECONDS_PER_DAY
+
+        # Ensure the end of the range is represented when the last daily step
+        # did not land on end_ts.
+        if not results or results[-1]["block"] != end_block:
+            end_data = self.w3.eth.get_block(end_block)
+            results.append(
+                {
+                    "timestamp": int(end_data["timestamp"]),
+                    "block": end_block,
+                    "share_price": self.share_price_at(end_block),
+                }
+            )
+
+        return results
 
     def _portfolio_position_values(
         self, portfolio: dict[str, int] | None = None
@@ -1016,9 +1202,13 @@ class OrionVault(OrionSmartContract):
 class OrionTransparentVault(OrionVault):
     """OrionTransparentVault contract."""
 
-    def __init__(self):
-        """Initialize the OrionTransparentVault contract."""
-        super().__init__("OrionTransparentVault")
+    def __init__(self, contract_address: str | None = None):
+        """Initialize the OrionTransparentVault contract.
+
+        Args:
+            contract_address: Vault address. If omitted, uses ``ORION_VAULT_ADDRESS``.
+        """
+        super().__init__("OrionTransparentVault", contract_address=contract_address)
 
     def transfer_manager_fees(self, amount: int) -> TransactionResult:
         """Transfer manager fees (claimVaultFees)."""
