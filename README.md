@@ -86,12 +86,13 @@ pip install orion-finance-sdk-py
 
 ## Environment Variables Setup
 
-The SDK uses `RPC_URL` from your `.env` if set; otherwise it uses a default public RPC. See [SDK Installation](https://sdk.orionfinance.ai/) for optional RPC setup.
+The SDK uses `RPC_URL` from your `.env` if set; otherwise it probes default public Sepolia RPCs in order (1rpc.io → 0xrpc.io → publicnode), matching `install.sh`. For long historical queries, set your own `RPC_URL` (e.g. Alchemy/Infura). See [SDK Installation](https://sdk.orionfinance.ai/) for optional RPC setup.
 
 Additional variables depend on what you do:
 - **Deploy a vault:** `STRATEGIST_ADDRESS`, `MANAGER_PRIVATE_KEY`
 - **Submit orders:** `ORION_VAULT_ADDRESS`, `STRATEGIST_PRIVATE_KEY`
 - **Update strategist / fee model / deposit access:** `ORION_VAULT_ADDRESS`, `MANAGER_PRIVATE_KEY`
+- **Read vault data:** pass `contract_address=` or set `ORION_VAULT_ADDRESS`
 
 ## Examples of Usage
 
@@ -133,6 +134,54 @@ Parquet support requires **pyarrow** (`pip install 'orion-finance-sdk-py[parquet
 
 ```bash
 orion update-strategist --new-strategist-address 0x...
+```
+
+### PIT prices and portfolio %TVL (Python)
+
+```python
+from orion_finance_sdk_py import OrionTransparentVault, PriceAdapterRegistry
+
+prices = PriceAdapterRegistry().get_prices()  # full investment universe
+vault = OrionTransparentVault()
+weights = vault.get_portfolio_pct_tvl()  # portfolio as fractions of PIT TVL
+```
+
+### Discover vaults, metadata, and intent (Python)
+
+```python
+from orion_finance_sdk_py import OrionConfig, OrionTransparentVault
+
+config = OrionConfig()
+for addr in config.orion_transparent_vaults:
+    vault = OrionTransparentVault(contract_address=addr)
+    print(vault.name, vault.symbol, vault.share_price)
+    intent = vault.get_intent()  # target weights (fractions, sum ≈ 1)
+    current = vault.get_portfolio_pct_tvl()  # PIT allocation
+    # Compare intent vs current for expected rebalancing (in your notebook)
+```
+
+### Vault share price history (notebook)
+
+The SDK reads on-chain share prices (live or historical). Use pandas in your notebook for correlation analysis:
+
+```python
+from datetime import datetime, timezone, timedelta
+
+from orion_finance_sdk_py import OrionConfig, OrionTransparentVault
+
+config = OrionConfig()
+vault_addr = config.orion_transparent_vaults[0]
+vault = OrionTransparentVault(contract_address=vault_addr)
+
+end = datetime.now(timezone.utc)
+start = end - timedelta(days=30)
+series = vault.share_price_history(start=start, end=end, interval="1d")
+# series: [{"timestamp", "block", "share_price"}, ...]
+
+# Optional — analytics stay in the notebook:
+# import pandas as pd
+# df = pd.DataFrame(series).set_index("timestamp")
+# df["share_price"].pct_change().corr(...)
 ```
 
 ### Update the fee model for a vault

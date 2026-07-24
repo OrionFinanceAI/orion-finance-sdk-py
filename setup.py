@@ -24,6 +24,7 @@ class CustomBuild(build_py):
             "TransparentVaultFactory",
             "OrionTransparentVault",
             "LiquidityOrchestrator",
+            "PriceAdapterRegistry",
         ]
         os.makedirs("python/abis", exist_ok=True)
 

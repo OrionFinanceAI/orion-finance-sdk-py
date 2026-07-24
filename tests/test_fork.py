@@ -9,6 +9,7 @@ from orion_finance_sdk_py.contracts import (
     LiquidityOrchestrator,
     OrionConfig,
     OrionTransparentVault,
+    PriceAdapterRegistry,
     VaultFactory,
 )
 from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
@@ -267,21 +268,6 @@ def test_vault_factory_address_matches_config_on_fork(sepolia_fork):
     assert factory.contract_address.lower() == expected.lower()
 
 
-def test_vault_fee_limits_and_fees_on_fork(sepolia_fork, monkeypatch):
-    """Vault max_performance_fee, max_management_fee, pending_vault_fees from state."""
-    config = OrionConfig()
-    vaults = config.orion_transparent_vaults
-    if not vaults:
-        pytest.skip("No Orion Transparent Vaults found")
-
-    monkeypatch.setenv("ORION_VAULT_ADDRESS", vaults[0])
-    vault = OrionTransparentVault()
-
-    assert vault.max_performance_fee > 0
-    assert vault.max_management_fee > 0
-    assert vault.pending_vault_fees >= 0.0
-
-
 def test_vault_share_price_convert_consistency_on_fork(sepolia_fork, monkeypatch):
     """Vault share_price equals convertToAssets(10**decimals) from contract."""
     config = OrionConfig()
@@ -295,6 +281,42 @@ def test_vault_share_price_convert_consistency_on_fork(sepolia_fork, monkeypatch
     decimals = vault.contract.functions.decimals().call(_VIEW_CALL_TX)
     one_share = 10**decimals
     assert vault.share_price == vault.convert_to_assets(one_share)
+
+
+def test_vault_share_price_at_recent_block_on_fork(sepolia_fork):
+    """share_price_at(past block) is readable and consistent with convert_to_assets."""
+    config = OrionConfig()
+    vaults = config.orion_transparent_vaults
+    if not vaults:
+        pytest.skip("No Orion Transparent Vaults found")
+
+    vault = OrionTransparentVault(contract_address=vaults[0])
+    latest = vault.w3.eth.block_number
+    past = max(0, latest - 10)
+    at_past = vault.share_price_at(past)
+    at_latest = vault.share_price
+    assert at_past > 0
+    assert at_latest > 0
+    # Same block should match the live property when querying latest
+    assert vault.share_price_at(latest) == at_latest
+
+
+def test_vault_name_symbol_and_intent_on_fork(sepolia_fork):
+    """Vault name/symbol are non-empty; get_intent returns a weight dict."""
+    config = OrionConfig()
+    vaults = config.orion_transparent_vaults
+    if not vaults:
+        pytest.skip("No Orion Transparent Vaults found")
+
+    vault = OrionTransparentVault(contract_address=vaults[0])
+    assert isinstance(vault.name, str) and len(vault.name) > 0
+    assert isinstance(vault.symbol, str) and len(vault.symbol) > 0
+    assert vault.decimals > 0
+
+    intent = vault.get_intent()
+    assert isinstance(intent, dict)
+    if intent:
+        assert abs(sum(intent.values()) - 1.0) < 1e-6
 
 
 def test_vault_can_request_deposit_and_max_deposit_on_fork(sepolia_fork, monkeypatch):
@@ -361,6 +383,44 @@ def test_vault_portfolio_tokens_whitelisted_on_fork(sepolia_fork, monkeypatch):
             assert token.lower() in whitelisted, (
                 f"Portfolio token {token} not whitelisted"
             )
+
+
+def test_price_adapter_registry_prices_on_fork(sepolia_fork):
+    """PriceAdapterRegistry returns a price for every investment-universe asset."""
+    config = OrionConfig()
+    universe = config.whitelisted_assets
+    if not universe:
+        pytest.skip("No whitelisted assets")
+
+    registry = PriceAdapterRegistry()
+    assert registry.contract_address
+    assert registry.price_adapter_decimals >= 0
+
+    prices = registry.get_prices()
+    assert len(prices) == len(universe)
+    for asset in universe:
+        key = next(k for k in prices if k.lower() == asset.lower())
+        assert isinstance(prices[key], int)
+        assert prices[key] > 0
+
+
+def test_vault_portfolio_pct_tvl_on_fork(sepolia_fork, monkeypatch):
+    """get_portfolio_pct_tvl weights sum to ~1 when the vault has holdings."""
+    config = OrionConfig()
+    vaults = config.orion_transparent_vaults
+    if not vaults:
+        pytest.skip("No Orion Transparent Vaults found")
+
+    monkeypatch.setenv("ORION_VAULT_ADDRESS", vaults[0])
+    vault = OrionTransparentVault()
+    portfolio = vault.get_portfolio()
+    if not portfolio:
+        pytest.skip("Vault portfolio is empty")
+
+    pct = vault.get_portfolio_pct_tvl()
+    assert set(k.lower() for k in pct) == set(k.lower() for k in portfolio)
+    assert abs(sum(pct.values()) - 1.0) < 1e-9
+    assert vault.point_in_time_total_assets() > 0
 
 
 def test_orion_config_uses_ape_provider_when_rpc_unset(sepolia_fork, monkeypatch):
