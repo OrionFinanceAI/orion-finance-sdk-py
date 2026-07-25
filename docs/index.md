@@ -1,115 +1,127 @@
 # Orion Finance SDK
 
-This guide shows how to install the [Orion SDK](https://pypi.org/project/orion-finance-sdk-py/) locally. The source code is publicly available on [GitHub](https://github.com/OrionFinanceAI/orion-finance-sdk-py).
+::::{container} orion-hero
+
+Python SDK and CLI for Orion's [on-chain portfolio management infrastructure](https://github.com/OrionFinanceAI/protocol): deploy transparent vaults, submit strategist intents, and read protocol state, including the whitelisted investment universe, without leaving Python or the shell.
+
+::::{container} orion-hero-links
+
+- **PyPI:** [orion-finance-sdk-py](https://pypi.org/project/orion-finance-sdk-py/)
+- **Source:** [GitHub](https://github.com/OrionFinanceAI/orion-finance-sdk-py)
+
+::::
+
+::::
+
+## What you can do
+
+::::{grid} 1 2 2 2
+:gutter: 2
+
+:::{grid-item-card} Install and configure
+:link: quick-start
+:link-type: ref
+
+Install the CLI or package, set environment variables, and connect to an RPC.
+:::
+
+:::{grid-item-card} Deploy and manage vaults
+:link: vault-operations
+:link-type: ref
+
+Create transparent vaults, update strategist and fees, verify deployment.
+:::
+
+:::{grid-item-card} Submit strategist intents
+:link: submit-intents
+:link-type: ref
+
+Push rebalancing allocations from JSON, CSV, Parquet, or an inline dict.
+:::
+
+:::{grid-item-card} Analyze universe and vaults
+:link: analytics-and-reads
+:link-type: ref
+
+PIT prices, asset price history, share-price series, and intent vs holdings.
+:::
+
+::::
 
 ---
 
-## Workflow Overview
+(quick-start)=
 
-The typical workflow for using the Orion Finance SDK:
+## Quick start
 
-1. **Install SDK** - Install the Orion Finance SDK package (see below);
-2. **Deploy Vault** - Create a new vault using `orion deploy-vault`;
-3. **Set Strategist** (if needed) - If you want to submit intents as a manager, set yourself as the strategist for your vault;
-4. **Submit Intents** - Submit portfolio allocation intents using `orion submit-order`.
+::::{tab-set}
 
----
-
-## Install
-
-The package CLI can be installed simply running:
+:::{tab-item} CLI
+:sync: cli
 
 ```bash
 curl -sSfL https://sdk.orionfinance.ai/cli/install.sh | sh
-```
-
-Check available CLI commands any time:
-
-```bash
 orion --help
 ```
 
-### Install from PyPI
-
-Alternatively, install the latest stable version from PyPI:
+Or install from PyPI:
 
 ```bash
 pip install "orion-finance-sdk-py>=1.4.0"
 ```
+:::
 
-## Configure Environment
-
-Create a `.env` file in your project directory with the following variables:
-
-### Required for Vault Deployment
-
-- **`RPC_URL`** (optional) - Chain RPC endpoint. If not set, the SDK probes default public Sepolia RPCs in order (`1rpc.io` → `0xrpc.io` → `publicnode`) until one responds. Set this if you want your own endpoint (recommended for long historical queries).
-- **`MANAGER_PRIVATE_KEY`** - Manager private key for signing vault deployment transactions;
-- **`MANAGER_ADDRESS`** - Manager address for fees/ownership (must match the address derived from `MANAGER_PRIVATE_KEY`).
-
-### Quick Start
-
-Example usage of the Orion Finance SDK:
+:::{tab-item} Python
+:sync: python
 
 ```python
-from orion_finance_sdk_py.contracts import OrionConfig
+from orion_finance_sdk_py import OrionConfig
 
 config = OrionConfig()
 print(f"Risk-free Rate: {config.risk_free_rate}")
 ```
+:::
 
-### Required for Intent Submission
+::::
 
-- **`ORION_VAULT_ADDRESS`** - Address of the deployed Orion vault to interact with (obtained after vault deployment);
+### Manager workflow
 
-> **Note:** Keep your `.env` file private and never commit it to version control.
-
-## Vault Deployment
-
-Deploy a new vault using the Orion CLI.
-
-## Who Can Create Vaults?
-
-- **Managers** can create vaults using the Orion CLI.
-
-## What is an RPC URL?
-
-An **RPC URL** is the endpoint the SDK uses to communicate with contracts on the blockchain network.
-
-It’s provided by a node or node service provider (e.g., [Alchemy](https://alchemy.com/)) and allows the SDK to send transactions and query blockchain data. **You do not have to set one** — if `RPC_URL` is omitted, the SDK probes the same default public Sepolia RPCs as `install.sh`. Set it if you want your own endpoint (higher rate limits, mainnet, or long historical `eth_call` series).
-
-## Getting an RPC URL (optional)
-
-If you want to use your own RPC endpoint, you can get one from multiple providers. Below are two popular options:
-
-### **1. Alchemy**
-
-1. Go to [Alchemy](https://alchemy.com/) and create a free account.
-2. Click **"Create App"** in your dashboard.
-3. Select:
-   - **Chain** - Ethereum;
-   - **Network** - Sepolia Testnet.
-4. Once created, click your app and copy the **HTTP URL** — this is your RPC URL.
-5. Add it to your `.env` file (optional):
-
-```bash
-RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
-```
-
-### **2. Infura**
-
-1. Go to [Infura](https://infura.io/) and sign up.
-2. Create a new project in your dashboard.
-3. Select the Sepolia network.
-4. Copy the HTTPS endpoint and add it to your `.env` file (optional):
-
-```bash
-RPC_URL=https://sepolia.infura.io/v3/YOUR_API_KEY
-```
+1. **Install** the SDK (above).
+2. **Deploy** a vault with `orion deploy-vault` (managers).
+3. **Set strategist** if you want to submit intents as the manager (`orion update-strategist`).
+4. **Submit intents** with `orion submit-order`.
 
 ---
 
-## Deploy a Transparent Vault
+## Configure environment
+
+Create a `.env` in your project directory. Keep it private and never commit it.
+
+| Task | Variables |
+| ---- | --------- |
+| Deploy a vault | `MANAGER_PRIVATE_KEY`, `MANAGER_ADDRESS` (must match the key), optional `STRATEGIST_ADDRESS` / CLI flag |
+| Submit intents | `ORION_VAULT_ADDRESS`, `STRATEGIST_PRIVATE_KEY` |
+| Update strategist / fees / deposit access | `ORION_VAULT_ADDRESS`, `MANAGER_PRIVATE_KEY` |
+| Read vault data | Pass `contract_address=` in Python, or set `ORION_VAULT_ADDRESS` |
+
+**`RPC_URL` (optional).** If unset, the SDK probes default public Sepolia RPCs (`1rpc.io` → `0xrpc.io` → `publicnode`), matching `install.sh`. Set your own endpoint for higher rate limits, other networks, or long historical series.
+
+### Getting an RPC URL (optional)
+
+An RPC URL is the HTTP endpoint the SDK uses to talk to the chain. Popular options:
+
+- **[Alchemy](https://alchemy.com/):** create an app → Ethereum / Sepolia → copy the HTTP URL → `RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY`
+- **[Infura](https://infura.io/):** create a project → Sepolia → copy the HTTPS endpoint → `RPC_URL=https://sepolia.infura.io/v3/YOUR_API_KEY`
+
+---
+
+(vault-operations)=
+
+## Vault operations
+
+Managers create transparent vaults with the CLI.
+
+### Deploy a transparent vault
 
 ```bash
 orion deploy-vault \
@@ -121,43 +133,34 @@ orion deploy-vault \
   --strategist-address 0x...
 ```
 
-**What this does:**
+This deploys an ERC-7540 vault, registers the manager from your `.env`, sets fees, and makes allocations visible onchain.
 
-- Deploys an ERC-7540 vault smart contract;
-- Registers the manager address set in your `.env`;
-- Sets the fee type and fees amounts;
-- Makes allocations visible onchain.
+**Verify:** the CLI prints the vault contract address - store it and share it with LPs. Set `ORION_VAULT_ADDRESS` for later commands.
 
----
+### Update strategist or fees
 
-## Verify Deployment
+```bash
+orion update-strategist --new-strategist-address 0x...
 
-- The CLI outputs the **vault contract address**;
-- Add it to your manager records and share it with users.
-
-## Submit Rebalancing Order Intents
-
-Submit portfolio allocation intents that the protocol executes on the next rebalancing cycle.
-
-### Prerequisites
-
-- A deployed vault;
-- Portfolio file generated by your strategy.
-
-### Who Can Submit Intents?
-
-- **Strategists** can submit portfolio intents for vaults they are assigned to.
-- **Managers** who have set themselves as the strategist for their vault can also submit intents directly.
+orion update-fee-model \
+  --fee-type high_water_mark \
+  --performance-fee 5.5 \
+  --management-fee 0.1
+```
 
 ---
 
-### Intent Submission
+(submit-intents)=
 
-Use **`--order-intent`** (alias **`--order-intent-path`**) with either a **file** or an **inline** intent:
+## Submit rebalancing order intents
 
-- **JSON file:** a single object mapping token addresses to weights (fractions that sum to **1**).
-- **CSV / Parquet:** tabular format; see column names below. Parquet needs **pyarrow** (`pip install 'orion-finance-sdk-py[parquet]'`).
-- **Inline string:** same object as JSON, or a Python `dict` literal, e.g. `'{"0x...": 0.5, "0x...": 0.5}'`.
+Strategists (or managers who set themselves as strategist) submit portfolio allocation intents executed on the next rebalancing cycle.
+
+**`--order-intent`** (alias **`--order-intent-path`**) accepts a file or an inline string:
+
+- **JSON file:** object mapping token addresses → weights (fractions summing to **1**).
+- **CSV / Parquet:** tabular; Parquet needs **pyarrow** (`pip install 'orion-finance-sdk-py[parquet]'`).
+- **Inline:** JSON object or Python `dict` literal.
 
 ```bash
 orion submit-order --order-intent order_intent.json
@@ -165,19 +168,18 @@ orion submit-order --order-intent order_intent.json
 orion submit-order --order-intent '{"0x...": 0.5, "0x...": 0.5}'
 ```
 
-### Notes
+Intents are collected and executed at the **next rebalance** (bundling, batching, netting).
 
-- Intents are collected and executed at the **next rebalance**, enabling bundling, batching, and netting.
-- Ensure portfolio inputs match the **expected schema** for your strategy/vault.
-
-### Expected Portfolio File Schema
+### Portfolio file schema
 
 | Column Name         | Type    | Description                                          |
 | ------------------- | ------- | ---------------------------------------------------- |
 | `address`           | string  | Token contract address (checksummed).                |
 | `percentage_of_tvl` | decimal | Percentage of total vault value to allocate (0-100). |
 
-For CSV/Parquet you can also use **`token`** / **`addr`** for the address column, and **`weight`**, **`value`**, or **`percentage`** for weights. Weights in a **`percentage_of_tvl`** (or **`percentage`**) column are treated as **0–100** and normalized to fractions.
+Aliases: **`token`** / **`addr`** for address; **`weight`**, **`value`**, or **`percentage`** for weights. Columns named `percentage_of_tvl` / `percentage` are treated as **0–100** and normalized to fractions.
+
+Example intent:
 
 ```json
 {
@@ -192,14 +194,17 @@ For CSV/Parquet you can also use **`token`** / **`addr`** for the address column
 }
 ```
 
-> **Note:**
->
-> - For **transparent vaults**, these values will be visible onchain once submitted.
-> - For **private vaults**, values are encrypted and only known to managers.
+> **Note:** On **transparent** vaults, intents are visible onchain after submission. On **private** vaults, values are encrypted and only known to managers.
 
-## PIT prices and portfolio %TVL
+---
 
-Managers can read point-in-time (PIT) oracle prices for the full investment universe and combine them with the vault portfolio to estimate current portfolio weights:
+(analytics-and-reads)=
+
+## Analytics and reads
+
+### Point-in-time prices and portfolio weights
+
+Point-in-time oracle prices for the investment universe, combined with vault holdings for portfolio weights:
 
 ```python
 from orion_finance_sdk_py import (
@@ -217,11 +222,33 @@ pit_tvl = vault.point_in_time_total_assets()
 share_price = vault.share_price  # value of 1 full share in underlying units
 ```
 
-`PriceAdapterRegistry` is resolved from `OrionConfig.price_adapter_registry`.
+`PriceAdapterRegistry` is resolved from `OrionConfig.price_adapter_registry`. Pass `assets=` to `get_prices` to price a subset.
 
-## Vault metadata and strategist intent
+### Investment universe price history
 
-Transparent vaults expose ERC-20 metadata and the current on-chain intent:
+Screen whitelisted assets before deploying a vault - daily PIT prices from the adapter registry:
+
+```python
+from datetime import datetime, timezone, timedelta
+
+from orion_finance_sdk_py import OrionConfig, PriceAdapterRegistry
+
+config = OrionConfig()
+registry = PriceAdapterRegistry()
+end = datetime.now(timezone.utc)
+start = end - timedelta(days=30)
+series = registry.price_history(start=start, end=end)
+# [{"timestamp": int, "block": int, "prices": {addr: int, ...}}, ...]
+
+# Optional subset:
+# series = registry.price_history(
+#     start=start, end=end, assets=config.whitelisted_assets[:3]
+# )
+```
+
+For long series, set a dedicated `RPC_URL` - public endpoints are rate-limited.
+
+### Vault metadata and strategist intent
 
 ```python
 from orion_finance_sdk_py import OrionConfig, OrionTransparentVault
@@ -238,9 +265,7 @@ for addr in config.orion_transparent_vaults:
 
 `get_intent()` scales on-chain weights by `OrionConfig.strategist_intent_decimals` so they match the fractional weights used when submitting intents.
 
-## Vault share price history (manager notebooks)
-
-The SDK owns **on-chain reads** (live and historical `eth_call`). Correlation / DataFrame / plotting work belongs in your own notebook project — install the SDK there with `uv pip install orion-finance-sdk-py` (pandas and matplotlib are not SDK dependencies).
+### Vault share price history
 
 ```python
 from datetime import datetime, timezone, timedelta
@@ -254,15 +279,13 @@ for addr in config.orion_transparent_vaults:
     start = end - timedelta(days=30)
     series = vault.share_price_history(start=start, end=end, interval="1d")
     # [{"timestamp": int, "block": int, "share_price": int}, ...]
-
-# Optional notebook analytics:
-# import pandas as pd
-# df = pd.DataFrame(series).set_index("timestamp")
 ```
 
-You can also query a single past block with `vault.share_price_at(block)` or `registry.get_price(asset, block=...)`. For long series, set a dedicated `RPC_URL` — public endpoints are rate-limited.
+You can also query a single past block with `vault.share_price_at(block)` or `registry.get_price(asset, block=...)`.
 
-### API Reference
+---
+
+## API reference
 
 ```{toctree}
 :maxdepth: 2
