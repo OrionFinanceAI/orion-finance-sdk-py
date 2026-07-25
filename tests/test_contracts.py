@@ -690,6 +690,101 @@ class TestPriceAdapterRegistry:
         registry = PriceAdapterRegistry(contract_address="0xExplicit")
         assert registry.contract_address == "0xExplicit"
 
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_get_prices_subset(self, MockConfig):
+        """get_prices(assets=...) only queries the requested subset."""
+        MockConfig.return_value.price_adapter_registry = "0xRegistry"
+        MockConfig.return_value.whitelisted_assets = ["0xA", "0xB", "0xC"]
+
+        registry = PriceAdapterRegistry()
+
+        def get_price_side_effect(asset):
+            mock_call = MagicMock()
+            mock_call.call.return_value = {"0xA": 100, "0xB": 200, "0xC": 300}[asset]
+            return mock_call
+
+        registry.contract.functions.getPrice.side_effect = get_price_side_effect
+
+        prices = registry.get_prices(assets=["0xA", "0xC"])
+        assert prices == {"0xA": 100, "0xC": 300}
+        assert registry.contract.functions.getPrice.call_count == 2
+        called_assets = [
+            call.args[0] for call in registry.contract.functions.getPrice.call_args_list
+        ]
+        assert called_assets == ["0xA", "0xC"]
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_price_history_daily(self, MockConfig):
+        """price_history samples daily and returns timestamp/block/prices."""
+        MockConfig.return_value.price_adapter_registry = "0xRegistry"
+        MockConfig.return_value.whitelisted_assets = ["0xA", "0xB"]
+
+        registry = PriceAdapterRegistry()
+
+        start_ts = 1_700_000_000
+        day = 86_400
+        blocks = {
+            10: {"timestamp": start_ts},
+            20: {"timestamp": start_ts + day},
+            30: {"timestamp": start_ts + 2 * day},
+        }
+        registry.w3.eth.block_number = 30
+
+        def get_block(n):
+            if n in blocks:
+                return blocks[n]
+            return {"timestamp": start_ts + (n - 10) * (2 * day) // 20}
+
+        registry.w3.eth.get_block.side_effect = get_block
+        registry.block_at_timestamp = MagicMock(
+            side_effect=lambda ts: {
+                start_ts: 10,
+                start_ts + day: 20,
+                start_ts + 2 * day: 30,
+            }.get(ts, 10)
+        )
+
+        def get_prices_side_effect(block=None, assets=None):
+            return {
+                "0xA": 100 + (block or 0),
+                "0xB": 200 + (block or 0),
+            }
+
+        registry.get_prices = MagicMock(side_effect=get_prices_side_effect)
+
+        series = registry.price_history(start=10, end=30, interval="1d")
+        assert len(series) >= 2
+        assert set(series[0].keys()) == {"timestamp", "block", "prices"}
+        assert series[0]["block"] == 10
+        assert series[-1]["block"] == 30
+        assert "0xA" in series[0]["prices"]
+        assert "0xB" in series[0]["prices"]
+
+        with pytest.raises(ValueError, match="Unsupported interval"):
+            registry.price_history(start=10, end=30, interval="1h")
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_price_history_assets_subset(self, MockConfig):
+        """price_history forwards assets= subset to get_prices."""
+        MockConfig.return_value.price_adapter_registry = "0xRegistry"
+        MockConfig.return_value.whitelisted_assets = ["0xA", "0xB", "0xC"]
+
+        registry = PriceAdapterRegistry()
+        registry._daily_sample_points = MagicMock(
+            return_value=[(1_700_000_000, 10), (1_700_086_400, 20)]
+        )
+        registry.get_prices = MagicMock(return_value={"0xA": 100})
+
+        series = registry.price_history(
+            start=10, end=20, interval="1d", assets=["0xA"]
+        )
+        assert len(series) == 2
+        assert all(call.kwargs.get("assets") == ["0xA"] for call in registry.get_prices.call_args_list)
+        assert all(point["prices"] == {"0xA": 100} for point in series)
+
 
 class TestVaultFactory:
     """Tests for VaultFactory."""

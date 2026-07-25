@@ -48,7 +48,7 @@ def test_pick_default_rpc_tries_in_order_and_caches():
 
     with patch("orion_finance_sdk_py.rpc.rpc_works", side_effect=_works):
         assert pick_default_rpc() == DEFAULT_PUBLIC_RPC_URLS[1]
-        # Second call uses cache — no more probes
+        # Second call uses cache - no more probes
         assert pick_default_rpc() == DEFAULT_PUBLIC_RPC_URLS[1]
 
     assert calls == [DEFAULT_PUBLIC_RPC_URLS[0], DEFAULT_PUBLIC_RPC_URLS[1]]

@@ -244,6 +244,48 @@ class OrionSmartContract:
                 return self.block_at_timestamp(value)
             return value
 
+    def _daily_sample_points(
+        self,
+        start: datetime | int,
+        end: datetime | int | None = None,
+    ) -> list[tuple[int, int]]:
+        """Sample ``(timestamp, block)`` pairs at daily cadence over a range.
+
+        Ensures the end block is included when the last daily step did not land
+        on it. Public RPCs are rate-limited - use a dedicated ``RPC_URL`` for
+        long series.
+        """
+        start_block = self._resolve_block(start)
+        end_block = (
+            self.w3.eth.block_number if end is None else self._resolve_block(end)
+        )
+        if end_block < start_block:
+            raise ValueError(
+                f"end block ({end_block}) is before start block ({start_block})"
+            )
+
+        start_ts = int(self.w3.eth.get_block(start_block)["timestamp"])
+        end_ts = int(self.w3.eth.get_block(end_block)["timestamp"])
+
+        points: list[tuple[int, int]] = []
+        sample_ts = start_ts
+        while sample_ts <= end_ts:
+            block = self.block_at_timestamp(sample_ts)
+            # Clamp to the requested window (binary search can land slightly outside
+            # if the chain has gaps, but keep samples within [start_block, end_block]).
+            block = max(start_block, min(block, end_block))
+            block_data = self.w3.eth.get_block(block)
+            points.append((int(block_data["timestamp"]), block))
+            sample_ts += _SECONDS_PER_DAY
+
+        # Ensure the end of the range is represented when the last daily step
+        # did not land on end_ts.
+        if not points or points[-1][1] != end_block:
+            end_data = self.w3.eth.get_block(end_block)
+            points.append((int(end_data["timestamp"]), end_block))
+
+        return points
+
     def _wait_for_transaction_receipt(
         self, tx_hash: str, timeout: int = 120
     ) -> TxReceipt:
@@ -458,22 +500,74 @@ class PriceAdapterRegistry(OrionSmartContract):
             block_identifier=block,
         )
 
-    def get_prices(self, block: int | None = None) -> dict[str, int]:
-        """Fetch point-in-time prices for the full investment universe.
+    def get_prices(
+        self,
+        block: int | None = None,
+        assets: Iterable[str] | None = None,
+    ) -> dict[str, int]:
+        """Fetch point-in-time prices for the investment universe (or a subset).
 
         Args:
             block: Optional block number for historical prices.
+            assets: Optional token addresses to price. Defaults to the full
+                whitelisted investment universe from ``OrionConfig``.
 
         Returns:
             Mapping of checksummed asset address to price (scaled by
             ``price_adapter_decimals``).
         """
-        config = OrionConfig()
-        assets = config.whitelisted_assets
+        if assets is None:
+            config = OrionConfig()
+            assets = config.whitelisted_assets
         return {
             Web3.to_checksum_address(asset): self.get_price(asset, block=block)
             for asset in assets
         }
+
+    def price_history(
+        self,
+        start: datetime | int,
+        end: datetime | int | None = None,
+        interval: str = "1d",
+        assets: Iterable[str] | None = None,
+    ) -> list[dict]:
+        """Sample PIT prices for whitelisted assets over a time range.
+
+        No vault is required - prices come from the price adapter registry for
+        the investment universe (or an optional subset). The SDK returns plain
+        dicts; wrap in pandas in your notebook for return / distribution
+        analysis. Public RPCs are rate-limited - use a dedicated ``RPC_URL``
+        for long series.
+
+        Args:
+            start: Start as ``datetime``, unix timestamp, or block number
+                (ints ``>= 1_000_000_000`` are treated as timestamps).
+            end: End bound (same types as ``start``). Defaults to latest block.
+            interval: Sampling interval. Only ``"1d"`` (daily) is supported for now.
+            assets: Optional token addresses to price. Defaults to the full
+                whitelisted investment universe from ``OrionConfig``.
+
+        Returns:
+            List of ``{"timestamp", "block", "prices"}`` dicts where ``prices``
+            maps checksummed asset address to price (scaled by
+            ``price_adapter_decimals``).
+        """
+        if interval != "1d":
+            raise ValueError(
+                f"Unsupported interval {interval!r}. Only '1d' is supported."
+            )
+
+        if assets is None:
+            assets = OrionConfig().whitelisted_assets
+
+        return [
+            {
+                "timestamp": timestamp,
+                "block": block,
+                "prices": self.get_prices(block=block, assets=assets),
+            }
+            for timestamp, block in self._daily_sample_points(start, end)
+        ]
 
 
 class LiquidityOrchestrator(OrionSmartContract):
@@ -1017,7 +1111,7 @@ class OrionVault(OrionSmartContract):
         """Sample vault share price over a time range (on-chain ``eth_call`` at each point).
 
         The SDK returns plain dicts; wrap in pandas in your notebook for correlation
-        analysis. Public RPCs are rate-limited — use a dedicated ``RPC_URL`` for
+        analysis. Public RPCs are rate-limited - use a dedicated ``RPC_URL`` for
         long series.
 
         Args:
@@ -1035,48 +1129,14 @@ class OrionVault(OrionSmartContract):
                 f"Unsupported interval {interval!r}. Only '1d' is supported."
             )
 
-        start_block = self._resolve_block(start)
-        end_block = (
-            self.w3.eth.block_number if end is None else self._resolve_block(end)
-        )
-        if end_block < start_block:
-            raise ValueError(
-                f"end block ({end_block}) is before start block ({start_block})"
-            )
-
-        start_ts = int(self.w3.eth.get_block(start_block)["timestamp"])
-        end_ts = int(self.w3.eth.get_block(end_block)["timestamp"])
-
-        results: list[dict] = []
-        sample_ts = start_ts
-        while sample_ts <= end_ts:
-            block = self.block_at_timestamp(sample_ts)
-            # Clamp to the requested window (binary search can land slightly outside
-            # if the chain has gaps, but keep samples within [start_block, end_block]).
-            block = max(start_block, min(block, end_block))
-            block_data = self.w3.eth.get_block(block)
-            results.append(
-                {
-                    "timestamp": int(block_data["timestamp"]),
-                    "block": block,
-                    "share_price": self.share_price_at(block),
-                }
-            )
-            sample_ts += _SECONDS_PER_DAY
-
-        # Ensure the end of the range is represented when the last daily step
-        # did not land on end_ts.
-        if not results or results[-1]["block"] != end_block:
-            end_data = self.w3.eth.get_block(end_block)
-            results.append(
-                {
-                    "timestamp": int(end_data["timestamp"]),
-                    "block": end_block,
-                    "share_price": self.share_price_at(end_block),
-                }
-            )
-
-        return results
+        return [
+            {
+                "timestamp": timestamp,
+                "block": block,
+                "share_price": self.share_price_at(block),
+            }
+            for timestamp, block in self._daily_sample_points(start, end)
+        ]
 
     def _portfolio_position_values(
         self, portfolio: dict[str, int] | None = None
