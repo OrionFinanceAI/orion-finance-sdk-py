@@ -2,8 +2,8 @@
 # Orion Finance SDK installer
 #
 # Environment variables:
-#   VERSION     — specific version to install (default: latest from PyPI)
-#   INSTALL_DIR — override directory to put the 'orion' binary (default: auto-detected)
+#   VERSION     - specific version to install (default: latest from PyPI)
+#   INSTALL_DIR - override directory to put the 'orion' binary (default: auto-detected)
 #
 # Local test only (no install):  sh install.sh --test-secret-read
 
@@ -67,7 +67,7 @@ ensure_uv() {
         return
     fi
 
-    log "uv not found — installing it now..."
+    log "uv not found - installing it now..."
 
     if has curl; then
         curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -138,7 +138,7 @@ install_sdk() {
 # ─── step 4: verify the binary is reachable ──────────────────────────────────
 
 verify_binary() {
-    # uv adds its tool bin dir to PATH — make sure it's available in this shell too
+    # uv adds its tool bin dir to PATH - make sure it's available in this shell too
     uv_tool_bin="$(uv tool dir --bin 2>/dev/null)" || true
     if [ -n "$uv_tool_bin" ]; then
         export PATH="${uv_tool_bin}:${PATH}"
@@ -199,7 +199,7 @@ post_install() {
     version="$1"
     echo "" >&2
     log "────────────────────────────────────────────"
-    log " Orion Finance SDK ${version} — ready!"
+    log " Orion Finance SDK ${version} - ready!"
     log "────────────────────────────────────────────"
     echo "" >&2
 
@@ -219,7 +219,7 @@ post_install() {
 
     env_file="./.env"
     if [ -f "$env_file" ]; then
-        log ".env already exists — leaving it untouched."
+        log ".env already exists - leaving it untouched."
         echo "" >&2
         return
     fi
@@ -261,7 +261,7 @@ post_install() {
 
     # ─── write .env ─────────────────────────────────────────────────────────
     {
-        echo "# Orion Finance SDK — Environment Variables"
+        echo "# Orion Finance SDK - Environment Variables"
         echo "# Docs: https://sdk.orionfinance.ai/"
         echo ""
         echo "# RPC URL for blockchain connection"
@@ -276,7 +276,7 @@ post_install() {
         echo "# Private key for strategist operations"
         echo "STRATEGIST_PRIVATE_KEY=$strategist_key"
         echo ""
-        echo "# Vault address — set after running: orion deploy-vault"
+        echo "# Vault address - set after running: orion deploy-vault"
         echo "# ORION_VAULT_ADDRESS="
     } > "$env_file"
     chmod 600 "$env_file"
@@ -285,9 +285,9 @@ post_install() {
 
     echo "" >&2
     log "Get started:"
-    log "   orion                  — interactive menu"
-    log "   orion deploy-vault     — deploy a new vault"
-    log "   orion --help           — all commands"
+    log "   orion                  - interactive menu"
+    log "   orion deploy-vault     - deploy a new vault"
+    log "   orion --help           - all commands"
     echo "" >&2
     log "Docs: https://sdk.orionfinance.ai/"
     echo "" >&2

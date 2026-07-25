@@ -24,6 +24,11 @@ extensions = [
     "sphinx_llms_txt",
 ]
 
+# Required for sphinx-design grid/card colon fences in Markdown.
+myst_enable_extensions = ["colon_fence"]
+# Open external Markdown links (PyPI, GitHub, Alchemy, …) in a new tab.
+myst_links_external_new_tab = True
+
 source_suffix = {
     ".rst": "restructuredtext",
     ".md": "markdown",
@@ -36,7 +41,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_favicon = "_static/favicon.ico"
-pygments_style = "friendly"
+pygments_style = "default"
 html_title = "Orion | SDK"
 html_short_title = "Orion | SDK"
 
@@ -67,7 +72,7 @@ autoclass_content = "both"  # Include __init__ docstring
 # -- sphinx-llms-txt: single-file docs for LLMs (llms.txt, llms-full.txt) ---
 # See https://sphinx-llms-txt.readthedocs.io/
 #
-# By default, llms-full.txt concatenates *source* .md/.rst — not rendered HTML. So
+# By default, llms-full.txt concatenates *source* .md/.rst - not rendered HTML. So
 # docs/api.md appears as raw `.. autoclass::` directives (useless for LLMs) even
 # though the HTML site shows full autodoc. We exclude `api` from the merge and append
 # the SDK Python sources instead (`llms_txt_code_files`), which include docstrings and

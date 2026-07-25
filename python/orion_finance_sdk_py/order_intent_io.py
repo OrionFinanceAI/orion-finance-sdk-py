@@ -246,10 +246,10 @@ def load_order_intent(
 ) -> dict[str, float]:
     """Load an order intent as ``address -> weight`` fractions (summing to ~1).
 
-    * **dict** — must map token address strings to numeric weights (same as JSON object).
-    * **path** — existing file: ``.json`` (object), ``.csv`` / ``.parquet`` (tabular),
+    * **dict** - must map token address strings to numeric weights (same as JSON object).
+    * **path** - existing file: ``.json`` (object), ``.csv`` / ``.parquet`` (tabular),
       see docs for column names.
-    * **str** — if it is not an existing file path, parsed as inline JSON object or
+    * **str** - if it is not an existing file path, parsed as inline JSON object or
       Python ``dict`` literal (e.g. ``'{"0x...": 0.5, ...}'``).
 
     Args:
