@@ -22,4 +22,3 @@ hardhat:
         upstream_provider: alchemy
       sepolia:
         upstream_provider: alchemy
-        # block_number: set to a valid Sepolia block (chain height ~10M) for reproducibility; omit to use latest

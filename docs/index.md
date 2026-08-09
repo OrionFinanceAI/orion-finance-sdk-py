@@ -67,7 +67,7 @@ orion --help
 Or install from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=1.4.1"
+pip install "orion-finance-sdk-py>=1.5.0"
 ```
 :::
 

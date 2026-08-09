@@ -288,3 +288,20 @@ def test_cli_no_args(mock_ensure, mock_menu):
     assert result.exit_code == 0
     mock_ensure.assert_called_once()
     mock_menu.assert_called_once()
+
+
+@patch("orion_finance_sdk_py.cli.build_asset_address_map")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_list_asset_address_map(mock_ensure, mock_build_map):
+    """Test list-asset-address-map prints testnet → mainnet rows."""
+    twin = "0x1111111111111111111111111111111111111111"
+    mainnet = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    mock_build_map.return_value = {twin: mainnet}
+
+    result = runner.invoke(app, ["list-asset-address-map"])
+
+    assert result.exit_code == 0
+    assert twin in result.stdout
+    assert mainnet in result.stdout
+    assert "Total: 1 twin assets" in result.stdout
+    mock_build_map.assert_called_once()

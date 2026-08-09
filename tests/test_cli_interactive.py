@@ -260,6 +260,26 @@ def test_interactive_menu_get_pending_fees(
 
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._list_asset_address_map_logic")
+def test_interactive_menu_list_asset_address_map(
+    mock_map_logic, mock_questionary, mock_input
+):
+    """Test interactive menu List Asset Address Map flow."""
+    ask_side_effect = [
+        "List Asset Address Map",
+        "Exit",
+    ]
+    iterator = iter(ask_side_effect)
+
+    mock_questionary.select.return_value.ask.side_effect = lambda: next(iterator)
+
+    interactive_menu()
+
+    mock_map_logic.assert_called_once()
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
 @patch("orion_finance_sdk_py.cli._deploy_vault_logic")
 def test_interactive_menu_error_handling(
     mock_deploy_logic, mock_questionary, mock_input

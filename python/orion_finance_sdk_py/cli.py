@@ -8,6 +8,7 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
+from .asset_map import build_asset_address_map
 from .contracts import (
     OrionConfig,
     OrionTransparentVault,
@@ -225,6 +226,27 @@ def _list_whitelisted_assets_logic():
     print("=" * 60 + "\n")
 
 
+def _list_asset_address_map_logic():
+    """Logic for listing testnet → mainnet twin address map."""
+    console = Console()
+
+    with console.status(
+        "[bold green]Resolving mainnetSource() for whitelisted twins..."
+    ):
+        address_map = build_asset_address_map()
+
+    print("\n" + "=" * 95)
+    print(f"{'testnet': <42} | mainnet")
+    print("-" * 95)
+
+    for testnet, mainnet in address_map.items():
+        print(f"{testnet} | {mainnet}")
+
+    print("\n" + "=" * 95)
+    print(f"Total: {len(address_map)} twin assets with mainnetSource()")
+    print("=" * 95 + "\n")
+
+
 def ask_or_exit(question):
     """Ask a questionary question and exit/return if cancelled."""
     result = question.ask()
@@ -280,6 +302,7 @@ def interactive_menu():
                         "Claim Fees",
                         "Get Pending Fees",
                         "List Whitelisted Assets",
+                        "List Asset Address Map",
                         "Exit",
                     ],
                     instruction="[ ↑↓ to scroll | Enter to select ]",
@@ -402,6 +425,9 @@ def interactive_menu():
             elif choice == "List Whitelisted Assets":
                 _list_whitelisted_assets_logic()
 
+            elif choice == "List Asset Address Map":
+                _list_asset_address_map_logic()
+
             input("\nPress Enter to continue...")
 
         except KeyboardInterrupt:
@@ -519,3 +545,9 @@ def get_pending_fees() -> None:
 def list_whitelisted_assets() -> None:
     """List all whitelisted assets from OrionConfig."""
     _list_whitelisted_assets_logic()
+
+
+@app.command()
+def list_asset_address_map() -> None:
+    """List testnet → mainnet address map for twin assets (mainnetSource)."""
+    _list_asset_address_map_logic()

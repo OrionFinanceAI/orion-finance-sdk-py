@@ -2,6 +2,7 @@
 
 import importlib.metadata
 
+from orion_finance_sdk_py.asset_map import build_asset_address_map
 from orion_finance_sdk_py.cli import deploy_vault, submit_order
 from orion_finance_sdk_py.contracts import (
     OrionConfig,
@@ -16,6 +17,7 @@ __all__ = [
     "OrionConfig",
     "OrionTransparentVault",
     "PriceAdapterRegistry",
+    "build_asset_address_map",
     "deploy_vault",
     "load_order_intent",
     "submit_order",
