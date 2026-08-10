@@ -23,6 +23,7 @@ def test_default_public_rpc_urls_match_install_order():
         "https://1rpc.io/sepolia",
         "https://0xrpc.io/sep",
         "https://ethereum-sepolia-rpc.publicnode.com",
+        "https://evm.stupidtech.net/v1/11155111",
     )
 
 

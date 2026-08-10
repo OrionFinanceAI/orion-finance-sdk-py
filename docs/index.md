@@ -104,7 +104,7 @@ Create a `.env` in your project directory. Keep it private and never commit it.
 | Update strategist / fees / deposit access | `ORION_VAULT_ADDRESS`, `MANAGER_PRIVATE_KEY` |
 | Read vault data | Pass `contract_address=` in Python, or set `ORION_VAULT_ADDRESS` |
 
-**`RPC_URL` (optional).** If unset, the SDK probes default public Sepolia RPCs (`1rpc.io` → `0xrpc.io` → `publicnode`), matching `install.sh`. Set your own endpoint for higher rate limits, other networks, or long historical series.
+**`RPC_URL` (optional).** If unset, the SDK probes default public Sepolia RPCs (`1rpc.io` → `0xrpc.io` → `publicnode` → `stupidtech`), matching `install.sh`. Set your own endpoint for higher rate limits, other networks, or long historical series.
 
 ### Getting an RPC URL (optional)
 
