@@ -12,6 +12,7 @@ import pytest
 from orion_finance_sdk_py.contracts import (
     LiquidityOrchestrator,
     OrionConfig,
+    OrionEncryptedVault,
     OrionSmartContract,
     OrionTransparentVault,
     OrionVault,
@@ -92,6 +93,7 @@ def mock_env():
         "CURATOR_ADDRESS": "0xCurator",
         "MANAGER_PRIVATE_KEY": "0xPrivate",
         "STRATEGIST_PRIVATE_KEY": "0xPrivate",
+        "LP_PRIVATE_KEY": "0xPrivate",
         "CURATOR_PRIVATE_KEY": "0xPrivate",
         "ORION_VAULT_ADDRESS": "0xVault",
     }
@@ -500,6 +502,7 @@ class TestOrionConfig:
         assert config.whitelisted_assets == ["0xA", "0xB"]
         assert config.get_investment_universe == ["0xA", "0xB"]
         assert config.orion_transparent_vaults == ["0xV1"]
+        assert config.orion_encrypted_vaults == ["0xV2"]
         assert config.is_system_idle() is True
 
         config.contract.functions.isWhitelisted("0xToken").call.return_value = True
@@ -513,8 +516,9 @@ class TestOrionConfig:
         config.contract.functions.underlyingAsset().call.return_value = "0xUnderlying"
         assert config.underlying_asset == "0xUnderlying"
 
-        config.contract.functions.getTokenDecimals("0xTok").call.return_value = 18
-        assert config.token_decimals("0xTok") == 18
+        token = "0x1111111111111111111111111111111111111111"
+        config.contract.functions.tokenDecimals(token).call.return_value = 18
+        assert config.token_decimals(token) == 18
 
         config.contract.functions.isOrionVault("0xVaultAddr").call.return_value = True
         assert config.is_orion_vault("0xVaultAddr") is True
@@ -926,6 +930,20 @@ class TestVaultFactory:
             MockConfig.return_value.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
             with pytest.raises(ValueError, match="Unsupported vault type"):
                 VaultFactory(vault_type="unknown")
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_encrypted_vault_factory_resolves_address(self, MockConfig):
+        """Encrypted VaultFactory uses encryptedVaultFactory() and EncryptedVaultFactory ABI."""
+        config_instance = MockConfig.return_value
+        config_instance.contract.functions.encryptedVaultFactory().call.return_value = (
+            "0xEVF"
+        )
+
+        factory = VaultFactory(VaultType.ENCRYPTED)
+        assert factory.contract_address == "0xEVF"
+        assert factory.contract_name == "EncryptedVaultFactory"
+        assert factory.vault_type == VaultType.ENCRYPTED
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -1467,7 +1485,7 @@ class TestOrionVaults:
         config_instance.is_orion_vault.return_value = False
 
         with pytest.raises(
-            ValueError, match="is NOT a valid Orion Transparent Vault registered"
+            ValueError, match="is NOT a valid Orion vault registered"
         ):
             OrionVault("Test")
 
@@ -1625,3 +1643,31 @@ class TestOrionVaults:
 
         with pytest.raises(ValueError, match="Signer .* is not the vault manager"):
             vault.transfer_manager_fees(100)
+
+    @patch("orion_finance_sdk_py.intent.Intent.encrypt")
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_encrypted_submit_order_intent_sends_ciphertext(
+        self, MockConfig, mock_encrypt
+    ):
+        """Encrypted submit seals intent then calls submitIntent(bytes)."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.is_orion_vault.return_value = True
+
+        ciphertext = b"\x01" * 48
+        mock_encrypt.return_value = ciphertext
+
+        vault = OrionEncryptedVault()
+        vault.contract.functions.strategist.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
+            100000
+        )
+        vault.contract.functions.submitIntent.return_value.build_transaction.return_value = {}
+
+        order = {"0xToken": 1000}
+        res = vault.submit_order_intent(order)
+
+        assert res.receipt["status"] == 1
+        mock_encrypt.assert_called_once()
+        vault.contract.functions.submitIntent.assert_called_with(ciphertext)

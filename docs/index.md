@@ -99,9 +99,9 @@ Create a `.env` in your project directory. Keep it private and never commit it.
 
 | Task | Variables |
 | ---- | --------- |
-| Deploy a vault | `MANAGER_PRIVATE_KEY`, `MANAGER_ADDRESS` (must match the key), optional `STRATEGIST_ADDRESS` / CLI flag |
+| Deploy / manage a vault | `MANAGER_PRIVATE_KEY`, `ORION_VAULT_ADDRESS` (after deploy) |
 | Submit intents | `ORION_VAULT_ADDRESS`, `STRATEGIST_PRIVATE_KEY` |
-| Update strategist / fees / deposit access | `ORION_VAULT_ADDRESS`, `MANAGER_PRIVATE_KEY` |
+| LP deposit / redeem | `ORION_VAULT_ADDRESS`, `LP_PRIVATE_KEY` |
 | Read vault data | Pass `contract_address=` in Python, or set `ORION_VAULT_ADDRESS` |
 
 **`RPC_URL` (optional).** If unset, the SDK probes default public Sepolia RPCs (`1rpc.io` → `0xrpc.io` → `publicnode` → `stupidtech`), matching `install.sh`. Set your own endpoint for higher rate limits, other networks, or long historical series.
@@ -119,9 +119,9 @@ An RPC URL is the HTTP endpoint the SDK uses to talk to the chain. Popular optio
 
 ## Vault operations
 
-Managers create transparent vaults with the CLI.
+Managers create transparent or encrypted vaults with the CLI.
 
-### Deploy a transparent vault
+### Deploy a vault
 
 ```bash
 orion deploy-vault \
@@ -130,10 +130,13 @@ orion deploy-vault \
   --fee-type hard_hurdle \
   --performance-fee 100 \
   --management-fee 10 \
-  --strategist-address 0x...
+  --strategist-address 0x... \
+  --vault-type transparent
 ```
 
-This deploys an ERC-7540 vault, registers the manager from your `.env`, sets fees, and makes allocations visible onchain.
+Use `--vault-type encrypted` for confidential vaults (intents sealed with Orion HPKE). Default is `transparent`.
+
+This deploys an ERC-7540 vault, registers the manager from your `.env`, and sets fees.
 
 **Verify:** the CLI prints the vault contract address - store it and share it with LPs. Set `ORION_VAULT_ADDRESS` for later commands.
 
@@ -146,6 +149,23 @@ orion update-fee-model \
   --fee-type high_water_mark \
   --performance-fee 5.5 \
   --management-fee 0.1
+```
+
+### LP deposit / redeem
+
+```bash
+orion request-deposit --assets 1000000
+orion cancel-deposit-request --amount 1000000
+orion request-redeem --shares 500000
+orion cancel-redeem-request --shares 500000
+# After full decommission only:
+orion redeem --shares 500000 --receiver 0x... --owner 0x...
+```
+
+### Remove / decommission vault (manager)
+
+```bash
+orion remove-vault
 ```
 
 ---
@@ -183,18 +203,28 @@ Example intent:
 
 ```json
 {
-  "0x...": 0.25,
-  "0x...": 0.02,
-  "0x...": 0.015,
-  "0x...": 0.0255,
-  "0x...": 0.06,
-  "0x...": 0.4,
-  "0x...": 0.22,
-  "0x...": 0.0095
+  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": 0.5,
+  "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": 0.3,
+  "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599": 0.2
 }
 ```
 
-> **Note:** On **transparent** vaults, intents are visible onchain after submission. On **private** vaults, values are encrypted and only known to managers.
+> **Note:** On **transparent** vaults, intents are visible onchain after submission. Confidential vault intents are sealed with Orion HPKE before submission, the chain stores an opaque `OrionCiphertext`:
+
+```text
+0x693658254630f73ad8da78fb331bf976cd42f90e0e9c9e83f40c51072a6f7417
+bdb98ee21c5fbd63b638e332a609dad2c433b7dddcadec1f43586b8df178c488
+01bc357ad2b6b530cfd9d63a8da1e0506ad748b7445373c5028131d0133fd503
+172331decd5b2c69027a78699d713bb7426278f5cfa7754cb9e608f8cac946be
+f38dd79d43391007eb7e87cca2a60b9e8ba869ae6dcdeb9289a09fa9748fc6a7
+57160df5b25eb1fab133b18d11865a12f04a6ba70fa9a7f6c1dcf32fdffcabda
+cd028fb3317650842264ba149850c24af40f1351564153ed0e0e00594caf6cef
+a9981d8f622a44fe2c905be117a8d6a9c2cb51e787d6b27a7676bf6ccb89ed42
+e3b8d9b4c24e887030a7caf503ba52d1d44510f73f5e7d30a396b4662a409178
+234f21d6d9a3a1256b7ae0aac3a31c5f5242a66db00495f1a46f8d171dd7be9d
+60d6dbaf04562614a8176738d66cf746101efeb2721f44ff2ed3ed3c3a1882ac
+cbee5712dff0103eca8470ee5774e02e
+```
 
 ---
 

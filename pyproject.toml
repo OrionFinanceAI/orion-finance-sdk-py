@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orion-finance-sdk-py"
-version = "1.5.0"
+version = "2.0.0"
 requires-python = ">=3.11,<3.14"
 readme = "README.md"
 authors = [
@@ -20,6 +20,7 @@ dependencies = [
     "typer>=0.16.0,<1.0.0",
     "web3>=7.12.0,<8.0.0",
     "questionary>=2.0.0,<3.0.0",
+    "pyhpke>=0.6.0,<1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -60,9 +61,6 @@ where = ["python"]
 
 [tool.setuptools.package-dir]
 "" = "python"
-
-[tool.setuptools.package-data]
-"orion_finance_sdk_py.js_sdk" = ["*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

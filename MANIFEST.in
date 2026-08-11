@@ -1,2 +1,0 @@
-# Include JS bundle and WASM files
-recursive-include python/orion_finance_sdk_py/js_sdk *

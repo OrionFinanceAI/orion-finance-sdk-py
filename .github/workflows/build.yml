@@ -25,9 +25,7 @@ jobs:
         with:
           node-version: 22.x
           cache: 'npm'
-          cache-dependency-path: |
-            js/package-lock.json
-            package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Enable Corepack (respect packageManager / npm min-release-age)
         run: |

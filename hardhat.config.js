@@ -7,7 +7,7 @@ module.exports = {
   solidity: "0.8.24",
   networks: {
     hardhat: {
-      hardfork: "shanghai",
+      hardfork: "cancun",
       initialBaseFeePerGas: 0,
       // Web3 default call gas is 60M; node cap must be >= that.
       blockGasLimit: 80000000,

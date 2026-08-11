@@ -16,8 +16,13 @@ def test_abi_loading():
     abis = [
         "OrionConfig",
         "TransparentVaultFactory",
+        "EncryptedVaultFactory",
+        "OrionVault",
         "OrionTransparentVault",
+        "OrionEncryptedVault",
+        "LiquidityOrchestrator",
         "PriceAdapterRegistry",
+        "ErrorsLib",
     ]
 
     for abi_name in abis:

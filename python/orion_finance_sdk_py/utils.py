@@ -38,6 +38,9 @@ MANAGER_PRIVATE_KEY=
 # Private key for strategist operations
 STRATEGIST_PRIVATE_KEY=
 
+# Private key for LP deposit/redeem operations
+LP_PRIVATE_KEY=
+
 # Vault address
 # ORION_VAULT_ADDRESS=
 """

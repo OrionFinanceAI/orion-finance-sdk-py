@@ -55,6 +55,7 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
     # Sequence of return values for ask() calls across all widgets
     ask_side_effect = [
         "Deploy Vault",  # Main menu
+        "transparent",  # Vault Type
         "0xStrategist",  # Strategist Address
         "Test Vault",  # Name
         "TV",  # Symbol
@@ -289,6 +290,7 @@ def test_interactive_menu_error_handling(
 
     ask_side_effect = [
         "Deploy Vault",
+        "transparent",
         "0xStrategist",
         "Name",
         "Symbol",

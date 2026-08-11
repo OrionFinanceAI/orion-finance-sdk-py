@@ -8,11 +8,13 @@ from orion_finance_sdk_py.contracts import (
     _VIEW_CALL_TX,
     LiquidityOrchestrator,
     OrionConfig,
+    OrionEncryptedVault,
     OrionTransparentVault,
     PriceAdapterRegistry,
     VaultFactory,
 )
 from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
+from web3 import Web3
 
 # Load .env at import so env vars are set before pytest collects/runs
 _root = Path(__file__).resolve().parents[1]
@@ -460,3 +462,152 @@ def test_get_investment_universe_on_fork(sepolia_fork):
     assert universe == assets
     if assets:
         assert config.is_whitelisted(assets[0])
+
+
+# Hardhat / Anvil default funded account #0 (matches Ape test_accounts[0]).
+_HH_ACCOUNT0_KEY = (
+    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+)
+# §17.2 test-vector recipient public key (valid X25519 pkR for Orion HPKE).
+_HPKE_TEST_PK_R = bytes.fromhex(
+    "b1f1b840de7a3241b02748cf9b05b74dc8c5e8451298738817bd76aa8ebe8c2b"
+)
+
+
+def _impersonate_send(w3, *, from_address: str, to: str, data: bytes) -> dict:
+    """Send an unlocked Hardhat tx from an impersonated account."""
+    from_address = Web3.to_checksum_address(from_address)
+    to = Web3.to_checksum_address(to)
+    w3.provider.make_request("hardhat_impersonateAccount", [from_address])
+    w3.provider.make_request(
+        "hardhat_setBalance",
+        [from_address, hex(10**18)],
+    )
+    tx_hash = w3.eth.send_transaction(
+        {
+            "from": from_address,
+            "to": to,
+            "data": data,
+            "gas": 3_000_000,
+        }
+    )
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    if receipt["status"] != 1:
+        raise AssertionError(
+            f"Impersonated tx from {from_address} to {to} failed "
+            f"(status={receipt['status']})"
+        )
+    return receipt
+
+
+def _ape_account_private_key(account) -> str:
+    """Return a 0x-prefixed private key for an Ape test account."""
+    key = getattr(account, "private_key", None)
+    if key is None:
+        raise AttributeError("Ape test account has no private_key")
+    if isinstance(key, bytes):
+        return "0x" + key.hex()
+    key_str = str(key)
+    return key_str if key_str.startswith("0x") else "0x" + key_str
+
+
+def test_encrypted_vault_deploy_encrypt_submit_on_fork(sepolia_fork, monkeypatch):
+    """Whitelist manager → deploy encrypted vault → HPKE-seal intent → submitIntent."""
+    config = OrionConfig()
+    if not config.is_system_idle():
+        pytest.skip("System is not Idle; cannot deploy or submit intent")
+
+    enc_factory = config.encrypted_vault_factory
+    if not enc_factory or enc_factory == ZERO_ADDRESS:
+        pytest.skip("EncryptedVaultFactory not configured on this fork")
+
+    assets = config.whitelisted_assets
+    if not assets:
+        pytest.skip("No whitelisted assets for intent")
+
+    manager_acct = accounts.test_accounts[0]
+    # Prefer a distinct strategist; fall back to manager if private key unavailable.
+    strategist_acct = accounts.test_accounts[1]
+    try:
+        manager_key = _ape_account_private_key(manager_acct)
+    except AttributeError:
+        manager_key = _HH_ACCOUNT0_KEY
+        # Verify fallback matches Hardhat account #0
+        derived = config.w3.eth.account.from_key(manager_key).address
+        if derived.lower() != manager_acct.address.lower():
+            pytest.skip("Cannot resolve private key for manager test account")
+
+    try:
+        strategist_key = _ape_account_private_key(strategist_acct)
+        strategist_address = Web3.to_checksum_address(strategist_acct.address)
+    except AttributeError:
+        strategist_key = manager_key
+        strategist_address = Web3.to_checksum_address(manager_acct.address)
+
+    manager_address = Web3.to_checksum_address(manager_acct.address)
+
+    # Owner whitelist (admin path only for fork setup — not an SDK public API).
+    owner = config.contract.functions.owner().call(_VIEW_CALL_TX)
+    if not config.is_whitelisted_manager(manager_address):
+        data = config.contract.functions.addWhitelistedManager(
+            manager_address
+        )._encode_transaction_data()
+        _impersonate_send(
+            config.w3,
+            from_address=owner,
+            to=config.contract_address,
+            data=data,
+        )
+    assert config.is_whitelisted_manager(manager_address)
+
+    # Ensure HPKE recipient key is set so Intent.encrypt() can seal on-chain pkR.
+    try:
+        pk = config.hpke_public_key
+        assert len(pk) == 32
+    except ValueError:
+        data = config.contract.functions.setHpkePublicKey(
+            _HPKE_TEST_PK_R
+        )._encode_transaction_data()
+        _impersonate_send(
+            config.w3,
+            from_address=owner,
+            to=config.contract_address,
+            data=data,
+        )
+        assert config.hpke_public_key == _HPKE_TEST_PK_R
+
+    monkeypatch.setenv("MANAGER_PRIVATE_KEY", manager_key)
+    monkeypatch.setenv("STRATEGIST_PRIVATE_KEY", strategist_key)
+
+    factory = VaultFactory(vault_type=VaultType.ENCRYPTED.value)
+    assert factory.contract_address.lower() == enc_factory.lower()
+
+    result = factory.create_orion_vault(
+        strategist_address=strategist_address,
+        name="Fork Enc Vault",
+        symbol="FENC",
+        fee_type=0,
+        performance_fee=0,
+        management_fee=0,
+        deposit_access_control=ZERO_ADDRESS,
+    )
+    assert result.receipt["status"] == 1
+    vault_addr = factory.get_vault_address_from_result(result)
+    assert vault_addr, "OrionVaultCreated event missing vault address"
+    assert config.is_encrypted_vault(vault_addr)
+    assert config.is_orion_vault(vault_addr)
+
+    monkeypatch.setenv("ORION_VAULT_ADDRESS", vault_addr)
+    vault = OrionEncryptedVault()
+    assert vault.manager_address.lower() == manager_address.lower()
+    assert vault.strategist_address.lower() == strategist_address.lower()
+
+    scale = 10**config.strategist_intent_decimals
+    order_intent = {Web3.to_checksum_address(assets[0]): scale}
+
+    tx_result = vault.submit_order_intent(order_intent)
+    assert tx_result.receipt["status"] == 1
+
+    intent_blob = vault.get_intent()
+    assert isinstance(intent_blob, (bytes, bytearray))
+    assert len(intent_blob) >= 48
