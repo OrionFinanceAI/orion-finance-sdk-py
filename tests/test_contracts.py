@@ -534,8 +534,8 @@ class TestOrionConfig:
         config.contract.functions.minRedeemAmount().call.return_value = 50
         assert config.min_redeem_amount == 50
 
-        config.contract.functions.vFeeCoefficient().call.return_value = 5
-        assert config.v_fee_coefficient == 5
+        config.contract.functions.nettingFeeCoefficient().call.return_value = 5
+        assert config.netting_fee_coefficient == 5
 
         config.contract.functions.rsFeeCoefficient().call.return_value = 10
         assert config.rs_fee_coefficient == 10

@@ -475,9 +475,9 @@ class OrionConfig(OrionSmartContract):
         return _call_view(self.contract.functions.minRedeemAmount())
 
     @property
-    def v_fee_coefficient(self) -> int:
-        """Fetch the volume fee coefficient from the OrionConfig contract."""
-        return _call_view(self.contract.functions.vFeeCoefficient())
+    def netting_fee_coefficient(self) -> int:
+        """Fetch the netting fee coefficient from the OrionConfig contract."""
+        return _call_view(self.contract.functions.nettingFeeCoefficient())
 
     @property
     def rs_fee_coefficient(self) -> int:

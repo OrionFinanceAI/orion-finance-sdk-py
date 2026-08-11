@@ -129,7 +129,7 @@ def test_comprehensive_config_on_fork(sepolia_fork):
         assert asset_decimals in [6, 18, 8]
 
     # 3. Fee Coefficients
-    print(f"V Fee Coeff: {config.v_fee_coefficient}")
+    print(f"Netting Fee Coeff: {config.netting_fee_coefficient}")
     print(f"RS Fee Coeff: {config.rs_fee_coefficient}")
 
     # 4. Test LiquidityOrchestrator integration
