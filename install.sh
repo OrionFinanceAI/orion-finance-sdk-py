@@ -212,7 +212,7 @@ post_install() {
     case "$answer" in
         [nN]*)
             echo "" >&2
-            log "Skipped. Create .env manually with: RPC_URL, MANAGER_PRIVATE_KEY, STRATEGIST_PRIVATE_KEY."
+            log "Skipped. Create .env manually with: RPC_URL, MANAGER_PRIVATE_KEY, STRATEGIST_PRIVATE_KEY, LP_PRIVATE_KEY."
             log "Run 'orion' when ready. Docs: https://sdk.orionfinance.ai/"
             echo "" >&2
             return
@@ -277,6 +277,9 @@ post_install() {
         echo ""
         echo "# Private key for strategist operations"
         echo "STRATEGIST_PRIVATE_KEY=$strategist_key"
+        echo ""
+        echo "# Private key for LP deposit/redeem operations"
+        echo "LP_PRIVATE_KEY="
         echo ""
         echo "# Vault address - set after running: orion deploy-vault"
         echo "# ORION_VAULT_ADDRESS="

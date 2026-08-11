@@ -92,6 +92,26 @@ def balance_of(w3: Web3, token_address: str, account: str) -> int:
     return token.functions.balanceOf(Web3.to_checksum_address(account)).call()
 
 
+def _send_token_tx(w3: Web3, fn, key: str, action: str) -> TransactionResult:
+    """Sign and send an ERC-20 state-changing call."""
+    account = w3.eth.account.from_key(key)
+    tx = fn.build_transaction(
+        {
+            "from": account.address,
+            "nonce": w3.eth.get_transaction_count(account.address),
+            "gasPrice": w3.eth.gas_price,
+        }
+    )
+    signed = account.sign_transaction(tx)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    if receipt["status"] != 1:
+        raise Exception(f"ERC-20 {action} failed with status: {receipt['status']}")
+    return TransactionResult(
+        tx_hash=tx_hash.hex(), receipt=receipt, decoded_logs=None
+    )
+
+
 def approve(
     w3: Web3,
     token_address: str,
@@ -106,29 +126,9 @@ def approve(
         os.getenv(key_env),
         error_message=f"{key_env} environment variable is missing or invalid.",
     )
-    account = w3.eth.account.from_key(key)
     token = get_erc20(w3, token_address)
-    nonce = w3.eth.get_transaction_count(account.address)
-    tx = token.functions.approve(
-        Web3.to_checksum_address(spender),
-        amount,
-    ).build_transaction(
-        {
-            "from": account.address,
-            "nonce": nonce,
-            "gasPrice": w3.eth.gas_price,
-        }
-    )
-    signed = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    if receipt["status"] != 1:
-        raise Exception(f"ERC-20 approve failed with status: {receipt['status']}")
-    return TransactionResult(
-        tx_hash=tx_hash.hex(),
-        receipt=receipt,
-        decoded_logs=None,
-    )
+    fn = token.functions.approve(Web3.to_checksum_address(spender), amount)
+    return _send_token_tx(w3, fn, key, "approve")
 
 
 def transfer(
@@ -145,26 +145,6 @@ def transfer(
         os.getenv(key_env),
         error_message=f"{key_env} environment variable is missing or invalid.",
     )
-    account = w3.eth.account.from_key(key)
     token = get_erc20(w3, token_address)
-    nonce = w3.eth.get_transaction_count(account.address)
-    tx = token.functions.transfer(
-        Web3.to_checksum_address(to),
-        amount,
-    ).build_transaction(
-        {
-            "from": account.address,
-            "nonce": nonce,
-            "gasPrice": w3.eth.gas_price,
-        }
-    )
-    signed = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    if receipt["status"] != 1:
-        raise Exception(f"ERC-20 transfer failed with status: {receipt['status']}")
-    return TransactionResult(
-        tx_hash=tx_hash.hex(),
-        receipt=receipt,
-        decoded_logs=None,
-    )
+    fn = token.functions.transfer(Web3.to_checksum_address(to), amount)
+    return _send_token_tx(w3, fn, key, "transfer")

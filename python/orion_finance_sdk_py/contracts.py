@@ -1122,12 +1122,6 @@ class OrionVault(OrionSmartContract):
         """Preview assets received for redeeming ``shares``."""
         return _call_view(self.contract.functions.previewRedeem(shares))
 
-    def max_deposit(self, receiver: str) -> int:
-        """Fetch max deposit for ``receiver``."""
-        return _call_view(
-            self.contract.functions.maxDeposit(Web3.to_checksum_address(receiver))
-        )
-
     def max_mint(self, receiver: str) -> int:
         """Fetch max mint for ``receiver``."""
         return _call_view(
@@ -1446,6 +1440,8 @@ class OrionVault(OrionSmartContract):
         signed = account.sign_transaction(tx)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())
+        if receipt["status"] != 1:
+            raise Exception(f"Transaction failed with status: {receipt['status']}")
         return TransactionResult(
             tx_hash=tx_hash.hex(),
             receipt=receipt,
@@ -1839,7 +1835,7 @@ class OrionEncryptedVault(OrionVault):
                 f"{self.strategist_address}. Cannot submit order."
             )
 
-        ciphertext = Intent(order_intent).encrypt()
+        ciphertext = Intent(order_intent).encrypt(config.hpke_public_key)
 
         nonce = self.w3.eth.get_transaction_count(account.address)
 

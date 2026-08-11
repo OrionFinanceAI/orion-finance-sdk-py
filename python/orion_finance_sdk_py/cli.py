@@ -528,7 +528,16 @@ def interactive_menu():
                 _get_pending_fees_logic()
 
             elif choice == "Remove Vault":
-                _remove_vault_logic()
+                confirmed = ask_or_exit(
+                    questionary.confirm(
+                        "Decommission this vault? This action is irreversible.",
+                        default=False,
+                    )
+                )
+                if confirmed:
+                    _remove_vault_logic()
+                else:
+                    print("Vault removal cancelled.")
 
             elif choice == "List Whitelisted Assets":
                 _list_whitelisted_assets_logic()

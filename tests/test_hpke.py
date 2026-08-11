@@ -181,3 +181,18 @@ def test_intent_rejects_empty_weights():
     """Empty intent is rejected."""
     with pytest.raises(ValueError, match="empty"):
         Intent({})
+
+
+def test_encode_intent_length_mismatch():
+    with pytest.raises(ValueError, match="same length"):
+        encode_intent_plaintext(TOKENS, [1])
+
+
+def test_encode_portfolio_length_mismatch():
+    with pytest.raises(ValueError, match="same length"):
+        encode_portfolio_plaintext(TOKENS, [1])
+
+
+def test_open_rejects_sk_r_wrong_length():
+    with pytest.raises(ValueError, match="skR must be exactly"):
+        open_orion_ciphertext(INTENT_BLOB, SK_R[:31], INFO_INTENT)

@@ -313,3 +313,92 @@ def test_interactive_menu_error_handling(
     # Should call deploy, raise error, catch it, wait for input, and loop back to Exit
     mock_deploy_logic.assert_called_once()
     assert mock_input.call_count >= 1  # "Press Enter to continue..."
+
+
+def _wire_questionary(mock_questionary, ask_side_effect):
+    iterator = iter(ask_side_effect)
+
+    def next_answer():
+        return next(iterator)
+
+    mock_questionary.select.return_value.ask.side_effect = next_answer
+    mock_questionary.text.return_value.ask.side_effect = next_answer
+    mock_questionary.confirm.return_value.ask.side_effect = next_answer
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._request_deposit_logic")
+def test_interactive_request_deposit(mock_logic, mock_questionary, mock_input):
+    _wire_questionary(mock_questionary, ["Request Deposit", "1000", "Exit"])
+    interactive_menu()
+    mock_logic.assert_called_once_with(1000)
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._cancel_deposit_logic")
+def test_interactive_cancel_deposit(mock_logic, mock_questionary, mock_input):
+    _wire_questionary(mock_questionary, ["Cancel Deposit Request", "40", "Exit"])
+    interactive_menu()
+    mock_logic.assert_called_once_with(40)
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._request_redeem_logic")
+def test_interactive_request_redeem(mock_logic, mock_questionary, mock_input):
+    _wire_questionary(mock_questionary, ["Request Redeem", "15", "Exit"])
+    interactive_menu()
+    mock_logic.assert_called_once_with(15)
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._cancel_redeem_logic")
+def test_interactive_cancel_redeem(mock_logic, mock_questionary, mock_input):
+    _wire_questionary(mock_questionary, ["Cancel Redeem Request", "9", "Exit"])
+    interactive_menu()
+    mock_logic.assert_called_once_with(9)
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._redeem_logic")
+def test_interactive_redeem_decommissioned(mock_logic, mock_questionary, mock_input):
+    _wire_questionary(
+        mock_questionary,
+        ["Redeem (Decommissioned)", "3", "0xReceiver", "0xOwner", "Exit"],
+    )
+    interactive_menu()
+    mock_logic.assert_called_once_with(3, "0xReceiver", "0xOwner")
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._remove_vault_logic")
+def test_interactive_remove_vault_confirmed(mock_logic, mock_questionary, mock_input):
+    _wire_questionary(mock_questionary, ["Remove Vault", True, "Exit"])
+    interactive_menu()
+    mock_logic.assert_called_once()
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._remove_vault_logic")
+def test_interactive_remove_vault_cancelled(
+    mock_logic, mock_questionary, mock_input, capsys
+):
+    _wire_questionary(mock_questionary, ["Remove Vault", False, "Exit"])
+    interactive_menu()
+    mock_logic.assert_not_called()
+    assert "Vault removal cancelled." in capsys.readouterr().out
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._list_whitelisted_assets_logic")
+def test_interactive_list_whitelisted_assets(mock_logic, mock_questionary, mock_input):
+    _wire_questionary(mock_questionary, ["List Whitelisted Assets", "Exit"])
+    interactive_menu()
+    mock_logic.assert_called_once()

@@ -393,3 +393,162 @@ def test_cli_remove_vault(mock_ensure, mock_logic):
     result = runner.invoke(app, ["remove-vault"])
     assert result.exit_code == 0
     mock_logic.assert_called_once()
+
+
+@patch("orion_finance_sdk_py.cli._cancel_deposit_logic")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_cli_cancel_deposit_request(mock_ensure, mock_logic):
+    result = runner.invoke(app, ["cancel-deposit-request", "--amount", "50"])
+    assert result.exit_code == 0
+    mock_logic.assert_called_once_with(50)
+
+
+@patch("orion_finance_sdk_py.cli._request_redeem_logic")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_cli_request_redeem(mock_ensure, mock_logic):
+    result = runner.invoke(app, ["request-redeem", "--shares", "25"])
+    assert result.exit_code == 0
+    mock_logic.assert_called_once_with(25)
+
+
+@patch("orion_finance_sdk_py.cli._cancel_redeem_logic")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_cli_cancel_redeem_request(mock_ensure, mock_logic):
+    result = runner.invoke(app, ["cancel-redeem-request", "--shares", "12"])
+    assert result.exit_code == 0
+    mock_logic.assert_called_once_with(12)
+
+
+@patch("orion_finance_sdk_py.cli._redeem_logic")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_cli_redeem(mock_ensure, mock_logic):
+    result = runner.invoke(
+        app,
+        [
+            "redeem",
+            "--shares",
+            "8",
+            "--receiver",
+            "0xReceiver",
+            "--owner",
+            "0xOwner",
+        ],
+    )
+    assert result.exit_code == 0
+    mock_logic.assert_called_once_with(8, "0xReceiver", "0xOwner")
+
+
+@patch("orion_finance_sdk_py.cli.format_transaction_logs")
+@patch("orion_finance_sdk_py.lp.request_deposit")
+def test_request_deposit_logic_wires_lp(mock_lp, mock_fmt):
+    from orion_finance_sdk_py.cli import _request_deposit_logic
+
+    mock_lp.return_value = MagicMock()
+    _request_deposit_logic(99)
+    mock_lp.assert_called_once_with(99)
+    mock_fmt.assert_called_once()
+
+
+@patch("orion_finance_sdk_py.cli.format_transaction_logs")
+@patch("orion_finance_sdk_py.lp.cancel_deposit_request")
+def test_cancel_deposit_logic_wires_lp(mock_lp, mock_fmt):
+    from orion_finance_sdk_py.cli import _cancel_deposit_logic
+
+    mock_lp.return_value = MagicMock()
+    _cancel_deposit_logic(5)
+    mock_lp.assert_called_once_with(5)
+
+
+@patch("orion_finance_sdk_py.cli.format_transaction_logs")
+@patch("orion_finance_sdk_py.lp.request_redeem")
+def test_request_redeem_logic_wires_lp(mock_lp, mock_fmt):
+    from orion_finance_sdk_py.cli import _request_redeem_logic
+
+    mock_lp.return_value = MagicMock()
+    _request_redeem_logic(7)
+    mock_lp.assert_called_once_with(7)
+
+
+@patch("orion_finance_sdk_py.cli.format_transaction_logs")
+@patch("orion_finance_sdk_py.lp.cancel_redeem_request")
+def test_cancel_redeem_logic_wires_lp(mock_lp, mock_fmt):
+    from orion_finance_sdk_py.cli import _cancel_redeem_logic
+
+    mock_lp.return_value = MagicMock()
+    _cancel_redeem_logic(3)
+    mock_lp.assert_called_once_with(3)
+
+
+@patch("orion_finance_sdk_py.cli.format_transaction_logs")
+@patch("orion_finance_sdk_py.lp.redeem")
+def test_redeem_logic_wires_lp(mock_lp, mock_fmt):
+    from orion_finance_sdk_py.cli import _redeem_logic
+
+    mock_lp.return_value = MagicMock()
+    _redeem_logic(1, "0xR", "0xO")
+    mock_lp.assert_called_once_with(1, "0xR", "0xO")
+
+
+@patch("orion_finance_sdk_py.cli.format_transaction_logs")
+@patch("orion_finance_sdk_py.manager.remove_orion_vault")
+def test_remove_vault_logic_wires_manager(mock_mgr, mock_fmt):
+    from orion_finance_sdk_py.cli import _remove_vault_logic
+
+    mock_mgr.return_value = MagicMock()
+    _remove_vault_logic()
+    mock_mgr.assert_called_once_with()
+    mock_fmt.assert_called_once()
+
+
+def test_validate_int_input():
+    from orion_finance_sdk_py.cli import validate_int_input
+
+    assert validate_int_input("5") is True
+    assert validate_int_input("0") == "Amount must be positive"
+    assert validate_int_input("abc") == "Please enter a valid integer"
+
+
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+def test_list_whitelisted_assets_logic(MockConfig, capsys):
+    from orion_finance_sdk_py.cli import _list_whitelisted_assets_logic
+
+    config = MockConfig.return_value
+    config.whitelisted_assets = ["0xA", "0xB"]
+    config.whitelisted_asset_names = ["AAA", "BBB"]
+    _list_whitelisted_assets_logic()
+    out = capsys.readouterr().out
+    assert "AAA" in out and "0xA" in out
+    assert "Total: 2" in out
+
+
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+def test_list_whitelisted_assets_logic_names_fallback(MockConfig, capsys):
+    from orion_finance_sdk_py.cli import _list_whitelisted_assets_logic
+
+    config = MockConfig.return_value
+    config.whitelisted_assets = ["0xA"]
+    type(config).whitelisted_asset_names = property(
+        lambda self: (_ for _ in ()).throw(RuntimeError("no names"))
+    )
+    _list_whitelisted_assets_logic()
+    assert "Unknown" in capsys.readouterr().out
+
+
+@patch("orion_finance_sdk_py.cli._list_whitelisted_assets_logic")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_cli_list_whitelisted_assets(mock_ensure, mock_logic):
+    result = runner.invoke(app, ["list-whitelisted-assets"])
+    assert result.exit_code == 0
+    mock_logic.assert_called_once()
+
+
+@patch("orion_finance_sdk_py.cli.app")
+@patch("orion_finance_sdk_py.cli.Console")
+def test_entry_point_value_error(MockConsole, mock_app):
+    from orion_finance_sdk_py.cli import entry_point
+
+    mock_app.side_effect = ValueError("boom")
+    with patch("orion_finance_sdk_py.cli.sys.exit") as mock_exit:
+        entry_point()
+    MockConsole.return_value.print.assert_called_once_with("boom")
+    mock_exit.assert_called_once_with(1)
