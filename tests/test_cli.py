@@ -11,6 +11,11 @@ from typer.testing import CliRunner
 runner = CliRunner()
 
 
+def _cli_output(result) -> str:
+    """Combine stdout and stderr (Rich console writes to stderr)."""
+    return result.stdout + result.stderr
+
+
 @patch("orion_finance_sdk_py.cli.VaultFactory")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
 def test_deploy_vault(mock_ensure_env, MockVaultFactory):
@@ -41,8 +46,10 @@ def test_deploy_vault(mock_ensure_env, MockVaultFactory):
     )
 
     assert result.exit_code == 0
-    assert "Vault deployment transaction completed" in result.stdout
-    assert "ORION_VAULT_ADDRESS=0xVault" in result.stdout
+    out = _cli_output(result)
+    assert "Vault deployment transaction completed" in out
+    assert "ORION_VAULT_ADDRESS" in out
+    assert "0xVault" in out
 
     mock_factory.create_orion_vault.assert_called_with(
         name="Test Vault",
@@ -87,17 +94,19 @@ def test_deploy_vault_encrypted(mock_ensure_env, MockVaultFactory):
 
     assert result.exit_code == 0
     MockVaultFactory.assert_called_with(vault_type="encrypted")
-    assert "ORION_VAULT_ADDRESS=0xEncVault" in result.stdout
+    out = _cli_output(result)
+    assert "ORION_VAULT_ADDRESS" in out
+    assert "0xEncVault" in out
 
 
 @patch("orion_finance_sdk_py.cli.OrionTransparentVault")
 @patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
 @patch("orion_finance_sdk_py.cli.validate_order")
-def test_submit_order_transparent(
+def test_submit_intent_transparent(
     mock_validate, mock_ensure, MockConfig, MockVault, tmp_path
 ):
-    """Test submitting transparent order."""
+    """Test submitting transparent intent."""
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xTransVault"]
@@ -111,19 +120,19 @@ def test_submit_order_transparent(
 
     result = runner.invoke(
         app,
-        ["submit-order", "--order-intent-path", str(order_file)],
+        ["submit-intent", "--intent-path", str(order_file)],
         env={"ORION_VAULT_ADDRESS": "0xTransVault", "CHAIN_ID": "11155111"},
     )
 
     assert result.exit_code == 0
-    assert "Order intent submitted successfully" in result.stdout
+    assert "Intent submitted successfully" in _cli_output(result)
 
 
 @patch("orion_finance_sdk_py.cli.OrionEncryptedVault")
 @patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
 @patch("orion_finance_sdk_py.cli.validate_order")
-def test_submit_order_encrypted(
+def test_submit_intent_encrypted(
     mock_validate, mock_ensure, MockConfig, MockVault, tmp_path
 ):
     """Encrypted vault submit routes to OrionEncryptedVault."""
@@ -139,12 +148,12 @@ def test_submit_order_encrypted(
 
     result = runner.invoke(
         app,
-        ["submit-order", "--order-intent-path", str(order_file)],
+        ["submit-intent", "--intent-path", str(order_file)],
         env={"ORION_VAULT_ADDRESS": "0xEncVault", "CHAIN_ID": "11155111"},
     )
 
     assert result.exit_code == 0
-    assert "Order intent submitted successfully" in result.stdout
+    assert "Intent submitted successfully" in _cli_output(result)
     mock_vault.submit_order_intent.assert_called_once_with(order_intent={"0xA": 1000})
 
 
@@ -152,8 +161,8 @@ def test_submit_order_encrypted(
 @patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
 @patch("orion_finance_sdk_py.cli.validate_order")
-def test_submit_order_inline_json(mock_validate, mock_ensure, MockConfig, MockVault):
-    """Inline JSON object (no file) for order intent."""
+def test_submit_intent_inline_json(mock_validate, mock_ensure, MockConfig, MockVault):
+    """Inline JSON object (no file) for intent."""
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xTransVault"]
@@ -163,12 +172,12 @@ def test_submit_order_inline_json(mock_validate, mock_ensure, MockConfig, MockVa
 
     result = runner.invoke(
         app,
-        ["submit-order", "--order-intent", '{"0xA": 1.0}'],
+        ["submit-intent", "--intent", '{"0xA": 1.0}'],
         env={"ORION_VAULT_ADDRESS": "0xTransVault", "CHAIN_ID": "11155111"},
     )
 
     assert result.exit_code == 0
-    assert "Order intent submitted successfully" in result.stdout
+    assert "Intent submitted successfully" in _cli_output(result)
 
 
 @patch("orion_finance_sdk_py.cli.OrionTransparentVault")
@@ -190,7 +199,7 @@ def test_update_strategist(mock_ensure, MockConfig, MockVault):
     )
 
     assert result.exit_code == 0
-    assert "Strategist address updated successfully" in result.stdout
+    assert "Strategist address updated successfully" in _cli_output(result)
 
 
 @patch("orion_finance_sdk_py.cli.OrionTransparentVault")
@@ -220,7 +229,7 @@ def test_update_fee_model(mock_ensure, MockConfig, MockVault):
     )
 
     assert result.exit_code == 0
-    assert "Fee model updated successfully" in result.stdout
+    assert "Fee model updated successfully" in _cli_output(result)
 
 
 @patch("orion_finance_sdk_py.cli.VaultFactory")
@@ -253,13 +262,13 @@ def test_deploy_vault_no_address(mock_ensure_env, MockVaultFactory):
     )
 
     assert result.exit_code == 0
-    assert "Could not extract vault address" in result.stdout
+    assert "Could not extract vault address" in _cli_output(result)
 
 
 @patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
-def test_submit_order_unknown_vault(mock_ensure_env, MockOrionConfig, tmp_path):
-    """Test submit-order with unknown vault address."""
+def test_submit_intent_unknown_vault(mock_ensure_env, MockOrionConfig, tmp_path):
+    """Test submit-intent with unknown vault address."""
     mock_config = MockOrionConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xTrans"]
@@ -270,7 +279,7 @@ def test_submit_order_unknown_vault(mock_ensure_env, MockOrionConfig, tmp_path):
 
     result = runner.invoke(
         app,
-        ["submit-order", "--order-intent-path", str(order_file)],
+        ["submit-intent", "--intent-path", str(order_file)],
         env={"ORION_VAULT_ADDRESS": "0xUnknown", "CHAIN_ID": "11155111"},
     )
 
@@ -299,7 +308,9 @@ def test_get_pending_fees(mock_ensure, MockConfig, MockVault):
     )
 
     assert result.exit_code == 0
-    assert "Pending Vault Fees: 12345" in result.stdout
+    combined = _cli_output(result)
+    assert "12345" in combined
+    assert "Pending vault fees" in combined
 
 
 def test_entry_point():
@@ -373,9 +384,10 @@ def test_list_asset_address_map(mock_ensure, mock_build_map):
     result = runner.invoke(app, ["list-asset-address-map"])
 
     assert result.exit_code == 0
-    assert twin in result.stdout
-    assert mainnet in result.stdout
-    assert "Total: 1 twin assets" in result.stdout
+    combined = _cli_output(result)
+    assert twin in combined
+    assert mainnet in combined
+    assert "Total: 1 twin assets" in combined
     mock_build_map.assert_called_once()
 
 
@@ -516,7 +528,8 @@ def test_list_whitelisted_assets_logic(MockConfig, capsys):
     config.whitelisted_assets = ["0xA", "0xB"]
     config.whitelisted_asset_names = ["AAA", "BBB"]
     _list_whitelisted_assets_logic()
-    out = capsys.readouterr().out
+    captured = capsys.readouterr()
+    out = captured.out + captured.err
     assert "AAA" in out and "0xA" in out
     assert "Total: 2" in out
 
@@ -531,7 +544,8 @@ def test_list_whitelisted_assets_logic_names_fallback(MockConfig, capsys):
         lambda self: (_ for _ in ()).throw(RuntimeError("no names"))
     )
     _list_whitelisted_assets_logic()
-    assert "Unknown" in capsys.readouterr().out
+    captured = capsys.readouterr()
+    assert "Unknown" in captured.out + captured.err
 
 
 @patch("orion_finance_sdk_py.cli._list_whitelisted_assets_logic")
@@ -542,13 +556,13 @@ def test_cli_list_whitelisted_assets(mock_ensure, mock_logic):
     mock_logic.assert_called_once()
 
 
+@patch("orion_finance_sdk_py.cli.print_error")
 @patch("orion_finance_sdk_py.cli.app")
-@patch("orion_finance_sdk_py.cli.Console")
-def test_entry_point_value_error(MockConsole, mock_app):
+def test_entry_point_value_error(mock_app, mock_print_error):
     from orion_finance_sdk_py.cli import entry_point
 
     mock_app.side_effect = ValueError("boom")
     with patch("orion_finance_sdk_py.cli.sys.exit") as mock_exit:
         entry_point()
-    MockConsole.return_value.print.assert_called_once_with("boom")
+    mock_print_error.assert_called_once_with("boom")
     mock_exit.assert_called_once_with(1)

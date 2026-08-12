@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from web3 import Web3
 from web3.types import HexStr, TxReceipt
 
+from .console_ui import progress_step
 from .rpc import pick_default_rpc
 from .types import CHAIN_CONFIG, ZERO_ADDRESS, VaultType
 from .utils import (
@@ -555,12 +556,14 @@ class OrionConfig(OrionSmartContract):
         Signs with ``MANAGER_PRIVATE_KEY`` and verifies the signer is the vault
         manager.
         """
+        progress_step("Verifying protocol is idle")
         if not self.is_system_idle():
             raise SystemNotIdleError(
                 "System is not idle. Cannot remove Orion vault at this time."
             )
 
         vault_address = Web3.to_checksum_address(vault_address)
+        progress_step("Verifying vault registration")
         if not self.is_orion_vault(vault_address):
             raise ValueError(
                 f"Address {vault_address} is not a registered Orion vault."
@@ -582,18 +585,21 @@ class OrionConfig(OrionSmartContract):
             abi=load_contract_abi("OrionVault"),
         )
         vault_manager = _call_view(vault_contract.functions.manager())
+        progress_step("Verifying vault manager signer")
         if account.address != Web3.to_checksum_address(vault_manager):
             raise ValueError(
                 f"Signer {account.address} is not the vault manager "
                 f"{vault_manager}. Cannot remove vault."
             )
 
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
         tx = self.contract.functions.removeOrionVault(vault_address).build_transaction(
             {"from": account.address, "nonce": nonce}
         )
         signed = account.sign_transaction(tx)
+        progress_step("Broadcasting removeOrionVault transaction")
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        progress_step("Waiting for confirmation")
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())
         if receipt["status"] != 1:
             raise Exception(f"Transaction failed with status: {receipt['status']}")
@@ -828,6 +834,7 @@ class VaultFactory(OrionSmartContract):
         """Create an Orion vault for a given strategist address."""
         config = OrionConfig()
 
+        progress_step("Verifying manager whitelist")
         strategist_address = validate_var(
             strategist_address,
             error_message=(
@@ -874,13 +881,15 @@ class VaultFactory(OrionSmartContract):
                 f"Management fee {management_fee} exceeds maximum {MAX_MANAGEMENT_FEE}"
             )
 
+        progress_step("Verifying protocol is idle")
         if not config.is_system_idle():
             raise SystemNotIdleError(
                 "System is not idle. Cannot deploy vault at this time."
             )
 
+        progress_step("Estimating gas and checking ETH balance")
         account = self.w3.eth.account.from_key(manager_private_key)
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
         # Estimate gas needed for the transaction
         gas_estimate = self.contract.functions.createVault(
@@ -925,9 +934,11 @@ class VaultFactory(OrionSmartContract):
         )
 
         signed = account.sign_transaction(tx)
+        progress_step("Broadcasting createVault transaction")
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         tx_hash_hex = tx_hash.hex()
 
+        progress_step("Waiting for confirmation")
         try:
             receipt = self._wait_for_transaction_receipt(tx_hash_hex)
         except Exception as e:
@@ -1158,9 +1169,10 @@ class OrionVault(OrionSmartContract):
         Returns:
             TransactionResult with transaction hash, receipt, and decoded logs
         """
+        progress_step("Building transaction")
         private_key = validate_var(os.getenv(key_env), error_msg)
         account = self.w3.eth.account.from_key(private_key)
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
         tx_params = {
             "from": account.address,
@@ -1171,7 +1183,9 @@ class OrionVault(OrionSmartContract):
 
         tx = contract_fn_call.build_transaction(tx_params)
         signed = account.sign_transaction(tx)
+        progress_step("Broadcasting transaction")
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        progress_step("Waiting for confirmation")
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())
 
         if receipt["status"] != 1:
@@ -1315,7 +1329,7 @@ class OrionVault(OrionSmartContract):
                 f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot update strategist."
             )
 
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
         tx = self.contract.functions.updateStrategist(
             new_strategist_address
@@ -1372,7 +1386,7 @@ class OrionVault(OrionSmartContract):
                 f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot update fee model."
             )
 
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
         tx = self.contract.functions.updateFeeModel(
             fee_type, performance_fee, management_fee
@@ -1432,7 +1446,7 @@ class OrionVault(OrionSmartContract):
                 f"{self.manager_address}. Cannot claim fees."
             )
 
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
         tx = self.contract.functions.claimVaultFees(amount).build_transaction(
             {"from": account.address, "nonce": nonce}
@@ -1610,7 +1624,7 @@ class OrionVault(OrionSmartContract):
                 f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot set deposit access control."
             )
 
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
         tx = self.contract.functions.setDepositAccessControl(
             Web3.to_checksum_address(access_control_address)
@@ -1710,6 +1724,7 @@ class OrionTransparentVault(OrionVault):
             TransactionResult
         """
         config = OrionConfig()
+        progress_step("Verifying protocol is idle")
         if not config.is_system_idle():
             raise SystemNotIdleError(
                 "System is not idle. Cannot submit order intent at this time."
@@ -1725,19 +1740,21 @@ class OrionTransparentVault(OrionVault):
         )
 
         account = self.w3.eth.account.from_key(strategist_private_key)
+        progress_step("Verifying strategist signer")
         # Validate that the signer is the strategist
         if account.address != self.strategist_address:
             raise ValueError(
                 f"Signer {account.address} is not the vault strategist {self.strategist_address}. Cannot submit order."
             )
 
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
         items = [
             {"token": Web3.to_checksum_address(token), "weight": value}
             for token, value in order_intent.items()
         ]
 
+        progress_step("Estimating gas for submitIntent")
         # Estimate gas needed for the transaction
         gas_estimate = self.contract.functions.submitIntent(items).estimate_gas(
             {"from": account.address, "nonce": nonce}
@@ -1756,9 +1773,11 @@ class OrionTransparentVault(OrionVault):
         )
 
         signed = account.sign_transaction(tx)
+        progress_step("Broadcasting submitIntent transaction")
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         tx_hash_hex = tx_hash.hex()
 
+        progress_step("Waiting for confirmation")
         receipt = self._wait_for_transaction_receipt(tx_hash_hex)
 
         if receipt["status"] != 1:
@@ -1814,6 +1833,7 @@ class OrionEncryptedVault(OrionVault):
         from .intent import Intent
 
         config = OrionConfig()
+        progress_step("Verifying protocol is idle")
         if not config.is_system_idle():
             raise SystemNotIdleError(
                 "System is not idle. Cannot submit order intent at this time."
@@ -1829,16 +1849,20 @@ class OrionEncryptedVault(OrionVault):
         )
 
         account = self.w3.eth.account.from_key(strategist_private_key)
+        progress_step("Verifying strategist signer")
         if account.address != self.strategist_address:
             raise ValueError(
                 f"Signer {account.address} is not the vault strategist "
                 f"{self.strategist_address}. Cannot submit order."
             )
 
-        ciphertext = Intent(order_intent).encrypt(config.hpke_public_key)
+        progress_step("Fetching HPKE public key from OrionConfig")
+        hpke_key = config.hpke_public_key
+        ciphertext = Intent(order_intent).encrypt(hpke_key)
 
-        nonce = self.w3.eth.get_transaction_count(account.address)
+        nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
+        progress_step("Estimating gas for submitIntent")
         gas_estimate = self.contract.functions.submitIntent(ciphertext).estimate_gas(
             {"from": account.address, "nonce": nonce}
         )
@@ -1854,9 +1878,11 @@ class OrionEncryptedVault(OrionVault):
         )
 
         signed = account.sign_transaction(tx)
+        progress_step("Broadcasting submitIntent transaction")
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         tx_hash_hex = tx_hash.hex()
 
+        progress_step("Waiting for confirmation")
         receipt = self._wait_for_transaction_receipt(tx_hash_hex)
 
         if receipt["status"] != 1:

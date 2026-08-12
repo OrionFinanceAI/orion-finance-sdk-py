@@ -1618,13 +1618,14 @@ wheels = [
 
 [[package]]
 name = "orion-finance-sdk-py"
-version = "2.0.0"
+version = "2.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
     { name = "pyhpke" },
     { name = "python-dotenv" },
     { name = "questionary" },
+    { name = "rich" },
     { name = "typer" },
     { name = "web3" },
 ]
@@ -1676,6 +1677,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0,<8.0.0" },
     { name = "python-dotenv", specifier = ">=1.1.0,<2.0.0" },
     { name = "questionary", specifier = ">=2.0.0,<3.0.0" },
+    { name = "rich", specifier = ">=13.0.0,<15.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.10,<1.0.0" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8.1.0,<10.0.0" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'", specifier = ">=3.0.0,<4.0.0" },

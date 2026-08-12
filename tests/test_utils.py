@@ -133,9 +133,8 @@ def test_format_transaction_logs(capsys):
 
     format_transaction_logs(tx_result)
 
-    # Check output
     captured = capsys.readouterr()
-    assert "✅ Transaction completed successfully!" in captured.out
-    assert "🔗 https://sepolia.etherscan.io/tx/0xabc" in captured.out
-    # We no longer print logs in the console
-    assert "TestEvent" not in captured.out
+    assert "Transaction completed successfully!" in captured.err
+    assert "sepolia.etherscan.io/tx/0xabc" in captured.err
+    assert "TestEvent" not in captured.err
+    assert "✅" not in captured.err

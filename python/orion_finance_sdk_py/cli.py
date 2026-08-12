@@ -6,9 +6,18 @@ import sys
 import questionary
 import typer
 from dotenv import load_dotenv
-from rich.console import Console
 
 from .asset_map import build_asset_address_map
+from .console_ui import (
+    operation_progress,
+    print_error,
+    print_info,
+    print_key_value,
+    print_table,
+    print_welcome,
+    progress_step,
+    rpc_status,
+)
 from .contracts import (
     OrionConfig,
     OrionEncryptedVault,
@@ -29,15 +38,6 @@ from .utils import (
     validate_order,
     validate_var,
 )
-
-ORION_BANNER = r"""
-     ██████╗ ██████╗ ██╗ ██████╗ ███╗   ██╗    ███████╗██╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗
-    ██╔═══██╗██╔══██╗██║██╔═══██╗████╗  ██║    ██╔════╝██║████╗  ██║██╔══██╗████╗  ██║██╔════╝██╔════╝
-    ██║   ██║██████╔╝██║██║   ██║██╔██╗ ██║    █████╗  ██║██╔██╗ ██║███████║██╔██╗ ██║██║     █████╗
-    ██║   ██║██╔══██╗██║██║   ██║██║╚██╗██║    ██╔══╝  ██║██║╚██╗██║██╔══██║██║╚██╗██║██║     ██╔══╝
-    ╚██████╔╝██║  ██║██║╚██████╔╝██║ ╚████║    ██║     ██║██║ ╚████║██║  ██║██║ ╚████║╚██████╗███████╗
-     ╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚══╝ ╚═════╝╚══════╝
-"""
 
 app = typer.Typer(help="Orion Finance SDK CLI")
 
@@ -66,31 +66,34 @@ def _deploy_vault_logic(
     """Logic for deploying a vault."""
     vault_factory = VaultFactory(vault_type=vault_type)
 
-    tx_result = vault_factory.create_orion_vault(
-        strategist_address=strategist_address,
-        name=name,
-        symbol=symbol,
-        fee_type=fee_type_value,
-        performance_fee=performance_fee_bp,
-        management_fee=management_fee_bp,
-        deposit_access_control=deposit_access_control,
-    )
+    with operation_progress("Deploy vault"):
+        tx_result = vault_factory.create_orion_vault(
+            strategist_address=strategist_address,
+            name=name,
+            symbol=symbol,
+            fee_type=fee_type_value,
+            performance_fee=performance_fee_bp,
+            management_fee=management_fee_bp,
+            deposit_access_control=deposit_access_control,
+        )
 
-    format_transaction_logs(tx_result, "Vault deployment transaction completed!")
+    format_transaction_logs(tx_result, "Vault deployment transaction completed")
 
     vault_address = vault_factory.get_vault_address_from_result(tx_result)
     if vault_address:
-        print(
-            f"\n📍 ORION_VAULT_ADDRESS={vault_address} <------------------- COPY THIS TO YOUR .env FILE TO INTERACT WITH THE VAULT."
+        print_key_value(
+            [("ORION_VAULT_ADDRESS", vault_address)],
+            title="Vault address",
         )
+        print_info("Add this address to your .env file to interact with the vault.")
     else:
-        print("\n❌ Could not extract vault address from transaction")
+        print_error("Could not extract vault address from transaction")
 
 
-def _submit_order_logic(order_intent_source: str):
-    """Logic for submitting an order.
+def _submit_intent_logic(intent_source: str):
+    """Logic for submitting a strategist intent.
 
-    ``order_intent_source`` may be a path to ``.json`` / ``.csv`` / ``.parquet``, or an
+    ``intent_source`` may be a path to ``.json`` / ``.csv`` / ``.parquet``, or an
     inline JSON / Python dict literal string mapping addresses to weights.
     """
     vault_address = validate_var(
@@ -101,14 +104,15 @@ def _submit_order_logic(order_intent_source: str):
         ),
     )
 
-    order_intent = load_order_intent(order_intent_source)
+    with operation_progress("Submit intent"):
+        progress_step("Loading intent from source")
+        order_intent = load_order_intent(intent_source)
+        config = OrionConfig()
+        vault = _resolve_vault(config, vault_address)
+        output_order_intent = validate_order(order_intent=order_intent)
+        tx_result = vault.submit_order_intent(order_intent=output_order_intent)
 
-    config = OrionConfig()
-    vault = _resolve_vault(config, vault_address)
-    output_order_intent = validate_order(order_intent=order_intent)
-    tx_result = vault.submit_order_intent(order_intent=output_order_intent)
-
-    format_transaction_logs(tx_result, "Order intent submitted successfully!")
+    format_transaction_logs(tx_result, "Intent submitted successfully")
 
 
 def _update_strategist_logic(new_strategist_address: str):
@@ -124,8 +128,9 @@ def _update_strategist_logic(new_strategist_address: str):
     config = OrionConfig()
     vault = _resolve_vault(config, vault_address)
 
-    tx_result = vault.update_strategist(new_strategist_address)
-    format_transaction_logs(tx_result, "Strategist address updated successfully!")
+    with operation_progress("Update vault strategist"):
+        tx_result = vault.update_strategist(new_strategist_address)
+    format_transaction_logs(tx_result, "Strategist address updated successfully")
 
 
 def _update_fee_model_logic(
@@ -143,12 +148,13 @@ def _update_fee_model_logic(
     config = OrionConfig()
     vault = _resolve_vault(config, vault_address)
 
-    tx_result = vault.update_fee_model(
-        fee_type=fee_type_value,
-        performance_fee=performance_fee_bp,
-        management_fee=management_fee_bp,
-    )
-    format_transaction_logs(tx_result, "Fee model updated successfully!")
+    with operation_progress("Update vault fee model"):
+        tx_result = vault.update_fee_model(
+            fee_type=fee_type_value,
+            performance_fee=performance_fee_bp,
+            management_fee=management_fee_bp,
+        )
+    format_transaction_logs(tx_result, "Fee model updated successfully")
 
 
 def _update_deposit_access_control_logic(new_dac_address: str):
@@ -161,8 +167,9 @@ def _update_deposit_access_control_logic(new_dac_address: str):
     config = OrionConfig()
     vault = _resolve_vault(config, vault_address)
 
-    tx_result = vault.set_deposit_access_control(new_dac_address)
-    format_transaction_logs(tx_result, "Deposit access control updated successfully!")
+    with operation_progress("Update deposit access control"):
+        tx_result = vault.set_deposit_access_control(new_dac_address)
+    format_transaction_logs(tx_result, "Deposit access control updated successfully")
 
 
 def _claim_fees_logic(amount: int):
@@ -174,8 +181,10 @@ def _claim_fees_logic(amount: int):
 
     config = OrionConfig()
     vault = _resolve_vault(config, vault_address)
-    tx_result = vault.transfer_manager_fees(amount)
-    format_transaction_logs(tx_result, "Manager fees claimed successfully!")
+
+    with operation_progress("Claim manager fees"):
+        tx_result = vault.transfer_manager_fees(amount)
+    format_transaction_logs(tx_result, "Manager fees claimed successfully")
 
 
 def _get_pending_fees_logic():
@@ -188,103 +197,101 @@ def _get_pending_fees_logic():
     config = OrionConfig()
     vault = _resolve_vault(config, vault_address)
 
-    fees = vault.pending_vault_fees
-    print(f"\n Pending Vault Fees: {fees}")
+    with rpc_status("Fetching pending vault fees…"):
+        fees = vault.pending_vault_fees
+
+    print_key_value([("Pending vault fees", str(fees))], title="Vault fees")
 
 
 def _request_deposit_logic(assets: int):
     """LP request deposit (approve + requestDeposit)."""
     from . import lp as lp_api
 
-    tx_result = lp_api.request_deposit(assets)
-    format_transaction_logs(tx_result, "Deposit request submitted successfully!")
+    with operation_progress("Submit deposit request"):
+        tx_result = lp_api.request_deposit(assets)
+    format_transaction_logs(tx_result, "Deposit request submitted successfully")
 
 
 def _cancel_deposit_logic(amount: int):
     """LP cancel deposit request."""
     from . import lp as lp_api
 
-    tx_result = lp_api.cancel_deposit_request(amount)
-    format_transaction_logs(tx_result, "Deposit request cancelled successfully!")
+    with operation_progress("Cancel deposit request"):
+        tx_result = lp_api.cancel_deposit_request(amount)
+    format_transaction_logs(tx_result, "Deposit request cancelled successfully")
 
 
 def _request_redeem_logic(shares: int):
     """LP request redeem (approve shares + requestRedeem)."""
     from . import lp as lp_api
 
-    tx_result = lp_api.request_redeem(shares)
-    format_transaction_logs(tx_result, "Redeem request submitted successfully!")
+    with operation_progress("Submit redeem request"):
+        tx_result = lp_api.request_redeem(shares)
+    format_transaction_logs(tx_result, "Redeem request submitted successfully")
 
 
 def _cancel_redeem_logic(shares: int):
     """LP cancel redeem request."""
     from . import lp as lp_api
 
-    tx_result = lp_api.cancel_redeem_request(shares)
-    format_transaction_logs(tx_result, "Redeem request cancelled successfully!")
+    with operation_progress("Cancel redeem request"):
+        tx_result = lp_api.cancel_redeem_request(shares)
+    format_transaction_logs(tx_result, "Redeem request cancelled successfully")
 
 
 def _redeem_logic(shares: int, receiver: str, owner: str):
     """LP sync redeem (decommissioned vaults only)."""
     from . import lp as lp_api
 
-    tx_result = lp_api.redeem(shares, receiver, owner)
-    format_transaction_logs(tx_result, "Redeem completed successfully!")
+    with operation_progress("Submit sync redeem"):
+        tx_result = lp_api.redeem(shares, receiver, owner)
+    format_transaction_logs(tx_result, "Redeem completed successfully")
 
 
 def _remove_vault_logic():
     """Manager-initiated vault decommissioning."""
     from . import manager as manager_api
 
-    tx_result = manager_api.remove_orion_vault()
-    format_transaction_logs(tx_result, "Vault removal / decommissioning started!")
+    with operation_progress("Start vault decommissioning"):
+        tx_result = manager_api.remove_orion_vault()
+    format_transaction_logs(tx_result, "Vault removal / decommissioning started")
 
 
 def _list_whitelisted_assets_logic():
     """Logic for listing whitelisted assets from OrionConfig."""
-    console = Console()
     config = OrionConfig()
 
-    with console.status("[bold green]Fetching whitelisted assets from chain..."):
+    with rpc_status("Fetching whitelisted assets from chain…"):
         assets = config.whitelisted_assets
         try:
             names = [n.strip() for n in config.whitelisted_asset_names]
         except Exception:
-            # Fallback if the contract doesn't support names yet
             names = ["Unknown"] * len(assets)
 
-    print("\n" + "=" * 60)
-
-    # Calculate alignment based on longest name
-    max_name_len = max((len(name) for name in names), default=10)
-
-    for name, address in zip(names, assets, strict=True):
-        print(f"{name: <{max_name_len}} | {address}")
-
-    print("\n" + "=" * 60)
-    print(f"Total: {len(assets)} whitelisted assets")
-    print("=" * 60 + "\n")
+    print_table(
+        ["Name", "Address"],
+        list(zip(names, assets, strict=True)),
+        title="Whitelisted assets",
+        caption=f"Total: {len(assets)} whitelisted assets",
+    )
 
 
 def _list_asset_address_map_logic():
     """Logic for listing testnet → mainnet twin address map."""
-    console = Console()
-
-    with console.status(
-        "[bold green]Resolving mainnetSource() for whitelisted twins..."
-    ):
+    with rpc_status("Resolving mainnetSource() for whitelisted twins…"):
         address_map = build_asset_address_map()
 
-    print("\n" + "=" * 95)
-    print(f"{'testnet': <42} | mainnet")
-    print("-" * 95)
+    if not address_map:
+        print_info("No twin assets with mainnetSource() found.")
+        return
 
-    for testnet, mainnet in address_map.items():
-        print(f"{testnet} | {mainnet}")
-
-    print("\n" + "=" * 95)
-    print(f"Total: {len(address_map)} twin assets with mainnetSource()")
-    print("=" * 95 + "\n")
+    for index, (testnet, mainnet) in enumerate(address_map.items(), start=1):
+        title = "Asset twin" if len(address_map) == 1 else f"Twin {index}"
+        print_key_value(
+            [("Testnet", testnet), ("Mainnet", mainnet)],
+            title=title,
+        )
+    print_info(f"Total: {len(address_map)} twin assets with mainnetSource()")
 
 
 def ask_or_exit(question):
@@ -325,7 +332,7 @@ def validate_symbol(val: str) -> bool | str:
 
 def interactive_menu():
     """Launch the interactive TUI menu."""
-    print(ORION_BANNER, file=sys.stderr)
+    print_welcome()
     while True:
         # Force reload environment variables to pick up changes (e.g. newly deployed vault address)
         load_dotenv(override=True)
@@ -335,7 +342,7 @@ def interactive_menu():
                     "What would you like to do?",
                     choices=[
                         "Deploy Vault",
-                        "Submit Order",
+                        "Submit Intent",
                         "Request Deposit",
                         "Cancel Deposit Request",
                         "Request Redeem",
@@ -414,13 +421,13 @@ def interactive_menu():
                     dac,
                 )
 
-            elif choice == "Submit Order":
+            elif choice == "Submit Intent":
                 path = ask_or_exit(
                     questionary.text(
-                        "Order intent: path to .json/.csv/.parquet or inline JSON object:",
+                        "Intent: path to .json/.csv/.parquet or inline JSON object:",
                     )
                 )
-                _submit_order_logic(path)
+                _submit_intent_logic(path)
 
             elif choice == "Request Deposit":
                 assets = int(
@@ -548,10 +555,10 @@ def interactive_menu():
             input("\nPress Enter to continue...")
 
         except KeyboardInterrupt:
-            print("\nOperation cancelled.")
+            print_info("Operation cancelled.")
             continue  # Go back to main menu loop
         except Exception as e:
-            print(f"\n❌ Error: {e}")
+            print_error(str(e))
             input("\nPress Enter to continue...")
 
 
@@ -568,7 +575,7 @@ def entry_point():
     try:
         app()
     except ValueError as e:
-        Console().print(str(e))
+        print_error(str(e))
         sys.exit(1)
 
 
@@ -609,23 +616,25 @@ def deploy_vault(
 
 
 @app.command()
-def submit_order(
-    order_intent: str = typer.Option(
+def submit_intent(
+    intent: str = typer.Option(
         ...,
+        "--intent",
+        "--intent-path",
         "--order-intent",
         "--order-intent-path",
         help=(
-            "Path to .json (object), .csv, or .parquet order intent; or inline JSON / "
+            "Path to .json (object), .csv, or .parquet intent; or inline JSON / "
             "Python dict literal, e.g. '{\"0xabc...\": 0.5, ...}'"
         ),
     ),
 ) -> None:
-    """Submit an order intent to an Orion vault.
+    """Submit an intent to an Orion vault.
 
     Transparent vaults submit plaintext weights. Encrypted vaults HPKE-seal the
     intent automatically before calling ``submitIntent(bytes)``.
     """
-    _submit_order_logic(order_intent)
+    _submit_intent_logic(intent)
 
 
 @app.command()

@@ -89,7 +89,7 @@ print(f"Risk-free Rate: {config.risk_free_rate}")
 1. **Install** the SDK (above).
 2. **Deploy** a vault with `orion deploy-vault` (managers).
 3. **Set strategist** if you want to submit intents as the manager (`orion update-strategist`).
-4. **Submit intents** with `orion submit-order`.
+4. **Submit intents** with `orion submit-intent`.
 
 ---
 
@@ -183,9 +183,9 @@ Strategists (or managers who set themselves as strategist) submit portfolio allo
 - **Inline:** JSON object or Python `dict` literal.
 
 ```bash
-orion submit-order --order-intent order_intent.json
+orion submit-intent --order-intent order_intent.json
 
-orion submit-order --order-intent '{"0x...": 0.5, "0x...": 0.5}'
+orion submit-intent --order-intent '{"0x...": 0.5, "0x...": 0.5}'
 ```
 
 Intents are collected and executed at the **next rebalance** (bundling, batching, netting).
