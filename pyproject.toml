@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orion-finance-sdk-py"
-version = "2.0.0"
+version = "2.0.1"
 requires-python = ">=3.11,<3.14"
 readme = "README.md"
 authors = [
@@ -18,6 +18,7 @@ dependencies = [
     "python-dotenv>=1.1.0,<2.0.0",
     "numpy>=1.21.0,<3.0.0",
     "typer>=0.16.0,<1.0.0",
+    "rich>=13.0.0,<15.0.0",
     "web3>=7.12.0,<8.0.0",
     "questionary>=2.0.0,<3.0.0",
     "pyhpke>=0.6.0,<1.0.0",

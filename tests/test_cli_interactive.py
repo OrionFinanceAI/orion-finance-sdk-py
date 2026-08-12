@@ -91,16 +91,16 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
 
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
-@patch("orion_finance_sdk_py.cli._submit_order_logic")
-def test_interactive_menu_submit_order(mock_submit_logic, mock_questionary, mock_input):
-    """Test interactive menu Submit Order flow."""
+@patch("orion_finance_sdk_py.cli._submit_intent_logic")
+def test_interactive_menu_submit_intent(mock_submit_logic, mock_questionary, mock_input):
+    """Test interactive menu Submit Intent flow."""
     # Sequence:
-    # 1. Main menu -> "Submit Order"
+    # 1. Main menu -> "Submit Intent"
     # 2. Path -> "order.json"
     # 3. Main menu -> "Exit"
 
     ask_side_effect = [
-        "Submit Order",
+        "Submit Intent",
         "order.json",
         "Exit",
     ]

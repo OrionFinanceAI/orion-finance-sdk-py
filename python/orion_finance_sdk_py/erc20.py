@@ -7,6 +7,7 @@ from typing import Any
 
 from web3 import Web3
 
+from .console_ui import progress_step
 from .contracts import TransactionResult
 from .utils import validate_var
 
@@ -98,12 +99,14 @@ def _send_token_tx(w3: Web3, fn, key: str, action: str) -> TransactionResult:
     tx = fn.build_transaction(
         {
             "from": account.address,
-            "nonce": w3.eth.get_transaction_count(account.address),
+            "nonce": w3.eth.get_transaction_count(account.address, "pending"),
             "gasPrice": w3.eth.gas_price,
         }
     )
     signed = account.sign_transaction(tx)
+    progress_step(f"Broadcasting ERC-20 {action}")
     tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+    progress_step("Waiting for confirmation")
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     if receipt["status"] != 1:
         raise Exception(f"ERC-20 {action} failed with status: {receipt['status']}")

@@ -1,15 +1,14 @@
 """Utility functions for the Orion Finance Python SDK."""
 
-import os
 import random
 import uuid
 from collections.abc import Mapping
 from pathlib import Path
 
 import numpy as np
-from rich.console import Console
 
-from .types import CHAIN_CONFIG, ZERO_ADDRESS
+from .console_ui import print_env_created, print_tx_result, progress_step
+from .types import ZERO_ADDRESS
 
 random.seed(uuid.uuid4().int)  # uuid-based random seed for irreproducibility.
 
@@ -48,10 +47,7 @@ LP_PRIVATE_KEY=
         try:
             with open(env_file_path, "w") as f:
                 f.write(env_template)
-            print(f"✅ Created .env file at {env_file_path}")
-            print(
-                "📝 Please update the .env file with your actual configuration values"
-            )
+            print_env_created(env_file_path)
         except Exception:
             pass
 
@@ -87,6 +83,7 @@ def validate_order(
 
     orion_config = OrionConfig()
 
+    progress_step("Validating tokens against whitelist")
     # Validate all tokens are whitelisted
     for token_address in order_intent.keys():
         if not orion_config.is_whitelisted(token_address):
@@ -105,6 +102,7 @@ def validate_order(
 
     strategist_intent_decimals = orion_config.strategist_intent_decimals
 
+    progress_step("Scaling weights to protocol decimals")
     order_intent = {
         token: weight * 10**strategist_intent_decimals
         for token, weight in order_intent.items()
@@ -149,20 +147,4 @@ def format_transaction_logs(
         tx_result: Transaction result object with tx_hash and decoded_logs attributes
         success_message: Custom success message to display at the end
     """
-    console = Console()
-
-    # Get chain ID and explorer URL
-    chain_id = int(os.getenv("CHAIN_ID", "11155111"))
-    explorer_url = "https://sepolia.etherscan.io"  # Default fallback
-
-    if chain_id in CHAIN_CONFIG and "Explorer" in CHAIN_CONFIG[chain_id]:
-        explorer_url = CHAIN_CONFIG[chain_id]["Explorer"]
-
-    # Normalize tx hash (ensure 0x prefix)
-    tx_hash = tx_result.tx_hash
-    if not tx_hash.startswith("0x"):
-        tx_hash = f"0x{tx_hash}"
-
-    # Print success message and link immediately to console
-    console.print(f"\n[bold green]✅ {success_message}[/bold green]")
-    console.print(f"🔗 {explorer_url}/tx/{tx_hash}\n")
+    print_tx_result(tx_result, title=success_message)

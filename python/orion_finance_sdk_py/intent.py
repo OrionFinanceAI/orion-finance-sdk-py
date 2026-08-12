@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from .console_ui import progress_step
 from .hpke import seal_intent
 
 
@@ -34,8 +35,10 @@ class Intent:
         if pk_r is None:
             from .contracts import OrionConfig
 
+            progress_step("Fetching HPKE public key from OrionConfig")
             pk_r = OrionConfig().hpke_public_key
 
+        progress_step("Encrypting intent with Orion HPKE")
         tokens = list(self.weights.keys())
         values = list(self.weights.values())
         return seal_intent(tokens, values, pk_r)

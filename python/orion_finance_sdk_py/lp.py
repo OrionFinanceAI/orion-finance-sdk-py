@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .console_ui import progress_step
 from .contracts import OrionConfig, SystemNotIdleError, TransactionResult
 from .erc20 import approve
 from .vault_resolve import resolve_vault
@@ -15,6 +16,7 @@ def request_deposit(
 ) -> TransactionResult:
     """Approve underlying to the vault, then ``requestDeposit``."""
     config = OrionConfig()
+    progress_step("Verifying protocol is idle")
     if not config.is_system_idle():
         raise SystemNotIdleError(
             "System is not idle. Cannot request deposit at this time."
@@ -25,11 +27,13 @@ def request_deposit(
         )
 
     vault = resolve_vault(vault_address)
+    progress_step("Checking vault decommission status")
     if config.is_decommissioning_vault(vault.contract_address) or (
         config.is_decommissioned_vault(vault.contract_address)
     ):
         raise ValueError("Cannot request deposit while vault is decommissioning/decommissioned.")
 
+    progress_step("Approving underlying token allowance")
     approve(
         vault.w3,
         config.underlying_asset,
@@ -64,6 +68,7 @@ def request_redeem(
 ) -> TransactionResult:
     """Approve vault shares to the vault, then ``requestRedeem``."""
     config = OrionConfig()
+    progress_step("Verifying protocol is idle")
     if not config.is_system_idle():
         raise SystemNotIdleError(
             "System is not idle. Cannot request redeem at this time."
@@ -74,11 +79,13 @@ def request_redeem(
         )
 
     vault = resolve_vault(vault_address)
+    progress_step("Checking vault decommission status")
     if config.is_decommissioned_vault(vault.contract_address):
         raise ValueError(
             "Vault is decommissioned. Use redeem() for sync exit instead of request_redeem."
         )
 
+    progress_step("Approving vault share allowance")
     approve(
         vault.w3,
         vault.contract_address,

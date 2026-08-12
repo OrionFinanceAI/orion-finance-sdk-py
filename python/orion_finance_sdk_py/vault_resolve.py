@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 
+from .console_ui import progress_step
 from .contracts import (
     OrionConfig,
     OrionEncryptedVault,
@@ -24,8 +25,11 @@ def resolve_vault(
         ),
     )
     config = OrionConfig()
+    progress_step("Checking vault registration and type")
     if config.is_encrypted_vault(address):
+        progress_step("Resolved encrypted vault")
         return OrionEncryptedVault(contract_address=address)
     if config.is_orion_vault(address):
+        progress_step("Resolved transparent vault")
         return OrionTransparentVault(contract_address=address)
     raise ValueError(f"Vault address {address} not in OrionConfig contract.")
