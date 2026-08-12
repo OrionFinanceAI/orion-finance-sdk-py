@@ -25,6 +25,7 @@ def test_ensure_env_file(tmp_path):
     assert env_file.exists()
     content = env_file.read_text()
     assert "STRATEGIST_PRIVATE_KEY=" in content
+    assert "LP_PRIVATE_KEY=" in content
 
 
 def test_ensure_env_file_exists(tmp_path):

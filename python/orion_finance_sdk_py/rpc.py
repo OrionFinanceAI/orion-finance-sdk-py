@@ -7,6 +7,7 @@ DEFAULT_PUBLIC_RPC_URLS: tuple[str, ...] = (
     "https://1rpc.io/sepolia",
     "https://0xrpc.io/sep",
     "https://ethereum-sepolia-rpc.publicnode.com",
+    "https://evm.stupidtech.net/v1/11155111",
 )
 
 _DEFAULT_RPC_CACHE: str | None = None

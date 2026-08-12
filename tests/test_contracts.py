@@ -12,6 +12,7 @@ import pytest
 from orion_finance_sdk_py.contracts import (
     LiquidityOrchestrator,
     OrionConfig,
+    OrionEncryptedVault,
     OrionSmartContract,
     OrionTransparentVault,
     OrionVault,
@@ -92,6 +93,7 @@ def mock_env():
         "CURATOR_ADDRESS": "0xCurator",
         "MANAGER_PRIVATE_KEY": "0xPrivate",
         "STRATEGIST_PRIVATE_KEY": "0xPrivate",
+        "LP_PRIVATE_KEY": "0xPrivate",
         "CURATOR_PRIVATE_KEY": "0xPrivate",
         "ORION_VAULT_ADDRESS": "0xVault",
     }
@@ -500,6 +502,7 @@ class TestOrionConfig:
         assert config.whitelisted_assets == ["0xA", "0xB"]
         assert config.get_investment_universe == ["0xA", "0xB"]
         assert config.orion_transparent_vaults == ["0xV1"]
+        assert config.orion_encrypted_vaults == ["0xV2"]
         assert config.is_system_idle() is True
 
         config.contract.functions.isWhitelisted("0xToken").call.return_value = True
@@ -513,8 +516,9 @@ class TestOrionConfig:
         config.contract.functions.underlyingAsset().call.return_value = "0xUnderlying"
         assert config.underlying_asset == "0xUnderlying"
 
-        config.contract.functions.getTokenDecimals("0xTok").call.return_value = 18
-        assert config.token_decimals("0xTok") == 18
+        token = "0x1111111111111111111111111111111111111111"
+        config.contract.functions.tokenDecimals(token).call.return_value = 18
+        assert config.token_decimals(token) == 18
 
         config.contract.functions.isOrionVault("0xVaultAddr").call.return_value = True
         assert config.is_orion_vault("0xVaultAddr") is True
@@ -530,8 +534,8 @@ class TestOrionConfig:
         config.contract.functions.minRedeemAmount().call.return_value = 50
         assert config.min_redeem_amount == 50
 
-        config.contract.functions.vFeeCoefficient().call.return_value = 5
-        assert config.v_fee_coefficient == 5
+        config.contract.functions.nettingFeeCoefficient().call.return_value = 5
+        assert config.netting_fee_coefficient == 5
 
         config.contract.functions.rsFeeCoefficient().call.return_value = 10
         assert config.rs_fee_coefficient == 10
@@ -926,6 +930,20 @@ class TestVaultFactory:
             MockConfig.return_value.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
             with pytest.raises(ValueError, match="Unsupported vault type"):
                 VaultFactory(vault_type="unknown")
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_encrypted_vault_factory_resolves_address(self, MockConfig):
+        """Encrypted VaultFactory uses encryptedVaultFactory() and EncryptedVaultFactory ABI."""
+        config_instance = MockConfig.return_value
+        config_instance.contract.functions.encryptedVaultFactory().call.return_value = (
+            "0xEVF"
+        )
+
+        factory = VaultFactory(VaultType.ENCRYPTED)
+        assert factory.contract_address == "0xEVF"
+        assert factory.contract_name == "EncryptedVaultFactory"
+        assert factory.vault_type == VaultType.ENCRYPTED
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -1467,7 +1485,7 @@ class TestOrionVaults:
         config_instance.is_orion_vault.return_value = False
 
         with pytest.raises(
-            ValueError, match="is NOT a valid Orion Transparent Vault registered"
+            ValueError, match="is NOT a valid Orion vault registered"
         ):
             OrionVault("Test")
 
@@ -1625,3 +1643,279 @@ class TestOrionVaults:
 
         with pytest.raises(ValueError, match="Signer .* is not the vault manager"):
             vault.transfer_manager_fees(100)
+
+    @patch("orion_finance_sdk_py.intent.Intent.encrypt")
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_encrypted_submit_order_intent_sends_ciphertext(
+        self, MockConfig, mock_encrypt
+    ):
+        """Encrypted submit seals intent then calls submitIntent(bytes)."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.is_orion_vault.return_value = True
+
+        ciphertext = b"\x01" * 48
+        mock_encrypt.return_value = ciphertext
+
+        vault = OrionEncryptedVault()
+        vault.contract.functions.strategist.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
+            100000
+        )
+        vault.contract.functions.submitIntent.return_value.build_transaction.return_value = {}
+
+        order = {"0xToken": 1000}
+        res = vault.submit_order_intent(order)
+
+        assert res.receipt["status"] == 1
+        mock_encrypt.assert_called_once()
+        vault.contract.functions.submitIntent.assert_called_with(ciphertext)
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_config_extra_views_and_hpke_key(self):
+        """Cover newer OrionConfig views and hpke_public_key branches."""
+        config = OrionConfig()
+        fn = config.contract.functions
+
+        fn.getAllTokenDecimals().call.return_value = [6, 18]
+        assert config.all_token_decimals == [6, 18]
+
+        fn.liquidityOrchestrator().call.return_value = "0xLO"
+        assert config.liquidity_orchestrator == "0xLO"
+
+        fn.transparentVaultFactory().call.return_value = "0xTF"
+        fn.encryptedVaultFactory().call.return_value = "0xEF"
+        assert config.transparent_vault_factory == "0xTF"
+        assert config.encrypted_vault_factory == "0xEF"
+
+        fn.getAllOrionManagers().call.return_value = ["0xM1"]
+        assert config.orion_managers == ["0xM1"]
+
+        fn.isEncryptedVault("0xV").call.return_value = True
+        assert config.is_encrypted_vault("0xV") is True
+
+        fn.isDecommissionedVault("0xV").call.return_value = True
+        fn.isDecommissioningVault("0xV").call.return_value = False
+        assert config.is_decommissioned_vault("0xV") is True
+        assert config.is_decommissioning_vault("0xV") is False
+
+        fn.getAllDecommissionedVaults().call.return_value = ["0xD"]
+        assert config.decommissioned_vaults == ["0xD"]
+
+        fn.hpkePublicKey().call.return_value = b"\x01" * 32
+        assert config.hpke_public_key == b"\x01" * 32
+
+        fn.hpkePublicKey().call.return_value = "0x" + "02" * 32
+        assert config.hpke_public_key == b"\x02" * 32
+
+        fn.hpkePublicKey().call.return_value = int("03" * 32, 16)
+        assert config.hpke_public_key == b"\x03" * 32
+
+        fn.hpkePublicKey().call.return_value = b"\x01" * 16
+        with pytest.raises(ValueError, match="32 bytes"):
+            _ = config.hpke_public_key
+
+        fn.hpkePublicKey().call.return_value = b"\x00" * 32
+        with pytest.raises(ValueError, match="unset"):
+            _ = config.hpke_public_key
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_remove_orion_vault_not_idle(self):
+        config = OrionConfig()
+        config.contract.functions.isSystemIdle().call.return_value = False
+        with pytest.raises(SystemNotIdleError, match="Cannot remove Orion vault"):
+            config.remove_orion_vault("0xVault")
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_remove_orion_vault_not_registered(self):
+        config = OrionConfig()
+        config.contract.functions.isSystemIdle().call.return_value = True
+        config.contract.functions.isOrionVault("0xVault").call.return_value = False
+        with pytest.raises(ValueError, match="not a registered Orion vault"):
+            config.remove_orion_vault("0xVault")
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_remove_orion_vault_wrong_manager(self, mock_w3):
+        config = OrionConfig()
+        config.contract.functions.isSystemIdle().call.return_value = True
+        config.contract.functions.isOrionVault("0xVault").call.return_value = True
+
+        vault_contract = MagicMock()
+        vault_contract.functions.manager.return_value.call.return_value = "0xOther"
+        # OrionConfig already holds self.contract; remove_orion_vault loads vault ABI next.
+        mock_w3.eth.contract.return_value = vault_contract
+
+        with pytest.raises(ValueError, match="not the vault manager"):
+            config.remove_orion_vault("0xVault")
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_remove_orion_vault_success_and_receipt_fail(self, mock_w3):
+        config = OrionConfig()
+        config.contract.functions.isSystemIdle().call.return_value = True
+        config.contract.functions.isOrionVault("0xVault").call.return_value = True
+
+        vault_contract = MagicMock()
+        vault_contract.functions.manager.return_value.call.return_value = "0xDeployer"
+        mock_w3.eth.contract.return_value = vault_contract
+        config.contract.functions.removeOrionVault.return_value.build_transaction.return_value = {}
+
+        res = config.remove_orion_vault("0xVault")
+        assert res.receipt["status"] == 1
+
+        mock_w3.eth.wait_for_transaction_receipt.return_value = {
+            "status": 0,
+            "logs": [],
+        }
+        with pytest.raises(Exception, match="Transaction failed with status"):
+            config.remove_orion_vault("0xVault")
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_lo_extra_views(self, MockConfig):
+        MockConfig.return_value.contract.functions.liquidityOrchestrator.return_value.call.return_value = (
+            "0xLO"
+        )
+        lo = LiquidityOrchestrator()
+        lo.contract.functions.bufferAmount().call.return_value = 123
+        lo.contract.functions.currentPhase().call.return_value = 2
+        lo.contract.functions.epochCounter().call.return_value = 9
+        lo.contract.functions.pendingProtocolFees().call.return_value = 7
+        assert lo.buffer_amount == 123
+        assert lo.current_phase == 2
+        assert lo.epoch_counter == 9
+        assert lo.pending_protocol_fees == 7
+
+        fee_model = (0, 100, 10, 1)
+        lo.contract.functions.getEpochState().call.return_value = (
+            ["0xV"],
+            5,
+            6,
+            [fee_model],
+            b"\x00" * 32,
+        )
+        state = lo.get_epoch_state()
+        assert state["vaultsEpoch"] == ["0xV"]
+        assert state["activeNettingFeeCoefficient"] == 5
+        assert state["vaultFeeModels"][0]["performanceFee"] == 100
+
+        lo.contract.functions.getAssetPrices(["0xA"]).call.return_value = [111]
+        assert lo.get_asset_prices(["0xA"]) == [111]
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_vault_erc4626_and_pending_views(self, MockConfig):
+        MockConfig.return_value.is_orion_vault.return_value = True
+        MockConfig.return_value.max_fulfill_batch_size = 10
+
+        vault = OrionTransparentVault()
+        fn = vault.contract.functions
+
+        fn.pendingDepositCount().call.return_value = 3
+        fn.pendingRedeemCount().call.return_value = 4
+        assert vault.pending_deposit_count() == 3
+        assert vault.pending_redeem_count() == 4
+
+        fn.pendingRedeemBatch(10).call.return_value = (["0xO"], [5])
+        owners, shares = vault.pending_redeem_batch()
+        assert owners == ["0xO"]
+        assert shares == [5]
+
+        fn.depositAccessControl().call.return_value = "0xAcl"
+        assert vault.deposit_access_control == "0xAcl"
+
+        fn.asset().call.return_value = "0xAsset"
+        fn.balanceOf("0xAcc").call.return_value = 8
+        fn.totalSupply().call.return_value = 100
+        fn.allowance("0xOwner", "0xSpender").call.return_value = 2
+        fn.convertToShares(50).call.return_value = 40
+        fn.previewRedeem(10).call.return_value = 9
+        fn.maxMint("0xR").call.return_value = 1
+        fn.maxRedeem("0xO").call.return_value = 2
+        fn.maxWithdraw("0xO").call.return_value = 3
+
+        assert vault.asset == "0xAsset"
+        assert vault.balance_of("0xAcc") == 8
+        assert vault.total_supply == 100
+        assert vault.allowance("0xOwner", "0xSpender") == 2
+        assert vault.convert_to_shares(50) == 40
+        assert vault.preview_redeem(10) == 9
+        assert vault.max_mint("0xR") == 1
+        assert vault.max_redeem("0xO") == 2
+        assert vault.max_withdraw("0xO") == 3
+
+    @patch("orion_finance_sdk_py.contracts.OrionVault._execute_vault_tx")
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_vault_share_ops_and_redeem_when_decommissioned(
+        self, MockConfig, mock_exec
+    ):
+        MockConfig.return_value.is_orion_vault.return_value = True
+        MockConfig.return_value.is_decommissioned_vault.return_value = True
+        mock_exec.return_value = TransactionResult(
+            tx_hash="0x1", receipt={"status": 1}, decoded_logs=[]
+        )
+
+        vault = OrionTransparentVault()
+        vault.approve_shares("0xS", 1)
+        vault.transfer_shares("0xT", 2)
+        vault.transfer_from_shares("0xF", "0xT", 3)
+        vault.redeem(4, "0xR", "0xO")
+        assert mock_exec.call_count == 4
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_transfer_manager_fees_receipt_failed(self, MockConfig, mock_w3):
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+
+        vault = OrionTransparentVault()
+        vault.contract.functions.manager.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.claimVaultFees.return_value.build_transaction.return_value = {}
+        mock_w3.eth.wait_for_transaction_receipt.return_value = {
+            "status": 0,
+            "logs": [],
+        }
+        with pytest.raises(Exception, match="Transaction failed with status"):
+            vault.transfer_manager_fees(100)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_encrypted_get_portfolio_and_intent(self, MockConfig):
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionEncryptedVault()
+        vault.contract.functions.getPortfolio().call.return_value = b"\xaa" * 10
+        vault.contract.functions.getIntent().call.return_value = b"\xbb" * 10
+        assert vault.get_portfolio() == b"\xaa" * 10
+        assert vault.get_intent() == b"\xbb" * 10
+
+    @patch("orion_finance_sdk_py.intent.Intent.encrypt")
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_encrypted_submit_idle_strategist_receipt_fail(
+        self, MockConfig, mock_encrypt, mock_w3
+    ):
+        config_instance = MockConfig.return_value
+        config_instance.is_orion_vault.return_value = True
+        config_instance.is_system_idle.return_value = False
+        vault = OrionEncryptedVault()
+        with pytest.raises(SystemNotIdleError):
+            vault.submit_order_intent({"0xA": 1})
+
+        config_instance.is_system_idle.return_value = True
+        vault.contract.functions.strategist.return_value.call.return_value = "0xOther"
+        with pytest.raises(ValueError, match="not the vault strategist"):
+            vault.submit_order_intent({"0xA": 1})
+
+        vault.contract.functions.strategist.return_value.call.return_value = "0xDeployer"
+        mock_encrypt.return_value = b"\x01" * 48
+        vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
+            100000
+        )
+        vault.contract.functions.submitIntent.return_value.build_transaction.return_value = {}
+        mock_w3.eth.wait_for_transaction_receipt.return_value = {
+            "status": 0,
+            "logs": [],
+        }
+        with pytest.raises(Exception, match="Transaction failed with status"):
+            vault.submit_order_intent({"0xA": 1})

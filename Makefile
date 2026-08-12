@@ -12,15 +12,11 @@ venv:
 install:
 	uv pip install -e ."[dev,docs]"
 	uv run pre-commit install
-	cd js && npm install && npm run build
-	./scripts/build_js.sh
 
 .PHONY: codestyle
 codestyle:
 	uv run ruff format
 	uv run ruff check --select I --fix
-
-	cd js && npm run prettier
 
 .PHONY: typecheck
 typecheck:

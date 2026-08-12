@@ -7,6 +7,20 @@ import urllib.request
 from setuptools import find_packages, setup
 from setuptools.command.build_py import build_py
 
+DEFAULT_ABI_VERSION = "abis-v2.6.0"
+
+CONTRACTS_TO_DOWNLOAD = [
+    "OrionConfig",
+    "TransparentVaultFactory",
+    "EncryptedVaultFactory",
+    "OrionVault",
+    "OrionTransparentVault",
+    "OrionEncryptedVault",
+    "LiquidityOrchestrator",
+    "PriceAdapterRegistry",
+    "ErrorsLib",
+]
+
 
 class CustomBuild(build_py):
     """Download the Orion Finance contracts ABIs."""
@@ -19,20 +33,14 @@ class CustomBuild(build_py):
 
     def download_abis(self):
         """Download the Orion Finance contracts ABIs."""
-        abis = [
-            "OrionConfig",
-            "TransparentVaultFactory",
-            "OrionTransparentVault",
-            "LiquidityOrchestrator",
-            "PriceAdapterRegistry",
-        ]
         os.makedirs("python/abis", exist_ok=True)
 
         base_url = (
-            "https://github.com/OrionFinanceAI/protocol/releases/download/abis-v2.0.0"
+            "https://github.com/OrionFinanceAI/protocol/releases/download/"
+            f"{DEFAULT_ABI_VERSION}"
         )
 
-        for contract in abis:
+        for contract in CONTRACTS_TO_DOWNLOAD:
             url = f"{base_url}/{contract}.json"
             dest = f"python/abis/{contract}.json"
             print(f"Downloading {contract} ABI...")

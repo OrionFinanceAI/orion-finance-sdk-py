@@ -168,6 +168,7 @@ verify_binary() {
 DEFAULT_RPC_1="https://1rpc.io/sepolia"
 DEFAULT_RPC_2="https://0xrpc.io/sep"
 DEFAULT_RPC_3="https://ethereum-sepolia-rpc.publicnode.com"
+DEFAULT_RPC_4="https://evm.stupidtech.net/v1/11155111"
 
 # Test if an RPC URL responds to eth_blockNumber.
 rpc_works() {
@@ -189,6 +190,7 @@ pick_default_rpc() {
     if rpc_works "$DEFAULT_RPC_1"; then log_ok "Using $DEFAULT_RPC_1"; echo "$DEFAULT_RPC_1"; return; fi
     if rpc_works "$DEFAULT_RPC_2"; then log_ok "Using $DEFAULT_RPC_2"; echo "$DEFAULT_RPC_2"; return; fi
     if rpc_works "$DEFAULT_RPC_3"; then log_ok "Using $DEFAULT_RPC_3"; echo "$DEFAULT_RPC_3"; return; fi
+    if rpc_works "$DEFAULT_RPC_4"; then log_ok "Using $DEFAULT_RPC_4"; echo "$DEFAULT_RPC_4"; return; fi
     log_err "None of the default RPCs responded. You can set RPC_URL manually in .env later."
     echo ""
 }
@@ -210,7 +212,7 @@ post_install() {
     case "$answer" in
         [nN]*)
             echo "" >&2
-            log "Skipped. Create .env manually with: RPC_URL, MANAGER_PRIVATE_KEY, STRATEGIST_PRIVATE_KEY."
+            log "Skipped. Create .env manually with: RPC_URL, MANAGER_PRIVATE_KEY, STRATEGIST_PRIVATE_KEY, LP_PRIVATE_KEY."
             log "Run 'orion' when ready. Docs: https://sdk.orionfinance.ai/"
             echo "" >&2
             return
@@ -227,7 +229,7 @@ post_install() {
     # ─── RPC_URL ───────────────────────────────────────────────────────────
     echo "" >&2
     log "RPC_URL (Sepolia or mainnet):"
-    log "  [1] Use default (we try: 1rpc.io → 0xrpc.io → publicnode)"
+    log "  [1] Use default (we try: 1rpc.io → 0xrpc.io → publicnode → stupidtech)"
     log "  [2] Paste your own URL"
     printf "  Choice [1/2]: " >&2
     read -r rpc_choice < /dev/tty || rpc_choice="1"
@@ -275,6 +277,9 @@ post_install() {
         echo ""
         echo "# Private key for strategist operations"
         echo "STRATEGIST_PRIVATE_KEY=$strategist_key"
+        echo ""
+        echo "# Private key for LP deposit/redeem operations"
+        echo "LP_PRIVATE_KEY="
         echo ""
         echo "# Vault address - set after running: orion deploy-vault"
         echo "# ORION_VAULT_ADDRESS="
