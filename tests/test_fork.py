@@ -450,7 +450,8 @@ def test_list_whitelisted_assets_logic_on_fork(sepolia_fork, capsys):
     from orion_finance_sdk_py.cli import _list_whitelisted_assets_logic
 
     _list_whitelisted_assets_logic()
-    out, _ = capsys.readouterr()
+    captured = capsys.readouterr()
+    out = captured.out + captured.err
     assert "whitelisted" in out.lower() or "Total:" in out
 
 

@@ -3,7 +3,7 @@
 import importlib.metadata
 
 from orion_finance_sdk_py.asset_map import build_asset_address_map
-from orion_finance_sdk_py.cli import deploy_vault, submit_intent, submit_order
+from orion_finance_sdk_py.cli import deploy_vault, submit_intent
 from orion_finance_sdk_py.contracts import (
     LiquidityOrchestrator,
     OrionConfig,
@@ -39,6 +39,5 @@ __all__ = [
     "seal_portfolio",
     "strategist",
     "submit_intent",
-    "submit_order",
     "views",
 ]

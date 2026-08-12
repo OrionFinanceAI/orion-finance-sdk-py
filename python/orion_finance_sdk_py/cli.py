@@ -637,10 +637,6 @@ def submit_intent(
     _submit_intent_logic(intent)
 
 
-# Backwards-compatible alias for older scripts/docs.
-submit_order = submit_intent
-
-
 @app.command()
 def update_strategist(
     new_strategist_address: str = typer.Option(
