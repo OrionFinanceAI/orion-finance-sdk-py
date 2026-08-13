@@ -24,6 +24,8 @@ from .contracts import (
     OrionTransparentVault,
     VaultFactory,
 )
+from .erc20 import decimals as erc20_decimals
+from .erc20 import symbol as erc20_symbol
 from .order_intent_io import load_order_intent
 from .types import (
     ZERO_ADDRESS,
@@ -35,6 +37,7 @@ from .utils import (
     BASIS_POINTS_FACTOR,
     ensure_env_file,
     format_transaction_logs,
+    to_base_units,
     validate_order,
     validate_var,
 )
@@ -203,6 +206,27 @@ def _get_pending_fees_logic():
     print_key_value([("Pending vault fees", str(fees))], title="Vault fees")
 
 
+def _underlying_token_meta() -> tuple[str, int]:
+    """Return ``(symbol, decimals)`` for ``OrionConfig.underlyingAsset()``."""
+    with rpc_status("Fetching underlying token…"):
+        config = OrionConfig()
+        address = config.underlying_asset
+        try:
+            token_symbol = erc20_symbol(config.w3, address).strip() or "tokens"
+        except Exception:
+            token_symbol = "tokens"
+        token_decimals = erc20_decimals(config.w3, address)
+    return token_symbol, token_decimals
+
+
+def _human_underlying_to_base(amount: str) -> int:
+    """Parse a human underlying amount and convert it to on-chain units."""
+    token_symbol, token_decimals = _underlying_token_meta()
+    raw = to_base_units(amount, token_decimals)
+    print_info(f"Submitting {amount} {token_symbol} ({raw} units)")
+    return raw
+
+
 def _request_deposit_logic(assets: int):
     """LP request deposit (approve + requestDeposit)."""
     from . import lp as lp_api
@@ -310,6 +334,28 @@ def validate_int_input(val: str) -> bool | str:
         return "Amount must be positive"
     except ValueError:
         return "Please enter a valid integer"
+
+
+def validate_decimal_input(val: str) -> bool | str:
+    """Validate a positive human token amount (integer or decimal)."""
+    try:
+        to_base_units(val, 18)
+    except ValueError as exc:
+        return str(exc)
+    return True
+
+
+def _validate_human_amount(decimals: int):
+    """Return a questionary validator for a human amount at ``decimals`` precision."""
+
+    def _validate(val: str) -> bool | str:
+        try:
+            to_base_units(val, decimals)
+        except ValueError as exc:
+            return str(exc)
+        return True
+
+    return _validate
 
 
 def validate_name(val: str) -> bool | str:
@@ -430,25 +476,28 @@ def interactive_menu():
                 _submit_intent_logic(path)
 
             elif choice == "Request Deposit":
-                assets = int(
-                    ask_or_exit(
-                        questionary.text(
-                            "Deposit assets (wei/units):", validate=validate_int_input
-                        )
+                token_symbol, token_decimals = _underlying_token_meta()
+                human_amount = ask_or_exit(
+                    questionary.text(
+                        f"Deposit amount ({token_symbol}):",
+                        validate=_validate_human_amount(token_decimals),
                     )
                 )
-                _request_deposit_logic(assets)
+                raw = to_base_units(human_amount, token_decimals)
+                print_info(f"Submitting {human_amount} {token_symbol} ({raw} units)")
+                _request_deposit_logic(raw)
 
             elif choice == "Cancel Deposit Request":
-                amount = int(
-                    ask_or_exit(
-                        questionary.text(
-                            "Cancel deposit amount (wei/units):",
-                            validate=validate_int_input,
-                        )
+                token_symbol, token_decimals = _underlying_token_meta()
+                human_amount = ask_or_exit(
+                    questionary.text(
+                        f"Cancel amount ({token_symbol}):",
+                        validate=_validate_human_amount(token_decimals),
                     )
                 )
-                _cancel_deposit_logic(amount)
+                raw = to_base_units(human_amount, token_decimals)
+                print_info(f"Submitting {human_amount} {token_symbol} ({raw} units)")
+                _cancel_deposit_logic(raw)
 
             elif choice == "Request Redeem":
                 shares = int(
@@ -689,18 +738,22 @@ def list_asset_address_map() -> None:
 
 @app.command()
 def request_deposit(
-    assets: int = typer.Option(..., help="Underlying amount in token units"),
+    assets: str = typer.Option(
+        ..., help="Underlying amount in human units (e.g. 100.5)"
+    ),
 ) -> None:
     """Request an async vault deposit (approves underlying, then requestDeposit)."""
-    _request_deposit_logic(assets)
+    _request_deposit_logic(_human_underlying_to_base(assets))
 
 
 @app.command()
 def cancel_deposit_request(
-    amount: int = typer.Option(..., help="Pending deposit amount to cancel"),
+    amount: str = typer.Option(
+        ..., help="Pending deposit amount to cancel, in human units (e.g. 100.5)"
+    ),
 ) -> None:
     """Cancel a pending vault deposit request."""
-    _cancel_deposit_logic(amount)
+    _cancel_deposit_logic(_human_underlying_to_base(amount))
 
 
 @app.command()

@@ -92,7 +92,9 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
 @patch("orion_finance_sdk_py.cli._submit_intent_logic")
-def test_interactive_menu_submit_intent(mock_submit_logic, mock_questionary, mock_input):
+def test_interactive_menu_submit_intent(
+    mock_submit_logic, mock_questionary, mock_input
+):
     """Test interactive menu Submit Intent flow."""
     # Sequence:
     # 1. Main menu -> "Submit Intent"
@@ -328,20 +330,26 @@ def _wire_questionary(mock_questionary, ask_side_effect):
 
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._underlying_token_meta", return_value=("USDC", 6))
 @patch("orion_finance_sdk_py.cli._request_deposit_logic")
-def test_interactive_request_deposit(mock_logic, mock_questionary, mock_input):
-    _wire_questionary(mock_questionary, ["Request Deposit", "1000", "Exit"])
+def test_interactive_request_deposit(
+    mock_logic, _mock_meta, mock_questionary, mock_input
+):
+    _wire_questionary(mock_questionary, ["Request Deposit", "1.5", "Exit"])
     interactive_menu()
-    mock_logic.assert_called_once_with(1000)
+    mock_logic.assert_called_once_with(1_500_000)
 
 
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._underlying_token_meta", return_value=("USDC", 6))
 @patch("orion_finance_sdk_py.cli._cancel_deposit_logic")
-def test_interactive_cancel_deposit(mock_logic, mock_questionary, mock_input):
+def test_interactive_cancel_deposit(
+    mock_logic, _mock_meta, mock_questionary, mock_input
+):
     _wire_questionary(mock_questionary, ["Cancel Deposit Request", "40", "Exit"])
     interactive_menu()
-    mock_logic.assert_called_once_with(40)
+    mock_logic.assert_called_once_with(40_000_000)
 
 
 @patch("builtins.input")

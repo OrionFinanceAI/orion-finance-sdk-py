@@ -9,7 +9,9 @@ from orion_finance_sdk_py.erc20 import (
     allowance,
     approve,
     balance_of,
+    decimals,
     get_erc20,
+    symbol,
     transfer,
 )
 
@@ -59,6 +61,31 @@ def test_balance_of_calls_token():
     token.functions.balanceOf.return_value.call.return_value = 99
     with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
         assert balance_of(w3, TOKEN, OWNER) == 99
+
+
+def test_decimals_calls_token():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.decimals.return_value.call.return_value = 6
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert decimals(w3, TOKEN) == 6
+    token.functions.decimals.assert_called_once()
+
+
+def test_symbol_calls_token():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.symbol.return_value.call.return_value = "USDC"
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert symbol(w3, TOKEN) == "USDC"
+
+
+def test_symbol_decodes_bytes32():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.symbol.return_value.call.return_value = b"USDC" + b"\x00" * 28
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert symbol(w3, TOKEN) == "USDC"
 
 
 def test_approve_with_explicit_private_key():

@@ -3,6 +3,7 @@
 import random
 import uuid
 from collections.abc import Mapping
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import numpy as np
@@ -50,6 +51,37 @@ LP_PRIVATE_KEY=
             print_env_created(env_file_path)
         except Exception:
             pass
+
+
+def to_base_units(amount: str | int | float | Decimal, decimals: int) -> int:
+    """Convert a human token amount to on-chain integer units.
+
+    Args:
+        amount: Human-readable token amount (e.g. ``"100.5"``).
+        decimals: Token decimals (e.g. 6 for USDC).
+
+    Returns:
+        Amount scaled by ``10**decimals``.
+
+    Raises:
+        ValueError: If ``amount`` is not a positive number, has more fractional
+            digits than ``decimals``, or ``decimals`` is negative.
+    """
+    if decimals < 0:
+        raise ValueError(f"decimals must be non-negative, got {decimals}")
+    try:
+        value = amount if isinstance(amount, Decimal) else Decimal(str(amount).strip())
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError(f"Invalid amount: {amount}") from exc
+    if not value.is_finite() or value <= 0:
+        raise ValueError("Amount must be positive")
+    exponent = value.as_tuple().exponent
+    if isinstance(exponent, int) and -exponent > decimals:
+        raise ValueError(f"Amount has more than {decimals} decimal places")
+    scaled = value * (Decimal(10) ** decimals)
+    if scaled != scaled.to_integral_value():
+        raise ValueError(f"Amount has more than {decimals} decimal places")
+    return int(scaled)
 
 
 def validate_var(var: str | None, error_message: str) -> str:

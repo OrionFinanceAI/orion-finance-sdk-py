@@ -154,8 +154,8 @@ orion update-fee-model \
 ### LP deposit / redeem
 
 ```bash
-orion request-deposit --assets 1000000
-orion cancel-deposit-request --amount 1000000
+orion request-deposit --assets 1.5
+orion cancel-deposit-request --amount 1.5
 orion request-redeem --shares 500000
 orion cancel-redeem-request --shares 500000
 # After full decommission only:

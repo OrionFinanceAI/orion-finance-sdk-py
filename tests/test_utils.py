@@ -1,5 +1,6 @@
 """Tests for the utility functions."""
 
+from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -7,6 +8,7 @@ from orion_finance_sdk_py.utils import (
     ensure_env_file,
     format_transaction_logs,
     round_with_fixed_sum,
+    to_base_units,
     validate_management_fee,
     validate_order,
     validate_performance_fee,
@@ -67,6 +69,26 @@ def test_validate_management_fee():
 
     with pytest.raises(ValueError, match="exceeds maximum allowed value"):
         validate_management_fee(301)
+
+
+def test_to_base_units():
+    """Human amounts convert to on-chain units using token decimals."""
+    assert to_base_units("1", 6) == 1_000_000
+    assert to_base_units("1.5", 6) == 1_500_000
+    assert to_base_units("0.000001", 6) == 1
+    assert to_base_units(Decimal("100.5"), 6) == 100_500_000
+    assert to_base_units("1", 18) == 10**18
+
+    with pytest.raises(ValueError, match="more than 6 decimal places"):
+        to_base_units("1.1234567", 6)
+    with pytest.raises(ValueError, match="must be positive"):
+        to_base_units("0", 6)
+    with pytest.raises(ValueError, match="must be positive"):
+        to_base_units("-1", 6)
+    with pytest.raises(ValueError, match="Invalid amount"):
+        to_base_units("abc", 6)
+    with pytest.raises(ValueError, match="non-negative"):
+        to_base_units("1", -1)
 
 
 def test_round_with_fixed_sum():
