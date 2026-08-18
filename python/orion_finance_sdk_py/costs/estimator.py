@@ -67,6 +67,13 @@ class ExecutionCostEstimator:
     def preload_uniswap_state(self, symbol: str, state: PoolState) -> None:
         """Inject a pool snapshot (tests and research pipelines)."""
         spec = self._spec_from_preloaded_state(symbol, state)
+        pool_mismatch = spec.pool.lower() != str(state.meta.address).lower()
+        fee_mismatch = int(spec.fee) != int(state.meta.fee)
+        if pool_mismatch or fee_mismatch:
+            raise ValueError(
+                f"Preloaded pool {state.meta.address} fee={state.meta.fee} "
+                f"does not match {symbol} pool {spec.pool} fee={spec.fee}"
+            )
         self._extra_assets[spec.symbol.upper()] = spec
         self._extra_assets[spec.address.lower()] = spec
         self._snapshots[(spec.pool.lower(), state.block_number)] = state

@@ -96,6 +96,12 @@ def test_pool_state_from_json_ignores_unknown_meta_keys():
     assert state.meta.stable_token == USDC_ADDRESS
 
 
+def test_preload_rejects_snapshot_that_does_not_match_registry_pool():
+    est = ExecutionCostEstimator(block_number=1)
+    with pytest.raises(ValueError, match="does not match WETH"):
+        est.preload_uniswap_state("WETH", _wbtc_usdc_state())
+
+
 def test_buy_and_sell_have_positive_cost():
     est = _estimator(at=datetime(2026, 8, 1, tzinfo=timezone.utc))
     buy = est.get_cost("WETH", 0.01, timestamp="2026-08-01")
