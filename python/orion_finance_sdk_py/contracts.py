@@ -12,6 +12,7 @@ from web3 import Web3
 from web3.types import HexStr, TxReceipt
 
 from .console_ui import progress_step
+from .rpc import block_at_timestamp as lookup_block_at_timestamp
 from .rpc import pick_default_rpc
 from .types import CHAIN_CONFIG, ZERO_ADDRESS, VaultType
 from .utils import (
@@ -205,31 +206,7 @@ class OrionSmartContract:
         Uses binary search over ``eth_getBlockByNumber``. For long historical
         series prefer a dedicated ``RPC_URL`` (public endpoints are rate-limited).
         """
-        if timestamp < 0:
-            raise ValueError("timestamp must be non-negative")
-
-        latest = self.w3.eth.block_number
-        latest_block = self.w3.eth.get_block(latest)
-        if timestamp >= latest_block["timestamp"]:
-            return latest
-
-        earliest = 0
-        earliest_block = self.w3.eth.get_block(earliest)
-        if timestamp < earliest_block["timestamp"]:
-            raise ValueError(
-                f"timestamp {timestamp} is before the earliest block "
-                f"({earliest_block['timestamp']})"
-            )
-
-        lo, hi = earliest, latest
-        while lo < hi:
-            mid = (lo + hi + 1) // 2
-            mid_ts = self.w3.eth.get_block(mid)["timestamp"]
-            if mid_ts <= timestamp:
-                lo = mid
-            else:
-                hi = mid - 1
-        return lo
+        return lookup_block_at_timestamp(self.w3, timestamp)
 
     def _resolve_block(self, value: datetime | int) -> int:
         """Resolve a datetime, unix timestamp, or block number to a block number."""
@@ -1269,9 +1246,7 @@ class OrionVault(OrionSmartContract):
     ) -> TransactionResult:
         """Approve ``spender`` to transfer vault shares."""
         return self._execute_vault_tx(
-            self.contract.functions.approve(
-                Web3.to_checksum_address(spender), amount
-            ),
+            self.contract.functions.approve(Web3.to_checksum_address(spender), amount),
             key_env=key_env,
             error_msg=f"{key_env} missing for share approve.",
         )

@@ -100,16 +100,18 @@ def balance_of(w3: Web3, token_address: str, account: str) -> int:
     return token.functions.balanceOf(Web3.to_checksum_address(account)).call()
 
 
-def decimals(w3: Web3, token_address: str) -> int:
+def decimals(w3: Web3, token_address: str, block: int | None = None) -> int:
     """Read ERC-20 decimals."""
     token = get_erc20(w3, token_address)
-    return int(token.functions.decimals().call())
+    call_kw = {} if block is None else {"block_identifier": block}
+    return int(token.functions.decimals().call(**call_kw))
 
 
-def symbol(w3: Web3, token_address: str) -> str:
+def symbol(w3: Web3, token_address: str, block: int | None = None) -> str:
     """Read ERC-20 symbol."""
     token = get_erc20(w3, token_address)
-    value = token.functions.symbol().call()
+    call_kw = {} if block is None else {"block_identifier": block}
+    value = token.functions.symbol().call(**call_kw)
     if isinstance(value, bytes):
         return value.rstrip(b"\x00").decode("utf-8")
     return str(value)

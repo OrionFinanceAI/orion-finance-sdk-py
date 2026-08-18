@@ -29,8 +29,11 @@ def ensure_env_file(env_file_path: Path = Path.cwd() / ".env"):
         # Create .env file with template
         env_template = """# Orion Finance SDK Environment Variables
 
-# RPC URL for blockchain connection
+# RPC URL for testnet connection
 RPC_URL=
+
+# RPC for execution cost estimates
+# MAINNET_RPC_URL=
 
 # Private key for manager operations
 MANAGER_PRIVATE_KEY=

@@ -70,6 +70,18 @@ def test_decimals_calls_token():
     with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
         assert decimals(w3, TOKEN) == 6
     token.functions.decimals.assert_called_once()
+    token.functions.decimals.return_value.call.assert_called_once_with()
+
+
+def test_decimals_passes_block_identifier():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.decimals.return_value.call.return_value = 6
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert decimals(w3, TOKEN, block=12_345_678) == 6
+    token.functions.decimals.return_value.call.assert_called_once_with(
+        block_identifier=12_345_678
+    )
 
 
 def test_symbol_calls_token():
@@ -78,6 +90,18 @@ def test_symbol_calls_token():
     token.functions.symbol.return_value.call.return_value = "USDC"
     with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
         assert symbol(w3, TOKEN) == "USDC"
+    token.functions.symbol.return_value.call.assert_called_once_with()
+
+
+def test_symbol_passes_block_identifier():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.symbol.return_value.call.return_value = "USDC"
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert symbol(w3, TOKEN, block=99) == "USDC"
+    token.functions.symbol.return_value.call.assert_called_once_with(
+        block_identifier=99
+    )
 
 
 def test_symbol_decodes_bytes32():

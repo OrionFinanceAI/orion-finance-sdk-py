@@ -13,6 +13,7 @@ from orion_finance_sdk_py.contracts import (
     PriceAdapterRegistry,
     VaultFactory,
 )
+from orion_finance_sdk_py.costs import ExecutionCost, ExecutionCostEstimator, get_cost
 from orion_finance_sdk_py.hpke import seal_intent, seal_portfolio
 from orion_finance_sdk_py.intent import Intent
 from orion_finance_sdk_py.order_intent_io import load_order_intent
@@ -22,6 +23,8 @@ from . import lp, manager, strategist, views
 __version__ = importlib.metadata.version("orion-finance-sdk-py")
 
 __all__ = [
+    "ExecutionCost",
+    "ExecutionCostEstimator",
     "Intent",
     "LiquidityOrchestrator",
     "OrionConfig",
@@ -32,6 +35,7 @@ __all__ = [
     "VaultFactory",
     "build_asset_address_map",
     "deploy_vault",
+    "get_cost",
     "load_order_intent",
     "lp",
     "manager",

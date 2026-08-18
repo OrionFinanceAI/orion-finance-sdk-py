@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orion-finance-sdk-py"
-version = "2.0.1"
+version = "2.1.0"
 requires-python = ">=3.11,<3.14"
 readme = "README.md"
 authors = [
@@ -68,6 +68,9 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "integration: live RPC tests skipped unless MAINNET_RPC_URL is set",
+]
 
 [tool.coverage.run]
 source = ["python/orion_finance_sdk_py"]
