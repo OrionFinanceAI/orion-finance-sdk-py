@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 
 from dotenv import load_dotenv
@@ -49,7 +50,7 @@ class ExecutionCostEstimator:
         self._rpc_url = (rpc_url or os.environ.get("MAINNET_RPC_URL") or "").strip()
         self._block_override = block_number
         self._w3: Web3 | None = None
-        self._snapshots: dict[tuple[str, int | None], PoolState] = {}
+        self._snapshots: dict[tuple[str, int], PoolState] = {}
         self._extra_assets: dict[str, VenueAsset] = {}
 
     def _web3(self) -> Web3:
@@ -68,7 +69,6 @@ class ExecutionCostEstimator:
         self._extra_assets[spec.symbol.upper()] = spec
         self._extra_assets[spec.address.lower()] = spec
         self._snapshots[(spec.pool.lower(), state.block_number)] = state
-        self._snapshots[(spec.pool.lower(), None)] = state
 
     def _spec_from_preloaded_state(self, symbol: str, state: PoolState) -> VenueAsset:
         try:
@@ -117,18 +117,19 @@ class ExecutionCostEstimator:
             raise ValueError(
                 f"Unsupported venue {venue!r}. v1 supports uniswap_v3 only."
             )
-        if signed_size == 0:
+        size = float(signed_size)
+        if not math.isfinite(size) or size == 0:
             raise ValueError("signed_size must be non-zero")
         if not 0.0 <= float(netting_eta) <= 1.0:
             raise ValueError("netting_eta must be in [0, 1]")
 
         as_of, unix = parse_cost_timestamp(timestamp)
-        swap_size = (1.0 - float(netting_eta)) * float(signed_size)
+        swap_size = (1.0 - float(netting_eta)) * size
         if swap_size == 0:
             return ExecutionCost(
                 symbol=str(symbol).strip(),
                 timestamp=as_of,
-                signed_size=float(signed_size),
+                signed_size=size,
                 netting_eta=float(netting_eta),
                 swap_size=0.0,
                 fee_pct=0.0,
@@ -138,14 +139,14 @@ class ExecutionCostEstimator:
                 amount_out=0.0,
             )
 
-        spec = self._resolve_asset(symbol)
         block = self._resolve_block(unix)
+        spec = self._resolve_asset(symbol, block)
         state = self._snapshot(spec, block)
         result = simulate_asset_swap(state, spec.address, swap_size)
         return ExecutionCost(
             symbol=spec.symbol,
             timestamp=as_of,
-            signed_size=float(signed_size),
+            signed_size=size,
             netting_eta=float(netting_eta),
             swap_size=swap_size,
             fee_pct=result.fee_pct,
@@ -155,7 +156,7 @@ class ExecutionCostEstimator:
             amount_out=result.amount_out,
         )
 
-    def _resolve_asset(self, symbol: str) -> VenueAsset:
+    def _resolve_asset(self, symbol: str, block: int) -> VenueAsset:
         raw = str(symbol).strip()
         extra = self._extra_assets.get(raw.upper()) or self._extra_assets.get(
             raw.lower()
@@ -167,9 +168,6 @@ class ExecutionCostEstimator:
         except KeyError:
             if not looks_like_address(raw):
                 raise
-            block = self._block_override
-            if block is None:
-                block = int(self._web3().eth.block_number)
             return resolve_symbol_onchain(symbol, self._web3(), block)
 
     def _resolve_block(self, unix: int) -> int:
@@ -179,9 +177,7 @@ class ExecutionCostEstimator:
 
     def _snapshot(self, spec: VenueAsset, block: int) -> PoolState:
         key = (spec.pool.lower(), block)
-        cached = self._snapshots.get(key) or self._snapshots.get(
-            (spec.pool.lower(), None)
-        )
+        cached = self._snapshots.get(key)
         if cached is not None:
             return cached
 
