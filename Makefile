@@ -11,7 +11,7 @@ venv:
 .PHONY: install
 install:
 	uv pip install -e ."[dev,docs]"
-	uv run pre-commit install
+	uv run pre-commit install --hook-type pre-commit --hook-type pre-push
 
 .PHONY: codestyle
 codestyle:

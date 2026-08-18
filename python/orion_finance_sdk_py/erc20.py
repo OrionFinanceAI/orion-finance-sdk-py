@@ -108,12 +108,18 @@ def decimals(w3: Web3, token_address: str, block: int | None = None) -> int:
     return int(token.functions.decimals().call(**call_kw))
 
 
+def _call_symbol(token, block: int | None):
+    """Call ``symbol()`` with an optional historical block."""
+    if block is None:
+        return token.functions.symbol().call()
+    return token.functions.symbol().call(block_identifier=block)
+
+
 def symbol(w3: Web3, token_address: str, block: int | None = None) -> str:
     """Read ERC-20 symbol."""
     token = get_erc20(w3, token_address)
-    call_kw = {} if block is None else {"block_identifier": block}
     try:
-        value = token.functions.symbol().call(**call_kw)
+        value = _call_symbol(token, block)
     except (OverflowError, DecodingError):
         token = w3.eth.contract(
             address=Web3.to_checksum_address(token_address),
@@ -127,7 +133,7 @@ def symbol(w3: Web3, token_address: str, block: int | None = None) -> str:
                 }
             ],
         )
-        value = token.functions.symbol().call(**call_kw)
+        value = _call_symbol(token, block)
     if isinstance(value, bytes):
         return value.rstrip(b"\x00").decode("utf-8")
     return str(value)

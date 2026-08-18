@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import os
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from web3 import Web3
@@ -125,6 +126,9 @@ class ExecutionCostEstimator:
 
         as_of, unix = parse_cost_timestamp(timestamp)
         swap_size = (1.0 - float(netting_eta)) * size
+        block = self._block_override
+        if block is not None:
+            as_of = self._date_at_block(block)
         if swap_size == 0:
             return ExecutionCost(
                 symbol=str(symbol).strip(),
@@ -139,7 +143,8 @@ class ExecutionCostEstimator:
                 amount_out=0.0,
             )
 
-        block = self._resolve_block(unix)
+        if block is None:
+            block = self._resolve_block(unix)
         spec = self._resolve_asset(symbol, block)
         state = self._snapshot(spec, block)
         result = simulate_asset_swap(state, spec.address, swap_size)
@@ -174,6 +179,12 @@ class ExecutionCostEstimator:
         if self._block_override is not None:
             return self._block_override
         return block_at_timestamp(self._web3(), unix)
+
+    def _date_at_block(self, block: int) -> str:
+        header = self._web3().eth.get_block(block)
+        return datetime.fromtimestamp(
+            int(header["timestamp"]), tz=timezone.utc
+        ).strftime("%Y-%m-%d")
 
     def _snapshot(self, spec: VenueAsset, block: int) -> PoolState:
         key = (spec.pool.lower(), block)

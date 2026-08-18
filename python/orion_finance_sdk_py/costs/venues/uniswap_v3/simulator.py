@@ -230,8 +230,8 @@ def simulate_asset_swap(
         )
         if amount_in_total < amount_asset_raw:
             raise ValueError(
-                f"Pool {state.meta.address} cannot fill exact output "
-                f"{amount_asset_raw} of {asset}; filled {amount_in_total}"
+                f"Pool {state.meta.address} cannot fill exact input "
+                f"{amount_asset_raw} of {asset}; consumed {amount_in_total}"
             )
         amount_in_raw = amount_asset_raw
         dec_out = state.meta.decimals1 if zero_for_one else state.meta.decimals0
