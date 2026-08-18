@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
+from unittest.mock import MagicMock
 
 import pytest
 from orion_finance_sdk_py.costs.estimator import ExecutionCostEstimator
@@ -76,10 +77,14 @@ def _wbtc_usdc_state() -> PoolState:
     )
 
 
-def _estimator() -> ExecutionCostEstimator:
+def _estimator(*, at: datetime | None = None) -> ExecutionCostEstimator:
+    when = at or datetime.now(timezone.utc)
     est = ExecutionCostEstimator(block_number=1)
     est.preload_uniswap_state("WETH", _weth_usdc_state())
     est.preload_uniswap_state("WBTC", _wbtc_usdc_state())
+    w3 = MagicMock()
+    w3.eth.get_block.return_value = {"timestamp": int(when.timestamp())}
+    est._w3 = w3
     return est
 
 
@@ -92,7 +97,7 @@ def test_pool_state_from_json_ignores_unknown_meta_keys():
 
 
 def test_buy_and_sell_have_positive_cost():
-    est = _estimator()
+    est = _estimator(at=datetime(2026, 8, 1, tzinfo=timezone.utc))
     buy = est.get_cost("WETH", 0.01, timestamp="2026-08-01")
     sell = est.get_cost("WETH", -0.01, timestamp="2026-08-01")
     assert isinstance(buy, ExecutionCost)
@@ -114,6 +119,12 @@ def test_default_timestamp_is_today():
     cost = est.get_cost("WETH", 0.01)
     after = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     assert cost.timestamp in {before, after}
+
+
+def test_block_override_uses_header_date_not_caller_timestamp():
+    est = _estimator(at=datetime(2026, 8, 1, tzinfo=timezone.utc))
+    cost = est.get_cost("WETH", 0.01, timestamp="2026-07-01")
+    assert cost.timestamp == "2026-08-01"
 
 
 def test_mainnet_address_symbol():
