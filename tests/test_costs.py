@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 
 import pytest
 from orion_finance_sdk_py.costs.estimator import ExecutionCostEstimator
@@ -109,9 +110,10 @@ def test_buy_and_sell_have_positive_cost():
 
 def test_default_timestamp_is_today():
     est = _estimator()
+    before = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     cost = est.get_cost("WETH", 0.01)
-    assert len(cost.timestamp) == 10
-    assert cost.timestamp[4] == "-"
+    after = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    assert cost.timestamp in {before, after}
 
 
 def test_mainnet_address_symbol():
@@ -135,6 +137,10 @@ def test_zero_size_rejected():
     est = _estimator()
     with pytest.raises(ValueError, match="non-zero"):
         est.get_cost("WETH", 0)
+    with pytest.raises(ValueError, match="non-zero"):
+        est.get_cost("WETH", float("nan"))
+    with pytest.raises(ValueError, match="non-zero"):
+        est.get_cost("WETH", float("inf"))
 
 
 def test_unknown_symbol():

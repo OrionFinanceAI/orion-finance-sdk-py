@@ -1,6 +1,5 @@
 """Tests for manager-facing execution cost dates."""
 
-import re
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -8,8 +7,10 @@ from orion_finance_sdk_py.costs.dates import parse_cost_timestamp
 
 
 def test_default_is_now_utc_date():
+    before = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     label, unix = parse_cost_timestamp(None)
-    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", label)
+    after = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    assert label in {before, after}
     assert unix > 1_000_000_000
 
 
@@ -31,3 +32,9 @@ def test_rejects_unix_and_other_formats():
         parse_cost_timestamp("01/08/2026")
     with pytest.raises(TypeError):
         parse_cost_timestamp(1754092799)  # type: ignore[arg-type]
+
+
+def test_rejects_future_utc_date():
+    future = (datetime.now(timezone.utc) + timedelta(days=2)).strftime("%Y-%m-%d")
+    with pytest.raises(ValueError, match="later than the current UTC date"):
+        parse_cost_timestamp(future)
