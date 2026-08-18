@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from eth_abi.exceptions import DecodingError
 from web3 import Web3
 
 from .console_ui import progress_step
@@ -111,7 +112,22 @@ def symbol(w3: Web3, token_address: str, block: int | None = None) -> str:
     """Read ERC-20 symbol."""
     token = get_erc20(w3, token_address)
     call_kw = {} if block is None else {"block_identifier": block}
-    value = token.functions.symbol().call(**call_kw)
+    try:
+        value = token.functions.symbol().call(**call_kw)
+    except (OverflowError, DecodingError):
+        token = w3.eth.contract(
+            address=Web3.to_checksum_address(token_address),
+            abi=[
+                {
+                    "type": "function",
+                    "name": "symbol",
+                    "stateMutability": "view",
+                    "inputs": [],
+                    "outputs": [{"name": "", "type": "bytes32"}],
+                }
+            ],
+        )
+        value = token.functions.symbol().call(**call_kw)
     if isinstance(value, bytes):
         return value.rstrip(b"\x00").decode("utf-8")
     return str(value)
