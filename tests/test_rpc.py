@@ -3,8 +3,10 @@
 from unittest.mock import MagicMock, patch
 
 from orion_finance_sdk_py.rpc import (
+    DEFAULT_PUBLIC_MAINNET_RPC_URLS,
     DEFAULT_PUBLIC_RPC_URLS,
     clear_default_rpc_cache,
+    pick_default_mainnet_rpc,
     pick_default_rpc,
     rpc_works,
 )
@@ -58,3 +60,52 @@ def test_pick_default_rpc_tries_in_order_and_caches():
 def test_pick_default_rpc_returns_none_when_all_fail():
     with patch("orion_finance_sdk_py.rpc.rpc_works", return_value=False):
         assert pick_default_rpc() is None
+
+
+def test_default_public_mainnet_rpc_urls_order():
+    assert DEFAULT_PUBLIC_MAINNET_RPC_URLS == (
+        "https://ethereum-rpc.publicnode.com",
+        "https://eth-mainnet.g.alchemy.com/public",
+        "https://public.1rpc.io/eth",
+        "https://eth.drpc.org/",
+    )
+
+
+def test_pick_default_mainnet_rpc_tries_in_order_and_caches():
+    calls: list[str] = []
+
+    def _works(url, timeout=5.0):
+        calls.append(url)
+        return url == DEFAULT_PUBLIC_MAINNET_RPC_URLS[1]
+
+    with patch("orion_finance_sdk_py.rpc.rpc_works", side_effect=_works):
+        assert pick_default_mainnet_rpc() == DEFAULT_PUBLIC_MAINNET_RPC_URLS[1]
+        assert pick_default_mainnet_rpc() == DEFAULT_PUBLIC_MAINNET_RPC_URLS[1]
+
+    assert calls == [
+        DEFAULT_PUBLIC_MAINNET_RPC_URLS[0],
+        DEFAULT_PUBLIC_MAINNET_RPC_URLS[1],
+    ]
+
+
+def test_pick_default_mainnet_rpc_returns_none_when_all_fail():
+    with patch("orion_finance_sdk_py.rpc.rpc_works", return_value=False):
+        assert pick_default_mainnet_rpc() is None
+
+
+def test_clear_default_rpc_cache_resets_mainnet_cache():
+    with patch(
+        "orion_finance_sdk_py.rpc.rpc_works",
+        return_value=True,
+    ):
+        assert pick_default_mainnet_rpc() == DEFAULT_PUBLIC_MAINNET_RPC_URLS[0]
+    clear_default_rpc_cache()
+    calls: list[str] = []
+
+    def _works(url, timeout=5.0):
+        calls.append(url)
+        return True
+
+    with patch("orion_finance_sdk_py.rpc.rpc_works", side_effect=_works):
+        assert pick_default_mainnet_rpc() == DEFAULT_PUBLIC_MAINNET_RPC_URLS[0]
+    assert calls == [DEFAULT_PUBLIC_MAINNET_RPC_URLS[0]]

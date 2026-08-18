@@ -199,19 +199,43 @@ def test_unsupported_venue():
         est.get_cost("WETH", 0.01, venue="bebop_rfq")
 
 
-def test_web3_requires_mainnet_rpc(monkeypatch):
+def test_web3_uses_public_mainnet_rpc_when_env_unset(monkeypatch):
     monkeypatch.delenv("MAINNET_RPC_URL", raising=False)
     est = ExecutionCostEstimator()
-    with pytest.raises(RuntimeError, match="MAINNET_RPC_URL"):
-        est._web3()
+    fake = MagicMock()
+    with (
+        patch.object(
+            estimator_mod,
+            "pick_default_mainnet_rpc",
+            return_value="https://public.example",
+        ) as picker,
+        patch.object(estimator_mod, "connect_mainnet", return_value=fake) as mocked,
+    ):
+        assert est._web3() is fake
+        assert est._web3() is fake
+    picker.assert_called_once()
+    mocked.assert_called_once_with("https://public.example")
+    assert est._rpc_url == "https://public.example"
+
+
+def test_web3_errors_when_public_mainnet_rpcs_fail(monkeypatch):
+    monkeypatch.delenv("MAINNET_RPC_URL", raising=False)
+    est = ExecutionCostEstimator()
+    with patch.object(estimator_mod, "pick_default_mainnet_rpc", return_value=None):
+        with pytest.raises(RuntimeError, match="public Ethereum mainnet RPC"):
+            est._web3()
 
 
 def test_web3_connects_and_caches():
     est = ExecutionCostEstimator(rpc_url="https://example.invalid")
     fake = MagicMock()
-    with patch.object(estimator_mod, "connect_mainnet", return_value=fake) as mocked:
+    with (
+        patch.object(estimator_mod, "pick_default_mainnet_rpc") as picker,
+        patch.object(estimator_mod, "connect_mainnet", return_value=fake) as mocked,
+    ):
         assert est._web3() is fake
         assert est._web3() is fake
+    picker.assert_not_called()
     mocked.assert_called_once_with("https://example.invalid")
 
 
