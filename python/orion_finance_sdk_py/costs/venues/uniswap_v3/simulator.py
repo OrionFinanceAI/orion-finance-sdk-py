@@ -6,6 +6,7 @@ is exact-input of the risk asset. Quote asset is the pool's USDC side.
 
 from __future__ import annotations
 
+import bisect
 from dataclasses import dataclass
 
 from orion_finance_sdk_py.costs.venues.uniswap_v3.constants import (
@@ -23,6 +24,7 @@ from orion_finance_sdk_py.costs.venues.uniswap_v3.v3_math.tick_math import (
     get_sqrt_ratio_at_tick,
     get_tick_at_sqrt_ratio,
 )
+from orion_finance_sdk_py.utils import to_base_units
 
 
 @dataclass(frozen=True)
@@ -34,6 +36,7 @@ class SwapResult:
     amount_in_raw: int
     amount_out_raw: int
     fee_raw: int
+    """Fee in the quote token for buys and the asset token for sells."""
     fee_pct: float
     slippage_pct: float
     cost_pct: float
@@ -63,10 +66,10 @@ def _next_initialized_tick(
     initialized_ticks: list[int], tick: int, zero_for_one: bool
 ) -> int:
     if zero_for_one:
-        below = [t for t in initialized_ticks if t < tick]
-        return max(below) if below else MIN_TICK
-    above = [t for t in initialized_ticks if t > tick]
-    return min(above) if above else MAX_TICK
+        i = bisect.bisect_right(initialized_ticks, tick) - 1
+        return initialized_ticks[i] if i >= 0 else MIN_TICK
+    i = bisect.bisect_right(initialized_ticks, tick)
+    return initialized_ticks[i] if i < len(initialized_ticks) else MAX_TICK
 
 
 def _add_liquidity_delta(liquidity: int, delta: int) -> int:
@@ -105,7 +108,7 @@ def _walk_swap(
     amount_out_total = 0
     fee_total = 0
     fee_pips = state.meta.fee
-    ticks = state.initialized_ticks
+    ticks = sorted(state.initialized_ticks)
     tick_net = state.tick_liquidity_net
 
     while remaining != 0 and sqrt_price_x96 != sqrt_price_limit_x96:
@@ -197,7 +200,7 @@ def simulate_asset_swap(
         raise ValueError(f"Cannot price tokens in pool {state.meta.address}")
 
     size_abs = abs(swap_size)
-    amount_asset_raw = max(int(size_abs * (10**asset_decimals)), 1)
+    amount_asset_raw = to_base_units(size_abs, asset_decimals)
     buy = swap_size > 0
 
     if buy:
@@ -222,9 +225,14 @@ def simulate_asset_swap(
     else:
         # Exact-input of the asset: asset in, USDC out.
         zero_for_one = asset_is_token0
-        _, amount_out_raw, fee_raw, _ = _walk_swap(
+        amount_in_total, amount_out_raw, fee_raw, _ = _walk_swap(
             state, amount_asset_raw, zero_for_one
         )
+        if amount_in_total < amount_asset_raw:
+            raise ValueError(
+                f"Pool {state.meta.address} cannot fill exact output "
+                f"{amount_asset_raw} of {asset}; filled {amount_in_total}"
+            )
         amount_in_raw = amount_asset_raw
         dec_out = state.meta.decimals1 if zero_for_one else state.meta.decimals0
         price_out = p1 if zero_for_one else p0

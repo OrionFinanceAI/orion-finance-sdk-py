@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from eth_abi import decode, encode
 from web3 import Web3
 from web3.exceptions import ContractLogicError
@@ -39,9 +41,6 @@ def encode_call(selector: str, args: bytes = b"") -> bytes:
     """Encode a 4-byte selector plus ABI-encoded arguments."""
     hex_sel = selector[2:] if selector.startswith("0x") else selector
     return bytes.fromhex(hex_sel) + args
-
-
-from urllib.parse import urlparse
 
 
 def connect_mainnet(rpc_url: str) -> Web3:
