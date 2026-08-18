@@ -328,6 +328,8 @@ Estimate Uniswap v3 execution cost (pool fee plus price impact) for a signed tra
 
 `signed_size` is human units of the risk asset: positive buys that many tokens (exact-output, matching adapter `buy`), negative sells them (exact-input, matching adapter `sell`).
 
+When constructing `ExecutionCostEstimator` without an explicit `rpc_url`, `MAINNET_RPC_URL` must be set to a non-empty Ethereum mainnet RPC endpoint.
+
 ```python
 from orion_finance_sdk_py import ExecutionCostEstimator
 
