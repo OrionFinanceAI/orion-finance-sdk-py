@@ -1,6 +1,11 @@
-"""Public RPC defaults and health probing (mirrors install.sh cascade)."""
+"""Public RPC defaults, health probing, and chain-agnostic block lookup."""
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from web3 import Web3
 
 # Keep in sync with install.sh DEFAULT_RPC_* (Sepolia public endpoints).
 DEFAULT_PUBLIC_RPC_URLS: tuple[str, ...] = (
@@ -45,3 +50,32 @@ def pick_default_rpc(timeout: float = 5.0) -> str | None:
             _DEFAULT_RPC_CACHE = url
             return url
     return None
+
+
+def block_at_timestamp(w3: Web3, timestamp: int) -> int:
+    """Return the latest block number whose timestamp is <= ``timestamp``."""
+    if timestamp < 0:
+        raise ValueError("timestamp must be non-negative")
+
+    latest = w3.eth.block_number
+    latest_block = w3.eth.get_block(latest)
+    if timestamp >= latest_block["timestamp"]:
+        return latest
+
+    earliest = 0
+    earliest_block = w3.eth.get_block(earliest)
+    if timestamp < earliest_block["timestamp"]:
+        raise ValueError(
+            f"timestamp {timestamp} is before the earliest block "
+            f"({earliest_block['timestamp']})"
+        )
+
+    lo, hi = earliest, latest
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        mid_ts = w3.eth.get_block(mid)["timestamp"]
+        if mid_ts <= timestamp:
+            lo = mid
+        else:
+            hi = mid - 1
+    return lo

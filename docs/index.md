@@ -46,6 +46,13 @@ Push rebalancing allocations from JSON, CSV, Parquet, or an inline dict.
 PIT prices, asset price history, share-price series, and intent vs holdings.
 :::
 
+:::{grid-item-card} Estimate execution cost
+:link: execution-cost
+:link-type: ref
+
+Uniswap v3 fee and slippage for a signed asset trade, as of a calendar date.
+:::
+
 ::::
 
 ---
@@ -154,8 +161,8 @@ orion update-fee-model \
 ### LP deposit / redeem
 
 ```bash
-orion request-deposit --assets 1000000
-orion cancel-deposit-request --amount 1000000
+orion request-deposit --assets 1.5
+orion cancel-deposit-request --amount 1.5
 orion request-redeem --shares 500000
 orion cancel-redeem-request --shares 500000
 # After full decommission only:
@@ -312,6 +319,31 @@ for addr in config.orion_transparent_vaults:
 ```
 
 You can also query a single past block with `vault.share_price_at(block)` or `registry.get_price(asset, block=...)`.
+
+(execution-cost)=
+
+## Estimate execution cost
+
+Estimate Uniswap v3 execution cost (pool fee plus price impact) for a signed trade in an Orion universe asset versus USDC.
+
+`signed_size` is human units of the risk asset: positive buys that many tokens (exact-output, matching adapter `buy`), negative sells them (exact-input, matching adapter `sell`).
+
+When constructing `ExecutionCostEstimator` without an explicit `rpc_url`, `MAINNET_RPC_URL` must be set to a non-empty Ethereum mainnet RPC endpoint.
+
+```python
+from orion_finance_sdk_py import ExecutionCostEstimator
+
+est = ExecutionCostEstimator()
+now = est.get_cost("WETH", 1.5)
+btc = est.get_cost("WBTC", 0.5)
+past = est.get_cost("WETH", 1.5, timestamp="2026-08-01")
+netted = est.get_cost("WETH", 1.5, timestamp="2026-08-01", netting_eta=0.3)
+# now.fee_pct, now.slippage_pct, now.cost_pct
+```
+
+- **symbol:** ticker (`WETH`, `WBTC`) or mainnet token address. Not a Sepolia twin.
+- **timestamp:** UTC `YYYY-MM-DD`. Omitted means now. Unix seconds and block numbers are internal.
+- **netting_eta:** shrinks the swap to `(1 - η) * signed_size`, then runs the full non-linear cost model on that size.
 
 ---
 

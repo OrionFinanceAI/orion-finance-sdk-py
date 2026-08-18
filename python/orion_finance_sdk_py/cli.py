@@ -9,13 +9,18 @@ from dotenv import load_dotenv
 
 from .asset_map import build_asset_address_map
 from .console_ui import (
+    _chain_label,
     operation_progress,
+    print_confirm_warning,
     print_error,
     print_info,
     print_key_value,
+    print_session_bar,
     print_table,
+    print_warn,
     print_welcome,
     progress_step,
+    questionary_style,
     rpc_status,
 )
 from .contracts import (
@@ -24,6 +29,8 @@ from .contracts import (
     OrionTransparentVault,
     VaultFactory,
 )
+from .erc20 import decimals as erc20_decimals
+from .erc20 import symbol as erc20_symbol
 from .order_intent_io import load_order_intent
 from .types import (
     ZERO_ADDRESS,
@@ -35,6 +42,7 @@ from .utils import (
     BASIS_POINTS_FACTOR,
     ensure_env_file,
     format_transaction_logs,
+    to_base_units,
     validate_order,
     validate_var,
 )
@@ -203,6 +211,27 @@ def _get_pending_fees_logic():
     print_key_value([("Pending vault fees", str(fees))], title="Vault fees")
 
 
+def _underlying_token_meta() -> tuple[str, int]:
+    """Return ``(symbol, decimals)`` for ``OrionConfig.underlyingAsset()``."""
+    with rpc_status("Fetching underlying token…"):
+        config = OrionConfig()
+        address = config.underlying_asset
+        try:
+            token_symbol = erc20_symbol(config.w3, address).strip() or "tokens"
+        except Exception:
+            token_symbol = "tokens"
+        token_decimals = erc20_decimals(config.w3, address)
+    return token_symbol, token_decimals
+
+
+def _human_underlying_to_base(amount: str) -> int:
+    """Parse a human underlying amount and convert it to on-chain units."""
+    token_symbol, token_decimals = _underlying_token_meta()
+    raw = to_base_units(amount, token_decimals)
+    print_info(f"Submitting {amount} {token_symbol} ({raw} units)")
+    return raw
+
+
 def _request_deposit_logic(assets: int):
     """LP request deposit (approve + requestDeposit)."""
     from . import lp as lp_api
@@ -285,13 +314,18 @@ def _list_asset_address_map_logic():
         print_info("No twin assets with mainnetSource() found.")
         return
 
+    rows: list[tuple[str, str]] = []
+    multi = len(address_map) > 1
     for index, (testnet, mainnet) in enumerate(address_map.items(), start=1):
-        title = "Asset twin" if len(address_map) == 1 else f"Twin {index}"
-        print_key_value(
-            [("Testnet", testnet), ("Mainnet", mainnet)],
-            title=title,
-        )
-    print_info(f"Total: {len(address_map)} twin assets with mainnetSource()")
+        prefix = f"{index} " if multi else ""
+        rows.append((f"{prefix}Testnet", testnet))
+        rows.append((f"{prefix}Mainnet", mainnet))
+    print_table(
+        ["Network", "Address"],
+        rows,
+        title="Asset address map",
+        caption=f"Total: {len(address_map)} twin assets with mainnetSource()",
+    )
 
 
 def ask_or_exit(question):
@@ -302,6 +336,70 @@ def ask_or_exit(question):
     return result
 
 
+_MENU_LABEL_WIDTH = 32
+
+
+def _q_select(message: str, choices):
+    """Questionary select with shared Orion style."""
+    return questionary.select(
+        message,
+        choices=choices,
+        instruction="[ ↑↓ to scroll | Enter to select ]",
+        style=questionary_style(),
+    )
+
+
+def _q_text(message: str, **kwargs):
+    """Questionary text prompt with shared Orion style."""
+    return questionary.text(message, style=questionary_style(), **kwargs)
+
+
+def _q_confirm(message: str, **kwargs):
+    """Questionary confirm prompt with shared Orion style."""
+    return questionary.confirm(message, style=questionary_style(), **kwargs)
+
+
+def _menu_section(title: str):
+    """Return a non-selectable section header for the interactive menu."""
+    return questionary.Separator(f"── {title} ──")
+
+
+def _menu_choice(label: str, description: str):
+    """Build a menu Choice whose value stays the public command label."""
+    pad = max(1, _MENU_LABEL_WIDTH - len(label))
+    title = f"{label}{' ' * pad}{description}"
+    return questionary.Choice(title=title, value=label)
+
+
+def _main_menu_choices():
+    """Return grouped interactive menu separators and labeled choices."""
+    return [
+        _menu_section("Vault"),
+        _menu_choice("Deploy Vault", "Create a new Orion vault"),
+        _menu_choice("Update Strategist", "Change vault strategist"),
+        _menu_choice("Update Fee Model", "Change fee type and rates"),
+        _menu_choice("Remove Vault", "Start irreversible decommission"),
+        _menu_section("Strategist"),
+        _menu_choice("Submit Intent", "Submit strategist weights"),
+        _menu_section("Deposits"),
+        _menu_choice("Request Deposit", "Request an underlying deposit"),
+        _menu_choice("Cancel Deposit Request", "Cancel a pending deposit"),
+        _menu_section("Redemptions"),
+        _menu_choice("Request Redeem", "Request a share redemption"),
+        _menu_choice("Cancel Redeem Request", "Cancel a pending redeem"),
+        _menu_choice("Redeem (Decommissioned)", "Sync exit after decommission"),
+        _menu_section("Access and assets"),
+        _menu_choice("Update Deposit Access Control", "Set deposit allowlist"),
+        _menu_choice("List Whitelisted Assets", "Show protocol asset list"),
+        _menu_choice("List Asset Address Map", "Testnet to mainnet twins"),
+        _menu_section("Fees"),
+        _menu_choice("Claim Fees", "Transfer manager fees"),
+        _menu_choice("Get Pending Fees", "View accrued vault fees"),
+        questionary.Separator(" "),
+        _menu_choice("Exit", "Leave the console"),
+    ]
+
+
 def validate_int_input(val: str) -> bool | str:
     """Validate integer input."""
     try:
@@ -310,6 +408,28 @@ def validate_int_input(val: str) -> bool | str:
         return "Amount must be positive"
     except ValueError:
         return "Please enter a valid integer"
+
+
+def validate_decimal_input(val: str) -> bool | str:
+    """Validate a positive human token amount (integer or decimal)."""
+    try:
+        to_base_units(val, 18)
+    except ValueError as exc:
+        return str(exc)
+    return True
+
+
+def _validate_human_amount(decimals: int):
+    """Return a questionary validator for a human amount at ``decimals`` precision."""
+
+    def _validate(val: str) -> bool | str:
+        try:
+            to_base_units(val, decimals)
+        except ValueError as exc:
+            return str(exc)
+        return True
+
+    return _validate
 
 
 def validate_name(val: str) -> bool | str:
@@ -336,30 +456,11 @@ def interactive_menu():
     while True:
         # Force reload environment variables to pick up changes (e.g. newly deployed vault address)
         load_dotenv(override=True)
+        print_session_bar()
+        choice = None
         try:
             choice = ask_or_exit(
-                questionary.select(
-                    "What would you like to do?",
-                    choices=[
-                        "Deploy Vault",
-                        "Submit Intent",
-                        "Request Deposit",
-                        "Cancel Deposit Request",
-                        "Request Redeem",
-                        "Cancel Redeem Request",
-                        "Redeem (Decommissioned)",
-                        "Update Strategist",
-                        "Update Fee Model",
-                        "Update Deposit Access Control",
-                        "Claim Fees",
-                        "Get Pending Fees",
-                        "Remove Vault",
-                        "List Whitelisted Assets",
-                        "List Asset Address Map",
-                        "Exit",
-                    ],
-                    instruction="[ ↑↓ to scroll | Enter to select ]",
-                )
+                _q_select("What would you like to do?", _main_menu_choices())
             )
 
             if choice == "Exit":
@@ -367,30 +468,16 @@ def interactive_menu():
 
             if choice == "Deploy Vault":
                 vault_type = ask_or_exit(
-                    questionary.select(
-                        "Vault Type:",
-                        choices=[t.value for t in VaultType],
-                        instruction="[ ↑↓ to scroll | Enter to select ]",
-                    )
+                    _q_select("Vault Type:", [t.value for t in VaultType])
                 )
-                strategist_address = ask_or_exit(
-                    questionary.text("Strategist Address:")
-                )
-                name = ask_or_exit(
-                    questionary.text("Vault Name:", validate=validate_name)
-                )
-                symbol = ask_or_exit(
-                    questionary.text("Vault Symbol:", validate=validate_symbol)
-                )
+                strategist_address = ask_or_exit(_q_text("Strategist Address:"))
+                name = ask_or_exit(_q_text("Vault Name:", validate=validate_name))
+                symbol = ask_or_exit(_q_text("Vault Symbol:", validate=validate_symbol))
                 fee_type_str = ask_or_exit(
-                    questionary.select(
-                        "Fee Type:",
-                        choices=[t.value for t in FeeType],
-                        instruction="[ ↑↓ to scroll | Enter to select ]",
-                    )
+                    _q_select("Fee Type:", [t.value for t in FeeType])
                 )
                 perf_fee_str = ask_or_exit(
-                    questionary.text(
+                    _q_text(
                         "Performance Fee (%):",
                         default="",
                     )
@@ -398,14 +485,14 @@ def interactive_menu():
                 perf_fee = float(perf_fee_str) if perf_fee_str else 0.0
 
                 mgmt_fee_str = ask_or_exit(
-                    questionary.text(
+                    _q_text(
                         "Management Fee (%):",
                         default="",
                     )
                 )
                 mgmt_fee = float(mgmt_fee_str) if mgmt_fee_str else 0.0
                 dac = ask_or_exit(
-                    questionary.text("Deposit Access Control (Address):", default="")
+                    _q_text("Deposit Access Control (Address):", default="")
                 )
                 if not dac:
                     dac = ZERO_ADDRESS
@@ -423,39 +510,40 @@ def interactive_menu():
 
             elif choice == "Submit Intent":
                 path = ask_or_exit(
-                    questionary.text(
+                    _q_text(
                         "Intent: path to .json/.csv/.parquet or inline JSON object:",
                     )
                 )
                 _submit_intent_logic(path)
 
             elif choice == "Request Deposit":
-                assets = int(
-                    ask_or_exit(
-                        questionary.text(
-                            "Deposit assets (wei/units):", validate=validate_int_input
-                        )
+                token_symbol, token_decimals = _underlying_token_meta()
+                human_amount = ask_or_exit(
+                    _q_text(
+                        f"Deposit amount ({token_symbol}):",
+                        validate=_validate_human_amount(token_decimals),
                     )
                 )
-                _request_deposit_logic(assets)
+                raw = to_base_units(human_amount, token_decimals)
+                print_info(f"Submitting {human_amount} {token_symbol} ({raw} units)")
+                _request_deposit_logic(raw)
 
             elif choice == "Cancel Deposit Request":
-                amount = int(
-                    ask_or_exit(
-                        questionary.text(
-                            "Cancel deposit amount (wei/units):",
-                            validate=validate_int_input,
-                        )
+                token_symbol, token_decimals = _underlying_token_meta()
+                human_amount = ask_or_exit(
+                    _q_text(
+                        f"Cancel amount ({token_symbol}):",
+                        validate=_validate_human_amount(token_decimals),
                     )
                 )
-                _cancel_deposit_logic(amount)
+                raw = to_base_units(human_amount, token_decimals)
+                print_info(f"Submitting {human_amount} {token_symbol} ({raw} units)")
+                _cancel_deposit_logic(raw)
 
             elif choice == "Request Redeem":
                 shares = int(
                     ask_or_exit(
-                        questionary.text(
-                            "Redeem shares (units):", validate=validate_int_input
-                        )
+                        _q_text("Redeem shares (units):", validate=validate_int_input)
                     )
                 )
                 _request_redeem_logic(shares)
@@ -463,7 +551,7 @@ def interactive_menu():
             elif choice == "Cancel Redeem Request":
                 shares = int(
                     ask_or_exit(
-                        questionary.text(
+                        _q_text(
                             "Cancel redeem shares (units):",
                             validate=validate_int_input,
                         )
@@ -474,29 +562,23 @@ def interactive_menu():
             elif choice == "Redeem (Decommissioned)":
                 shares = int(
                     ask_or_exit(
-                        questionary.text(
-                            "Shares to redeem:", validate=validate_int_input
-                        )
+                        _q_text("Shares to redeem:", validate=validate_int_input)
                     )
                 )
-                receiver = ask_or_exit(questionary.text("Receiver address:"))
-                owner = ask_or_exit(questionary.text("Owner address:"))
+                receiver = ask_or_exit(_q_text("Receiver address:"))
+                owner = ask_or_exit(_q_text("Owner address:"))
                 _redeem_logic(shares, receiver, owner)
 
             elif choice == "Update Strategist":
-                addr = ask_or_exit(questionary.text("New Strategist Address:"))
+                addr = ask_or_exit(_q_text("New Strategist Address:"))
                 _update_strategist_logic(addr)
 
             elif choice == "Update Fee Model":
                 fee_type_str = ask_or_exit(
-                    questionary.select(
-                        "Fee Type:",
-                        choices=[t.value for t in FeeType],
-                        instruction="[ ↑↓ to scroll | Enter to select ]",
-                    )
+                    _q_select("Fee Type:", [t.value for t in FeeType])
                 )
                 perf_fee_str = ask_or_exit(
-                    questionary.text(
+                    _q_text(
                         "Performance Fee (%):",
                         default="",
                     )
@@ -504,7 +586,7 @@ def interactive_menu():
                 perf_fee = float(perf_fee_str) if perf_fee_str else 0.0
 
                 mgmt_fee_str = ask_or_exit(
-                    questionary.text(
+                    _q_text(
                         "Management Fee (%):",
                         default="",
                     )
@@ -518,15 +600,13 @@ def interactive_menu():
                 )
 
             elif choice == "Update Deposit Access Control":
-                addr = ask_or_exit(questionary.text("New Access Control Address:"))
+                addr = ask_or_exit(_q_text("New Access Control Address:"))
                 _update_deposit_access_control_logic(addr)
 
             elif choice == "Claim Fees":
                 amount = int(
                     ask_or_exit(
-                        questionary.text(
-                            "Amount to Claim (units):", validate=validate_int_input
-                        )
+                        _q_text("Amount to Claim (units):", validate=validate_int_input)
                     )
                 )
                 _claim_fees_logic(amount)
@@ -535,16 +615,23 @@ def interactive_menu():
                 _get_pending_fees_logic()
 
             elif choice == "Remove Vault":
+                vault = os.getenv("ORION_VAULT_ADDRESS", "").strip() or "not set"
+                print_confirm_warning(
+                    "Confirm decommission",
+                    [
+                        ("Operation", "Remove Vault"),
+                        ("Vault", vault),
+                        ("Network", _chain_label()),
+                    ],
+                    "Deposits will stop. LPs use sync redeem after decommissioning completes.",
+                )
                 confirmed = ask_or_exit(
-                    questionary.confirm(
-                        "Decommission this vault? This action is irreversible.",
-                        default=False,
-                    )
+                    _q_confirm("Proceed with decommission?", default=False)
                 )
                 if confirmed:
                     _remove_vault_logic()
                 else:
-                    print("Vault removal cancelled.")
+                    print_warn("Vault removal cancelled.")
 
             elif choice == "List Whitelisted Assets":
                 _list_whitelisted_assets_logic()
@@ -558,7 +645,10 @@ def interactive_menu():
             print_info("Operation cancelled.")
             continue  # Go back to main menu loop
         except Exception as e:
-            print_error(str(e))
+            extra: dict[str, str] = {}
+            if not isinstance(e, ValueError):
+                extra["error_type"] = type(e).__name__
+            print_error(str(e), operation=choice, **extra)
             input("\nPress Enter to continue...")
 
 
@@ -689,18 +779,22 @@ def list_asset_address_map() -> None:
 
 @app.command()
 def request_deposit(
-    assets: int = typer.Option(..., help="Underlying amount in token units"),
+    assets: str = typer.Option(
+        ..., help="Underlying amount in human units (e.g. 100.5)"
+    ),
 ) -> None:
     """Request an async vault deposit (approves underlying, then requestDeposit)."""
-    _request_deposit_logic(assets)
+    _request_deposit_logic(_human_underlying_to_base(assets))
 
 
 @app.command()
 def cancel_deposit_request(
-    amount: int = typer.Option(..., help="Pending deposit amount to cancel"),
+    amount: str = typer.Option(
+        ..., help="Pending deposit amount to cancel, in human units (e.g. 100.5)"
+    ),
 ) -> None:
     """Cancel a pending vault deposit request."""
-    _cancel_deposit_logic(amount)
+    _cancel_deposit_logic(_human_underlying_to_base(amount))
 
 
 @app.command()

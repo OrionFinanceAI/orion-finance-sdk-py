@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from eth_abi.exceptions import DecodingError
 from web3 import Web3
 
 from .console_ui import progress_step
@@ -67,6 +68,13 @@ IERC20_ABI: list[dict[str, Any]] = [
         "inputs": [],
         "outputs": [{"name": "", "type": "uint8"}],
     },
+    {
+        "type": "function",
+        "name": "symbol",
+        "stateMutability": "view",
+        "inputs": [],
+        "outputs": [{"name": "", "type": "string"}],
+    },
 ]
 
 
@@ -93,6 +101,44 @@ def balance_of(w3: Web3, token_address: str, account: str) -> int:
     return token.functions.balanceOf(Web3.to_checksum_address(account)).call()
 
 
+def decimals(w3: Web3, token_address: str, block: int | None = None) -> int:
+    """Read ERC-20 decimals."""
+    token = get_erc20(w3, token_address)
+    call_kw = {} if block is None else {"block_identifier": block}
+    return int(token.functions.decimals().call(**call_kw))
+
+
+def _call_symbol(token, block: int | None):
+    """Call ``symbol()`` with an optional historical block."""
+    if block is None:
+        return token.functions.symbol().call()
+    return token.functions.symbol().call(block_identifier=block)
+
+
+def symbol(w3: Web3, token_address: str, block: int | None = None) -> str:
+    """Read ERC-20 symbol."""
+    token = get_erc20(w3, token_address)
+    try:
+        value = _call_symbol(token, block)
+    except (OverflowError, DecodingError):
+        token = w3.eth.contract(
+            address=Web3.to_checksum_address(token_address),
+            abi=[
+                {
+                    "type": "function",
+                    "name": "symbol",
+                    "stateMutability": "view",
+                    "inputs": [],
+                    "outputs": [{"name": "", "type": "bytes32"}],
+                }
+            ],
+        )
+        value = _call_symbol(token, block)
+    if isinstance(value, bytes):
+        return value.rstrip(b"\x00").decode("utf-8")
+    return str(value)
+
+
 def _send_token_tx(w3: Web3, fn, key: str, action: str) -> TransactionResult:
     """Sign and send an ERC-20 state-changing call."""
     account = w3.eth.account.from_key(key)
@@ -110,9 +156,7 @@ def _send_token_tx(w3: Web3, fn, key: str, action: str) -> TransactionResult:
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     if receipt["status"] != 1:
         raise Exception(f"ERC-20 {action} failed with status: {receipt['status']}")
-    return TransactionResult(
-        tx_hash=tx_hash.hex(), receipt=receipt, decoded_logs=None
-    )
+    return TransactionResult(tx_hash=tx_hash.hex(), receipt=receipt, decoded_logs=None)
 
 
 def approve(

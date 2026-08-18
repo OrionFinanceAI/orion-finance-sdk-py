@@ -50,6 +50,20 @@
    :show-inheritance:
 ```
 
+## Execution cost
+
+```{eval-rst}
+.. autoclass:: orion_finance_sdk_py.costs.types.ExecutionCost
+   :members:
+   :undoc-members:
+
+.. autoclass:: orion_finance_sdk_py.costs.estimator.ExecutionCostEstimator
+   :members:
+   :undoc-members:
+
+.. autofunction:: orion_finance_sdk_py.costs.estimator.get_cost
+```
+
 ## RPC defaults
 
 ```{eval-rst}

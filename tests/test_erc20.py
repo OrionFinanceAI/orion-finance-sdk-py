@@ -4,12 +4,15 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
+from eth_abi.exceptions import DecodingError
 from orion_finance_sdk_py.erc20 import (
     _send_token_tx,
     allowance,
     approve,
     balance_of,
+    decimals,
     get_erc20,
+    symbol,
     transfer,
 )
 
@@ -59,6 +62,67 @@ def test_balance_of_calls_token():
     token.functions.balanceOf.return_value.call.return_value = 99
     with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
         assert balance_of(w3, TOKEN, OWNER) == 99
+
+
+def test_decimals_calls_token():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.decimals.return_value.call.return_value = 6
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert decimals(w3, TOKEN) == 6
+    token.functions.decimals.assert_called_once()
+    token.functions.decimals.return_value.call.assert_called_once_with()
+
+
+def test_decimals_passes_block_identifier():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.decimals.return_value.call.return_value = 6
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert decimals(w3, TOKEN, block=12_345_678) == 6
+    token.functions.decimals.return_value.call.assert_called_once_with(
+        block_identifier=12_345_678
+    )
+
+
+def test_symbol_calls_token():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.symbol.return_value.call.return_value = "USDC"
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert symbol(w3, TOKEN) == "USDC"
+    token.functions.symbol.return_value.call.assert_called_once_with()
+
+
+def test_symbol_passes_block_identifier():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.symbol.return_value.call.return_value = "USDC"
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert symbol(w3, TOKEN, block=99) == "USDC"
+    token.functions.symbol.return_value.call.assert_called_once_with(
+        block_identifier=99
+    )
+
+
+def test_symbol_decodes_bytes32():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.symbol.return_value.call.return_value = b"USDC" + b"\x00" * 28
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert symbol(w3, TOKEN) == "USDC"
+
+
+def test_symbol_bytes32_fallback_on_abi_decode_error():
+    w3 = MagicMock()
+    token = MagicMock()
+    token.functions.symbol.return_value.call.side_effect = DecodingError("abi")
+    token32 = MagicMock()
+    token32.functions.symbol.return_value.call.return_value = b"DAI" + b"\x00" * 29
+    w3.eth.contract.return_value = token32
+    with patch("orion_finance_sdk_py.erc20.get_erc20", return_value=token):
+        assert symbol(w3, TOKEN) == "DAI"
+    w3.eth.contract.assert_called_once()
 
 
 def test_approve_with_explicit_private_key():

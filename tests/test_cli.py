@@ -391,12 +391,13 @@ def test_list_asset_address_map(mock_ensure, mock_build_map):
     mock_build_map.assert_called_once()
 
 
+@patch("orion_finance_sdk_py.cli._underlying_token_meta", return_value=("USDC", 6))
 @patch("orion_finance_sdk_py.cli._request_deposit_logic")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
-def test_cli_request_deposit(mock_ensure, mock_logic):
-    result = runner.invoke(app, ["request-deposit", "--assets", "1000"])
+def test_cli_request_deposit(mock_ensure, mock_logic, _mock_meta):
+    result = runner.invoke(app, ["request-deposit", "--assets", "1.5"])
     assert result.exit_code == 0
-    mock_logic.assert_called_once_with(1000)
+    mock_logic.assert_called_once_with(1_500_000)
 
 
 @patch("orion_finance_sdk_py.cli._remove_vault_logic")
@@ -407,12 +408,13 @@ def test_cli_remove_vault(mock_ensure, mock_logic):
     mock_logic.assert_called_once()
 
 
+@patch("orion_finance_sdk_py.cli._underlying_token_meta", return_value=("USDC", 6))
 @patch("orion_finance_sdk_py.cli._cancel_deposit_logic")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
-def test_cli_cancel_deposit_request(mock_ensure, mock_logic):
+def test_cli_cancel_deposit_request(mock_ensure, mock_logic, _mock_meta):
     result = runner.invoke(app, ["cancel-deposit-request", "--amount", "50"])
     assert result.exit_code == 0
-    mock_logic.assert_called_once_with(50)
+    mock_logic.assert_called_once_with(50_000_000)
 
 
 @patch("orion_finance_sdk_py.cli._request_redeem_logic")
@@ -459,6 +461,46 @@ def test_request_deposit_logic_wires_lp(mock_lp, mock_fmt):
     _request_deposit_logic(99)
     mock_lp.assert_called_once_with(99)
     mock_fmt.assert_called_once()
+
+
+@patch("orion_finance_sdk_py.cli.rpc_status")
+@patch("orion_finance_sdk_py.cli.erc20_decimals", return_value=6)
+@patch("orion_finance_sdk_py.cli.erc20_symbol", return_value="USDC")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+def test_underlying_token_meta(MockConfig, mock_symbol, mock_decimals, mock_status):
+    from orion_finance_sdk_py.cli import _underlying_token_meta
+
+    mock_status.return_value.__enter__ = MagicMock(return_value=None)
+    mock_status.return_value.__exit__ = MagicMock(return_value=False)
+    config = MockConfig.return_value
+    config.underlying_asset = "0xA"
+    config.w3 = MagicMock()
+    assert _underlying_token_meta() == ("USDC", 6)
+
+
+@patch("orion_finance_sdk_py.cli.rpc_status")
+@patch("orion_finance_sdk_py.cli.erc20_decimals", return_value=6)
+@patch("orion_finance_sdk_py.cli.erc20_symbol", side_effect=RuntimeError("no symbol"))
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+def test_underlying_token_meta_symbol_fallback(
+    MockConfig, _mock_symbol, mock_decimals, mock_status
+):
+    from orion_finance_sdk_py.cli import _underlying_token_meta
+
+    mock_status.return_value.__enter__ = MagicMock(return_value=None)
+    mock_status.return_value.__exit__ = MagicMock(return_value=False)
+    config = MockConfig.return_value
+    config.underlying_asset = "0xA"
+    config.w3 = MagicMock()
+    assert _underlying_token_meta() == ("tokens", 6)
+
+
+@patch("orion_finance_sdk_py.cli._underlying_token_meta", return_value=("USDC", 6))
+def test_human_underlying_to_base(mock_meta):
+    from orion_finance_sdk_py.cli import _human_underlying_to_base
+
+    assert _human_underlying_to_base("1.5") == 1_500_000
+    mock_meta.assert_called_once()
 
 
 @patch("orion_finance_sdk_py.cli.format_transaction_logs")
@@ -518,6 +560,18 @@ def test_validate_int_input():
     assert validate_int_input("5") is True
     assert validate_int_input("0") == "Amount must be positive"
     assert validate_int_input("abc") == "Please enter a valid integer"
+
+
+def test_validate_decimal_input():
+    from orion_finance_sdk_py.cli import _validate_human_amount, validate_decimal_input
+
+    assert validate_decimal_input("1.5") is True
+    assert validate_decimal_input("0") == "Amount must be positive"
+    assert validate_decimal_input("abc") == "Invalid amount: abc"
+
+    validate = _validate_human_amount(6)
+    assert validate("1.5") is True
+    assert "more than 6 decimal places" in validate("1.1234567")
 
 
 @patch("orion_finance_sdk_py.cli.OrionConfig")

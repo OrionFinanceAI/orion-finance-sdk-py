@@ -9,15 +9,15 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 
-from rich.console import Console, Group
+from questionary import Style
+from rich.console import Console, Group, RenderableType
 from rich.live import Live
 from rich.panel import Panel
-from rich.rule import Rule
 from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
 
-from .types import CHAIN_CONFIG
+from .types import CHAIN_CONFIG, ZERO_ADDRESS
 
 # Status and chrome go to stderr so stdout stays pipe-friendly where needed.
 console = Console(stderr=True)
@@ -30,6 +30,24 @@ _CHAIN_LABELS = {
     11155111: "Sepolia",
     1: "Mainnet",
 }
+
+
+def questionary_style() -> Style:
+    """Shared Questionary style: blue accent, dim chrome, red danger."""
+    return Style(
+        [
+            ("qmark", "fg:ansiblue bold"),
+            ("question", "bold"),
+            ("answer", "fg:ansiblue"),
+            ("pointer", "fg:ansiblue bold"),
+            ("highlighted", "fg:ansiblue bold"),
+            ("selected", "fg:ansiblue"),
+            ("separator", "fg:ansiblue bold"),
+            ("instruction", "fg:ansibrightblack"),
+            ("text", ""),
+            ("disabled", "fg:ansibrightblack italic"),
+        ]
+    )
 
 
 class OperationProgress:
@@ -54,13 +72,24 @@ class OperationProgress:
         else:
             console.print(f"[dim]  • {message}[/dim]")
 
-    def _render(self) -> Group:
-        parts: list[Text | Spinner] = [Text(self.title, style="bold")]
+    def _body(self) -> Group:
+        parts: list[RenderableType] = []
         for step in self.completed:
-            parts.append(Text(f"  • {step}", style="dim"))
+            parts.append(Text(f"  ✓ {step}", style="dim"))
         if self.current:
             parts.append(Spinner("dots", text=f"  {self.current}"))
+        if not parts:
+            parts.append(Text("  Preparing…", style="dim"))
         return Group(*parts)
+
+    def _render(self) -> Panel:
+        return Panel(
+            self._body(),
+            title=self.title,
+            border_style="blue",
+            expand=True,
+            padding=(1, 2),
+        )
 
     def _refresh_live(self) -> None:
         if self._live is not None:
@@ -138,6 +167,26 @@ def _short_hash(tx_hash: str) -> str:
     return f"{tx_hash[:6]}…{tx_hash[-4:]}"
 
 
+def short_address(address: str) -> str:
+    """Truncate an address or hash for compact display."""
+    return _short_hash(address)
+
+
+def _receipt_int(tx_result, key: str) -> int | None:
+    """Return an integer receipt field, or ``None`` if missing or unusable."""
+    receipt = getattr(tx_result, "receipt", None)
+    if receipt is None:
+        return None
+    try:
+        value = receipt[key] if not hasattr(receipt, "get") else receipt.get(key)
+    except Exception:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 @contextmanager
 def rpc_status(message: str) -> Iterator[None]:
     """Show a spinner while an RPC or on-chain operation is in progress."""
@@ -152,15 +201,55 @@ def print_info(message: str) -> None:
 
 def print_warn(message: str) -> None:
     """Print a warning line."""
-    console.print(f"[yellow]{message}[/yellow]")
+    console.print(f"[yellow]! {message}[/yellow]")
 
 
-def print_error(message: str) -> None:
-    """Print an error line."""
-    console.print(f"[bold red]Error:[/bold red] {message}")
+def print_error(
+    message: str,
+    *,
+    operation: str | None = None,
+    error_type: str | None = None,
+) -> None:
+    """Print an error panel. ``operation`` and ``error_type`` are optional context."""
+    body = Text()
+    body.append("✗ ", style="bold red")
+    body.append(f"{operation or 'Error'}\n\n", style="bold")
+    body.append(message)
+    if error_type:
+        body.append(f"\n\n{error_type}", style="dim")
+    console.print(
+        Panel(body, title="Failed", border_style="red", expand=True, padding=(1, 2))
+    )
 
 
-def print_key_value(rows: Sequence[tuple[str, str]], *, title: str | None = None) -> None:
+def print_confirm_warning(
+    operation: str,
+    rows: Sequence[tuple[str, str]],
+    consequence: str,
+) -> None:
+    """Print a yellow warning panel before a destructive confirmation."""
+    body = Text()
+    body.append("! ", style="bold yellow")
+    body.append("This action cannot be undone.\n\n", style="yellow")
+    for key, value in rows:
+        body.append(f"{key:<12}", style="dim")
+        body.append(f"{value}\n")
+    body.append("\n")
+    body.append(consequence, style="dim")
+    console.print(
+        Panel(
+            body,
+            title=operation,
+            border_style="yellow",
+            expand=True,
+            padding=(1, 2),
+        )
+    )
+
+
+def print_key_value(
+    rows: Sequence[tuple[str, str]], *, title: str | None = None
+) -> None:
     """Print labeled key/value rows inside a compact panel."""
     lines = Text()
     for index, (key, value) in enumerate(rows):
@@ -205,23 +294,58 @@ def print_table(
 
 
 def print_tx_result(tx_result, title: str = "Transaction completed") -> None:
-    """Print a transaction result with hash and explorer link (no emojis)."""
+    """Print a transaction result panel with hash, explorer, and receipt fields."""
     tx_hash = _normalize_tx_hash(tx_result.tx_hash)
     explorer = _explorer_url()
     short = _short_hash(tx_hash)
     explorer_tx = f"{explorer}/tx/{tx_hash}"
 
     body = Text()
+    body.append("✓ ", style="bold green")
     body.append(f"{title}\n\n", style="bold")
-    body.append("Hash      ", style="dim")
+    body.append("Transaction  ", style="dim")
     body.append(f"{short}\n")
-    body.append("Explorer  ", style="dim")
+    block = _receipt_int(tx_result, "blockNumber")
+    if block is not None:
+        body.append("Block        ", style="dim")
+        body.append(f"{block:,}\n")
+    gas = _receipt_int(tx_result, "gasUsed")
+    if gas is not None:
+        body.append("Gas used     ", style="dim")
+        body.append(f"{gas:,}\n")
+    body.append("Explorer     ", style="dim")
     body.append(explorer_tx, style="cyan underline")
 
     console.print()
-    console.print(Rule(style="dim"))
-    console.print(body)
-    console.print(Rule(style="dim"))
+    console.print(
+        Panel(
+            body,
+            title="Transaction confirmed",
+            border_style="green",
+            expand=True,
+            padding=(1, 2),
+        )
+    )
+    console.print()
+
+
+def print_session_bar() -> None:
+    """Print a compact session line: version, network, and current vault."""
+    vault = os.getenv("ORION_VAULT_ADDRESS", "").strip()
+    if not vault or vault == ZERO_ADDRESS:
+        vault_display = "not set"
+    else:
+        vault_display = short_address(vault)
+
+    line = Text()
+    line.append("› ", style="bold blue")
+    line.append("Orion Console", style="bold")
+    line.append(f"  v{_sdk_version()}", style="dim")
+    line.append("  ·  ", style="dim")
+    line.append(_chain_label(), style="dim")
+    line.append("  ·  Vault ", style="dim")
+    line.append(vault_display, style="dim")
+    console.print(line)
     console.print()
 
 

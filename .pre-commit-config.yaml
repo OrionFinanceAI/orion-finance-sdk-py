@@ -1,4 +1,4 @@
-default_stages: [pre-commit]
+default_stages: [pre-commit, pre-push]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -33,6 +33,8 @@ repos:
     hooks:
       - id: ty
         name: ty (type checker)
-        entry: bash -c "uv run ty check python/"
+        entry: bash -c 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; make typecheck'
         language: system
         pass_filenames: false
+        always_run: true
+        stages: [pre-commit, pre-push]

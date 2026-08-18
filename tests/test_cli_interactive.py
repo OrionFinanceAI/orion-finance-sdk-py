@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from orion_finance_sdk_py.cli import (
+    _main_menu_choices,
     ask_or_exit,
     interactive_menu,
     validate_name,
@@ -92,7 +93,9 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
 @patch("orion_finance_sdk_py.cli._submit_intent_logic")
-def test_interactive_menu_submit_intent(mock_submit_logic, mock_questionary, mock_input):
+def test_interactive_menu_submit_intent(
+    mock_submit_logic, mock_questionary, mock_input
+):
     """Test interactive menu Submit Intent flow."""
     # Sequence:
     # 1. Main menu -> "Submit Intent"
@@ -328,20 +331,26 @@ def _wire_questionary(mock_questionary, ask_side_effect):
 
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._underlying_token_meta", return_value=("USDC", 6))
 @patch("orion_finance_sdk_py.cli._request_deposit_logic")
-def test_interactive_request_deposit(mock_logic, mock_questionary, mock_input):
-    _wire_questionary(mock_questionary, ["Request Deposit", "1000", "Exit"])
+def test_interactive_request_deposit(
+    mock_logic, _mock_meta, mock_questionary, mock_input
+):
+    _wire_questionary(mock_questionary, ["Request Deposit", "1.5", "Exit"])
     interactive_menu()
-    mock_logic.assert_called_once_with(1000)
+    mock_logic.assert_called_once_with(1_500_000)
 
 
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._underlying_token_meta", return_value=("USDC", 6))
 @patch("orion_finance_sdk_py.cli._cancel_deposit_logic")
-def test_interactive_cancel_deposit(mock_logic, mock_questionary, mock_input):
+def test_interactive_cancel_deposit(
+    mock_logic, _mock_meta, mock_questionary, mock_input
+):
     _wire_questionary(mock_questionary, ["Cancel Deposit Request", "40", "Exit"])
     interactive_menu()
-    mock_logic.assert_called_once_with(40)
+    mock_logic.assert_called_once_with(40_000_000)
 
 
 @patch("builtins.input")
@@ -392,7 +401,8 @@ def test_interactive_remove_vault_cancelled(
     _wire_questionary(mock_questionary, ["Remove Vault", False, "Exit"])
     interactive_menu()
     mock_logic.assert_not_called()
-    assert "Vault removal cancelled." in capsys.readouterr().out
+    captured = capsys.readouterr()
+    assert "Vault removal cancelled." in captured.out + captured.err
 
 
 @patch("builtins.input")
@@ -402,3 +412,31 @@ def test_interactive_list_whitelisted_assets(mock_logic, mock_questionary, mock_
     _wire_questionary(mock_questionary, ["List Whitelisted Assets", "Exit"])
     interactive_menu()
     mock_logic.assert_called_once()
+
+
+def test_main_menu_choice_values():
+    import questionary
+
+    values = [
+        choice.value
+        for choice in _main_menu_choices()
+        if type(choice) is questionary.Choice
+    ]
+    assert values == [
+        "Deploy Vault",
+        "Update Strategist",
+        "Update Fee Model",
+        "Remove Vault",
+        "Submit Intent",
+        "Request Deposit",
+        "Cancel Deposit Request",
+        "Request Redeem",
+        "Cancel Redeem Request",
+        "Redeem (Decommissioned)",
+        "Update Deposit Access Control",
+        "List Whitelisted Assets",
+        "List Asset Address Map",
+        "Claim Fees",
+        "Get Pending Fees",
+        "Exit",
+    ]
