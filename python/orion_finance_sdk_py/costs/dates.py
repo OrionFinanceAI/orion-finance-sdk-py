@@ -21,6 +21,8 @@ def parse_cost_timestamp(timestamp: str | None) -> tuple[str, int]:
         day = datetime.strptime(timestamp, _DATE_FMT).replace(tzinfo=timezone.utc)
     except ValueError as exc:
         raise ValueError(f"timestamp must be YYYY-MM-DD, got {timestamp!r}") from exc
+    if timestamp != day.strftime(_DATE_FMT):
+        raise ValueError(f"timestamp must be YYYY-MM-DD, got {timestamp!r}")
 
     end_of_day = day + timedelta(days=1) - timedelta(seconds=1)
-    return timestamp, int(end_of_day.timestamp())
+    return day.strftime(_DATE_FMT), int(end_of_day.timestamp())

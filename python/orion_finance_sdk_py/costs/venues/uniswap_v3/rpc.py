@@ -41,11 +41,16 @@ def encode_call(selector: str, args: bytes = b"") -> bytes:
     return bytes.fromhex(hex_sel) + args
 
 
+from urllib.parse import urlparse
+
+
 def connect_mainnet(rpc_url: str) -> Web3:
     """Connect to Ethereum mainnet and reject other chain IDs."""
     w3 = Web3(Web3.HTTPProvider(rpc_url, request_kwargs={"timeout": 120}))
     if not w3.is_connected():
-        raise RuntimeError(f"Failed to connect to mainnet RPC: {rpc_url[:40]}...")
+        raise RuntimeError(
+            f"Failed to connect to mainnet RPC host: {urlparse(rpc_url).hostname}"
+        )
     chain_id = int(w3.eth.chain_id)
     if chain_id != 1:
         raise RuntimeError(f"Expected mainnet chain_id=1, got {chain_id}")

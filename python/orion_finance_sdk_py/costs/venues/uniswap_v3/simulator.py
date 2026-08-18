@@ -203,9 +203,14 @@ def simulate_asset_swap(
     if buy:
         # Exact-output of the asset: USDC in, asset out. zero_for_one iff asset is token1.
         zero_for_one = not asset_is_token0
-        amount_in_raw, _, fee_raw, _ = _walk_swap(
+        amount_in_raw, filled_out_raw, fee_raw, _ = _walk_swap(
             state, -amount_asset_raw, zero_for_one
         )
+        if filled_out_raw < amount_asset_raw:
+            raise ValueError(
+                f"Pool {state.meta.address} cannot fill exact output "
+                f"{amount_asset_raw} of {asset}; filled {filled_out_raw}"
+            )
         amount_out_raw = amount_asset_raw
         dec_in = state.meta.decimals0 if zero_for_one else state.meta.decimals1
         price_in = p0 if zero_for_one else p1
