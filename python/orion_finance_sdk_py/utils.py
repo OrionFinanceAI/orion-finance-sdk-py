@@ -32,7 +32,7 @@ def ensure_env_file(env_file_path: Path = Path.cwd() / ".env"):
 # RPC URL for testnet connection
 RPC_URL=
 
-# RPC for execution cost estimates
+# Optional RPC for execution cost estimates (public mainnet RPCs if unset)
 # MAINNET_RPC_URL=
 
 # Private key for manager operations

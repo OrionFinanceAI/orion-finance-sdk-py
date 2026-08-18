@@ -26,7 +26,7 @@ from orion_finance_sdk_py.costs.venues.uniswap_v3.pool_state import (
 )
 from orion_finance_sdk_py.costs.venues.uniswap_v3.rpc import connect_mainnet
 from orion_finance_sdk_py.costs.venues.uniswap_v3.simulator import simulate_asset_swap
-from orion_finance_sdk_py.rpc import block_at_timestamp
+from orion_finance_sdk_py.rpc import block_at_timestamp, pick_default_mainnet_rpc
 
 load_dotenv()
 
@@ -36,9 +36,12 @@ _SUPPORTED_VENUES = frozenset({"uniswap_v3"})
 class ExecutionCostEstimator:
     """Manager-facing execution cost estimator.
 
-    v1 wraps Uniswap v3 on Ethereum mainnet (the venue Orion will use). Set
-    ``MAINNET_RPC_URL`` to an archival endpoint. Optional ``block_number`` pins
-    snapshots for research reproducibility and is not part of ``get_cost``.
+    v1 wraps Uniswap v3 on Ethereum mainnet (the venue Orion will use). If
+    ``rpc_url`` and ``MAINNET_RPC_URL`` are unset, public mainnet RPCs are
+    probed in order. Set ``MAINNET_RPC_URL`` to an archival endpoint for
+    historical ``timestamp`` queries and higher rate limits. Optional
+    ``block_number`` pins snapshots for research reproducibility and is not
+    part of ``get_cost``.
     """
 
     def __init__(
@@ -56,12 +59,17 @@ class ExecutionCostEstimator:
 
     def _web3(self) -> Web3:
         if self._w3 is None:
-            if not self._rpc_url:
+            url = self._rpc_url
+            if not url:
+                url = (pick_default_mainnet_rpc() or "").strip()
+                self._rpc_url = url
+            if not url:
                 raise RuntimeError(
-                    "MAINNET_RPC_URL is required for execution cost estimates. "
-                    "Set it to an archival Ethereum mainnet RPC."
+                    "No public Ethereum mainnet RPC responded. Set "
+                    "MAINNET_RPC_URL to an Ethereum mainnet RPC "
+                    "(archival for historical timestamps)."
                 )
-            self._w3 = connect_mainnet(self._rpc_url)
+            self._w3 = connect_mainnet(url)
         return self._w3
 
     def preload_uniswap_state(self, symbol: str, state: PoolState) -> None:

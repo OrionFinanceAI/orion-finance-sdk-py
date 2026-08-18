@@ -74,7 +74,7 @@ orion --help
 Or install from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=2.0.0"
+pip install "orion-finance-sdk-py>=2.1.1"
 ```
 :::
 
@@ -110,8 +110,11 @@ Create a `.env` in your project directory. Keep it private and never commit it.
 | Submit intents | `ORION_VAULT_ADDRESS`, `STRATEGIST_PRIVATE_KEY` |
 | LP deposit / redeem | `ORION_VAULT_ADDRESS`, `LP_PRIVATE_KEY` |
 | Read vault data | Pass `contract_address=` in Python, or set `ORION_VAULT_ADDRESS` |
+| Estimate execution cost | Optional `MAINNET_RPC_URL` (public mainnet RPCs if unset) |
 
 **`RPC_URL` (optional).** If unset, the SDK probes default public Sepolia RPCs (`1rpc.io` → `0xrpc.io` → `publicnode` → `stupidtech`), matching `install.sh`. Set your own endpoint for higher rate limits, other networks, or long historical series.
+
+**`MAINNET_RPC_URL` (optional).** Used for execution-cost estimates. If unset, the SDK probes public Ethereum mainnet RPCs (`publicnode` → Alchemy public → `1rpc` → `drpc`). Set an archival endpoint for historical `timestamp` queries and higher rate limits.
 
 ### Getting an RPC URL (optional)
 
@@ -328,7 +331,7 @@ Estimate Uniswap v3 execution cost (pool fee plus price impact) for a signed tra
 
 `signed_size` is human units of the risk asset: positive buys that many tokens (exact-output, matching adapter `buy`), negative sells them (exact-input, matching adapter `sell`).
 
-When constructing `ExecutionCostEstimator` without an explicit `rpc_url`, `MAINNET_RPC_URL` must be set to a non-empty Ethereum mainnet RPC endpoint.
+When constructing `ExecutionCostEstimator` without an explicit `rpc_url` or `MAINNET_RPC_URL`, the SDK probes public Ethereum mainnet RPCs (`publicnode` → Alchemy public → `1rpc` → `drpc`). Set `MAINNET_RPC_URL` to an archival endpoint for historical `timestamp` queries and higher rate limits — public RPCs often cannot serve old `eth_call` snapshots.
 
 ```python
 from orion_finance_sdk_py import ExecutionCostEstimator
