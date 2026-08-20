@@ -561,7 +561,7 @@ def test_encrypted_vault_deploy_encrypt_submit_on_fork(sepolia_fork, monkeypatch
         )
     assert config.is_whitelisted_manager(manager_address)
 
-    # Ensure HPKE recipient key is set so Intent.encrypt() can seal on-chain pkR.
+    # Ensure HPKE recipient key is set so Intent.encrypt() can seal onchain pkR.
     try:
         pk = config.hpke_public_key
         assert len(pk) == 32

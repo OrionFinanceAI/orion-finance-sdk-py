@@ -225,7 +225,7 @@ def _underlying_token_meta() -> tuple[str, int]:
 
 
 def _human_underlying_to_base(amount: str) -> int:
-    """Parse a human underlying amount and convert it to on-chain units."""
+    """Parse a human underlying amount and convert it to onchain units."""
     token_symbol, token_decimals = _underlying_token_meta()
     raw = to_base_units(amount, token_decimals)
     print_info(f"Submitting {amount} {token_symbol} ({raw} units)")

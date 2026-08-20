@@ -72,7 +72,7 @@ def test_validate_management_fee():
 
 
 def test_to_base_units():
-    """Human amounts convert to on-chain units using token decimals."""
+    """Human amounts convert to onchain units using token decimals."""
     assert to_base_units("1", 6) == 1_000_000
     assert to_base_units("1.5", 6) == 1_500_000
     assert to_base_units("0.000001", 6) == 1

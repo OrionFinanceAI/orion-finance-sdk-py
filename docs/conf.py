@@ -80,8 +80,10 @@ autoclass_content = "both"  # Include __init__ docstring
 # Outputs are written to _build/html/ after the HTML build.
 llms_txt_title = "Orion Finance SDK"
 llms_txt_summary = (
-    "Python SDK for the Orion Finance protocol: deploy vaults, submit order intents, "
-    "manage fees and strategist, and interact with OrionConfig and vault contracts."
+    "Python SDK for the Orion Finance protocol: interactive console and CLI, "
+    "whitelisted investment universe, Sepolia testnet-to-mainnet twin mapping, "
+    "deploy vaults, submit order intents, manage fees and strategist, and "
+    "interact with OrionConfig and vault contracts."
 )
 llms_txt_exclude = ["api"]
 llms_txt_code_files = [

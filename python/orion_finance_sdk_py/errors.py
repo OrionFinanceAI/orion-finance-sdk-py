@@ -39,7 +39,7 @@ class ContractError(RuntimeError):
     """Raised when a transaction/call reverts with a known custom error."""
 
     def __init__(self, error_name: str, message: str | None = None):
-        """Initialize with the on-chain error name and optional message."""
+        """Initialize with the onchain error name and optional message."""
         self.error_name = error_name
         super().__init__(message or error_name)
 

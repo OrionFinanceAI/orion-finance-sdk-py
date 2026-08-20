@@ -956,7 +956,7 @@ class OrionVault(OrionSmartContract):
         """Initialize the OrionVault contract.
 
         Args:
-            contract_name: On-chain contract name (ABI key).
+            contract_name: onchain contract name (ABI key).
             contract_address: Vault address. If omitted, uses ``ORION_VAULT_ADDRESS``.
         """
         if contract_address is None:
@@ -1486,7 +1486,7 @@ class OrionVault(OrionSmartContract):
         end: datetime | int | None = None,
         interval: str = "1d",
     ) -> list[dict]:
-        """Sample vault share price over a time range (on-chain ``eth_call`` at each point).
+        """Sample vault share price over a time range (onchain ``eth_call`` at each point).
 
         The SDK returns plain dicts; wrap in pandas in your notebook for correlation
         analysis. Public RPCs are rate-limited - use a dedicated ``RPC_URL`` for
@@ -1672,7 +1672,7 @@ class OrionTransparentVault(OrionVault):
     def get_intent(self) -> dict[str, float]:
         """Fetch the current strategist intent as fractional weights (sum ≈ 1).
 
-        On-chain weights are scaled by ``OrionConfig.strategist_intent_decimals``.
+        onchain weights are scaled by ``OrionConfig.strategist_intent_decimals``.
         Returns an empty dict when no intent is set. Compare with
         ``get_portfolio_pct_tvl()`` to see expected rebalancing.
         """
