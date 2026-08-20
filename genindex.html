@@ -1,0 +1,841 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index &#8212; Orion | SDK</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=f485503f" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/force_light.js?v=6f406d85"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-light" alt="Orion | SDK"/>
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-dark pst-js-only" alt="Orion | SDK"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="ms-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ 
+</div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.active_fee_model">active_fee_model (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.all_token_decimals">all_token_decimals (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.allowance">allowance() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.amount_in">amount_in (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.amount_out">amount_out (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.approve_shares">approve_shares() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.asset">asset (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.balance_of">balance_of() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.rpc.block_at_timestamp">block_at_timestamp() (in module orion_finance_sdk_py.rpc)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.buffer_amount">buffer_amount (orion_finance_sdk_py.contracts.LiquidityOrchestrator property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.can_request_deposit">can_request_deposit() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.cancel_deposit_request">cancel_deposit_request() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.cancel_redeem_request">cancel_redeem_request() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.rpc.clear_default_rpc_cache">clear_default_rpc_cache() (in module orion_finance_sdk_py.rpc)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.convert_to_assets">convert_to_assets() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.convert_to_shares">convert_to_shares() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.cost_pct">cost_pct (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.VaultFactory.create_orion_vault">create_orion_vault() (orion_finance_sdk_py.contracts.VaultFactory method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.current_phase">current_phase (orion_finance_sdk_py.contracts.LiquidityOrchestrator property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.decimals">decimals (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.decommissioned_vaults">decommissioned_vaults (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.deposit_access_control">deposit_access_control (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.encrypted_vault_factory">encrypted_vault_factory (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.epoch_counter">epoch_counter (orion_finance_sdk_py.contracts.LiquidityOrchestrator property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.epoch_duration">epoch_duration (orion_finance_sdk_py.contracts.LiquidityOrchestrator property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost">ExecutionCost (class in orion_finance_sdk_py.costs.types)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.estimator.ExecutionCostEstimator">ExecutionCostEstimator (class in orion_finance_sdk_py.costs.estimator)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.fee_change_cooldown_duration">fee_change_cooldown_duration (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.fee_pct">fee_pct (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.get_asset_prices">get_asset_prices() (orion_finance_sdk_py.contracts.LiquidityOrchestrator method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.estimator.get_cost">get_cost() (in module orion_finance_sdk_py.costs.estimator)</a>
+
+      <ul>
+        <li><a href="api.html#orion_finance_sdk_py.costs.estimator.ExecutionCostEstimator.get_cost">(orion_finance_sdk_py.costs.estimator.ExecutionCostEstimator method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.get_epoch_state">get_epoch_state() (orion_finance_sdk_py.contracts.LiquidityOrchestrator method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionTransparentVault.get_intent">get_intent() (orion_finance_sdk_py.contracts.OrionTransparentVault method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.get_investment_universe">get_investment_universe (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.get_portfolio">get_portfolio() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.get_portfolio_pct_tvl">get_portfolio_pct_tvl() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.PriceAdapterRegistry.get_price">get_price() (orion_finance_sdk_py.contracts.PriceAdapterRegistry method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.PriceAdapterRegistry.get_prices">get_prices() (orion_finance_sdk_py.contracts.PriceAdapterRegistry method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.VaultFactory.get_vault_address_from_result">get_vault_address_from_result() (orion_finance_sdk_py.contracts.VaultFactory method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.hpke_public_key">hpke_public_key (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.is_decommissioned_vault">is_decommissioned_vault() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.is_decommissioning">is_decommissioning (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.is_decommissioning_vault">is_decommissioning_vault() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.is_encrypted_vault">is_encrypted_vault() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.is_orion_vault">is_orion_vault() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.is_system_idle">is_system_idle() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted">is_whitelisted() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.is_whitelisted_manager">is_whitelisted_manager() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.liquidity_orchestrator">liquidity_orchestrator (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator">LiquidityOrchestrator (class in orion_finance_sdk_py.contracts)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.manager_address">manager_address (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.manager_intent_decimals">manager_intent_decimals (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.max_deposit">max_deposit() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.max_fulfill_batch_size">max_fulfill_batch_size (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.max_management_fee">max_management_fee (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.max_mint">max_mint() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.max_performance_fee">max_performance_fee (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.max_redeem">max_redeem() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.max_withdraw">max_withdraw() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.min_deposit_amount">min_deposit_amount (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.min_redeem_amount">min_redeem_amount (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="api.html#module-orion_finance_sdk_py.rpc">orion_finance_sdk_py.rpc</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.name">name (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.netting_eta">netting_eta (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.netting_fee_coefficient">netting_fee_coefficient (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.orion_encrypted_vaults">orion_encrypted_vaults (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li>
+    orion_finance_sdk_py.rpc
+
+      <ul>
+        <li><a href="api.html#module-orion_finance_sdk_py.rpc">module</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.orion_managers">orion_managers (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.orion_transparent_vaults">orion_transparent_vaults (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig">OrionConfig (class in orion_finance_sdk_py.contracts)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionTransparentVault">OrionTransparentVault (class in orion_finance_sdk_py.contracts)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault">OrionVault (class in orion_finance_sdk_py.contracts)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.pending_deposit">pending_deposit() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.pending_deposit_count">pending_deposit_count() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.pending_protocol_fees">pending_protocol_fees (orion_finance_sdk_py.contracts.LiquidityOrchestrator property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.pending_redeem">pending_redeem() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.pending_redeem_batch">pending_redeem_batch() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.pending_redeem_count">pending_redeem_count() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.pending_vault_fees">pending_vault_fees (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.rpc.pick_default_mainnet_rpc">pick_default_mainnet_rpc() (in module orion_finance_sdk_py.rpc)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.rpc.pick_default_rpc">pick_default_rpc() (in module orion_finance_sdk_py.rpc)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.point_in_time_total_assets">point_in_time_total_assets() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.estimator.ExecutionCostEstimator.preload_uniswap_state">preload_uniswap_state() (orion_finance_sdk_py.costs.estimator.ExecutionCostEstimator method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.preview_redeem">preview_redeem() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.price_adapter_decimals">price_adapter_decimals (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+
+      <ul>
+        <li><a href="api.html#orion_finance_sdk_py.contracts.PriceAdapterRegistry.price_adapter_decimals">(orion_finance_sdk_py.contracts.PriceAdapterRegistry property)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.price_adapter_registry">price_adapter_registry (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.PriceAdapterRegistry.price_history">price_history() (orion_finance_sdk_py.contracts.PriceAdapterRegistry method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.PriceAdapterRegistry">PriceAdapterRegistry (class in orion_finance_sdk_py.contracts)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.redeem">redeem() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.remove_orion_vault">remove_orion_vault() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.request_deposit">request_deposit() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.request_redeem">request_redeem() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.risk_free_rate">risk_free_rate (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.rpc.rpc_works">rpc_works() (in module orion_finance_sdk_py.rpc)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.rs_fee_coefficient">rs_fee_coefficient (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.set_deposit_access_control">set_deposit_access_control() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.share_price">share_price (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.share_price_at">share_price_at() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.share_price_history">share_price_history() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.signed_size">signed_size (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.slippage_pct">slippage_pct (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.slippage_tolerance">slippage_tolerance (orion_finance_sdk_py.contracts.LiquidityOrchestrator property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.strategist_address">strategist_address (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.strategist_intent_decimals">strategist_intent_decimals (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionTransparentVault.submit_order_intent">submit_order_intent() (orion_finance_sdk_py.contracts.OrionTransparentVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.swap_size">swap_size (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.symbol">symbol (orion_finance_sdk_py.contracts.OrionVault property)</a>
+
+      <ul>
+        <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.symbol">(orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.LiquidityOrchestrator.target_buffer_ratio">target_buffer_ratio (orion_finance_sdk_py.contracts.LiquidityOrchestrator property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.costs.types.ExecutionCost.timestamp">timestamp (orion_finance_sdk_py.costs.types.ExecutionCost attribute)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.token_decimals">token_decimals() (orion_finance_sdk_py.contracts.OrionConfig method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.total_assets">total_assets (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.total_assets_at">total_assets_at() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.total_supply">total_supply (orion_finance_sdk_py.contracts.OrionVault property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.transfer_from_shares">transfer_from_shares() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.transfer_manager_fees">transfer_manager_fees() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.transfer_shares">transfer_shares() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.transparent_vault_factory">transparent_vault_factory (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.underlying_asset">underlying_asset (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.update_fee_model">update_fee_model() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionVault.update_strategist">update_strategist() (orion_finance_sdk_py.contracts.OrionVault method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.VaultFactory">VaultFactory (class in orion_finance_sdk_py.contracts)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.whitelisted_asset_names">whitelisted_asset_names (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.whitelisted_assets">whitelisted_assets (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+      <li><a href="api.html#orion_finance_sdk_py.contracts.OrionConfig.whitelisted_assets_length">whitelisted_assets_length (orion_finance_sdk_py.contracts.OrionConfig property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+                </article>
+              
+              
+              
+              
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Orion Finance.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

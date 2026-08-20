@@ -1,0 +1,916 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Orion Finance SDK &#8212; Orion | SDK</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=f485503f" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/force_light.js?v=6f406d85"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="#">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-light" alt="Orion | SDK"/>
+    <img src="https://docs.orionfinance.ai/img/Orion_Logo_blue_horizontal.svg" class="logo__image only-dark pst-js-only" alt="Orion | SDK"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="ms-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="orion-finance-sdk">
+<h1>Orion Finance SDK<a class="headerlink" href="#orion-finance-sdk" title="Link to this heading">#</a></h1>
+<div class="orion-hero docutils container">
+<p>Python SDK and CLI for Orion’s <a class="reference external" href="https://github.com/OrionFinanceAI/protocol" rel="noreferer noopener" target="_blank">onchain portfolio management infrastructure</a>: deploy vaults, submit strategist intents, and read protocol state, including the whitelisted investment universe, without leaving Python or the shell.</p>
+<div class="orion-hero-links docutils container">
+<ul class="simple">
+<li><p><strong>PyPI:</strong> <a class="reference external" href="https://pypi.org/project/orion-finance-sdk-py/" rel="noreferer noopener" target="_blank">orion-finance-sdk-py</a></p></li>
+<li><p><strong>Source:</strong> <a class="reference external" href="https://github.com/OrionFinanceAI/orion-finance-sdk-py" rel="noreferer noopener" target="_blank">GitHub</a></p></li>
+</ul>
+</div>
+</div>
+<div class="docutils">
+<p class="rubric" id="what-you-can-do">What you can do</p>
+<div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
+<div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-2 sd-g-2 sd-g-xs-2 sd-g-sm-2 sd-g-md-2 sd-g-lg-2 docutils">
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+Install and configure</div>
+<p class="sd-card-text">Install the CLI or package, set environment variables, and connect to an RPC.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="#quick-start"><span class="std std-ref">Quick start</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+Use the console</div>
+<p class="sd-card-text">Interactive <code class="docutils literal notranslate"><span class="pre">orion</span></code> menu and scriptable commands for every role.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="#orion-console"><span class="std std-ref">Orion Console</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+Investment universe</div>
+<p class="sd-card-text">List the onchain whitelist: names, addresses, and how to query it.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="#investment-universe"><span class="std std-ref">Investment universe</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+Testnet sandbox</div>
+<p class="sd-card-text">Sepolia twins, <code class="docutils literal notranslate"><span class="pre">mainnetSource()</span></code>, and which address to use where.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="#testnet-sandbox"><span class="std std-ref">Testnet sandbox</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+Deploy and manage vaults</div>
+<p class="sd-card-text">Create transparent vaults, update strategist and fees, verify deployment.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="#vault-operations"><span class="std std-ref">Vault operations</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+Submit strategist intents</div>
+<p class="sd-card-text">Push rebalancing allocations from JSON, CSV, Parquet, or an inline dict.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="#submit-intents"><span class="std std-ref">Submit rebalancing order intents</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+Analyze universe and vaults</div>
+<p class="sd-card-text">PIT prices, asset price history, share-price series, and intent vs holdings.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="#analytics-and-reads"><span class="std std-ref">Analytics and reads</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+Estimate execution cost</div>
+<p class="sd-card-text">Uniswap v3 fee and slippage for a signed asset trade, as of a calendar date.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="#execution-cost"><span class="std std-ref">Estimate execution cost</span></a></div>
+</div>
+</div>
+</div>
+</div>
+<hr class="docutils" />
+<section id="quick-start">
+<span id="id1"></span><h2>Quick start<a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h2>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="cli" for="sd-tab-item-0">
+CLI</label><div class="sd-tab-content docutils">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-sSfL<span class="w"> </span>https://sdk.orionfinance.ai/cli/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+orion<span class="w"> </span>--help
+</pre></div>
+</div>
+<p>Or install from PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;orion-finance-sdk-py&gt;=2.1.1&quot;</span>
+</pre></div>
+</div>
+<p>Running <code class="docutils literal notranslate"><span class="pre">orion</span></code> with no arguments opens the <a class="reference internal" href="#orion-console"><span class="std std-ref">interactive console</span></a>.</p>
+</div>
+<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="python" for="sd-tab-item-1">
+Python</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrionConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Risk-free Rate: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">risk_free_rate</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="manager-workflow">
+<h3>Manager workflow<a class="headerlink" href="#manager-workflow" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Install</strong> the SDK (above).</p></li>
+<li><p><strong>Deploy</strong> a vault with <code class="docutils literal notranslate"><span class="pre">orion</span> <span class="pre">deploy-vault</span></code> (managers).</p></li>
+<li><p><strong>Set strategist</strong> if you want to submit intents as the manager (<code class="docutils literal notranslate"><span class="pre">orion</span> <span class="pre">update-strategist</span></code>).</p></li>
+<li><p><strong>Submit intents</strong> with <code class="docutils literal notranslate"><span class="pre">orion</span> <span class="pre">submit-intent</span></code>.</p></li>
+</ol>
+</section>
+</section>
+<hr class="docutils" />
+<section id="configure-environment">
+<h2>Configure environment<a class="headerlink" href="#configure-environment" title="Link to this heading">#</a></h2>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> in your project directory. Keep it private and never commit it.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Task</p></th>
+<th class="head"><p>Variables</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Deploy / manage a vault</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">MANAGER_PRIVATE_KEY</span></code>, <code class="docutils literal notranslate"><span class="pre">ORION_VAULT_ADDRESS</span></code> (after deploy)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Submit intents</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ORION_VAULT_ADDRESS</span></code>, <code class="docutils literal notranslate"><span class="pre">STRATEGIST_PRIVATE_KEY</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>LP deposit / redeem</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ORION_VAULT_ADDRESS</span></code>, <code class="docutils literal notranslate"><span class="pre">LP_PRIVATE_KEY</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Read vault data</p></td>
+<td><p>Pass <code class="docutils literal notranslate"><span class="pre">contract_address=</span></code> in Python, or set <code class="docutils literal notranslate"><span class="pre">ORION_VAULT_ADDRESS</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Estimate execution cost</p></td>
+<td><p>Optional <code class="docutils literal notranslate"><span class="pre">MAINNET_RPC_URL</span></code> (public mainnet RPCs if unset)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr class="docutils" />
+</section>
+<section id="orion-console">
+<span id="id2"></span><h2>Orion Console<a class="headerlink" href="#orion-console" title="Link to this heading">#</a></h2>
+<p>The SDK ships a CLI named <code class="docutils literal notranslate"><span class="pre">orion</span></code>. With <strong>no subcommand</strong> it opens an interactive menu. With a subcommand it runs that action non-interactively.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w">          </span><span class="c1"># interactive console</span>
+orion<span class="w"> </span>--help<span class="w">   </span><span class="c1"># list scriptable commands</span>
+</pre></div>
+</div>
+<section id="scriptable-commands">
+<h3>Scriptable commands<a class="headerlink" href="#scriptable-commands" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>deploy-vault<span class="w"> </span>--help
+orion<span class="w"> </span>submit-intent<span class="w"> </span>--help
+orion<span class="w"> </span>list-whitelisted-assets
+orion<span class="w"> </span>list-asset-address-map
+</pre></div>
+</div>
+<hr class="docutils" />
+</section>
+</section>
+<section id="investment-universe">
+<span id="id3"></span><h2>Investment universe<a class="headerlink" href="#investment-universe" title="Link to this heading">#</a></h2>
+<p>The investment universe is the onchain whitelist in <code class="docutils literal notranslate"><span class="pre">OrionConfig</span></code>: the only tokens a vault may hold and the only keys allowed in a strategist intent. The list is maintained on the protocol, not in this SDK, so query it rather than copying a static table.</p>
+<p>Names come from <code class="docutils literal notranslate"><span class="pre">whitelisted_asset_names</span></code> (same order as the addresses).</p>
+<section id="list-from-the-console">
+<h3>List from the console<a class="headerlink" href="#list-from-the-console" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>list-whitelisted-assets
+</pre></div>
+</div>
+<p>Or from the interactive menu: <strong>Access and assets</strong> → <strong>List Whitelisted Assets</strong>. The table prints name, address, and a total count.</p>
+<p>On Sepolia, those addresses are <strong>twins</strong>. Map them to mainnet with <code class="docutils literal notranslate"><span class="pre">orion</span> <span class="pre">list-asset-address-map</span></code> (<a class="reference internal" href="#testnet-sandbox"><span class="std std-ref">Testnet sandbox</span></a>).</p>
+</section>
+<section id="list-from-python">
+<h3>List from Python<a class="headerlink" href="#list-from-python" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrionConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">address</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">whitelisted_asset_names</span><span class="p">,</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">whitelisted_assets</span><span class="p">,</span>
+    <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">address</span><span class="p">)</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">is_whitelisted</span><span class="p">(</span><span class="s2">&quot;0x...&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<hr class="docutils" />
+</section>
+</section>
+<section id="testnet-sandbox">
+<span id="id4"></span><h2>Testnet sandbox<a class="headerlink" href="#testnet-sandbox" title="Link to this heading">#</a></h2>
+<p>The operational sandbox is <strong>Ethereum Sepolia</strong>. Vaults, intents, and the <a class="reference internal" href="#investment-universe"><span class="std std-ref">investment universe</span></a> live there. Twin ERC-20s on Sepolia expose <code class="docutils literal notranslate"><span class="pre">mainnetSource()</span></code> so you can recover the Ethereum mainnet token they stand in for.</p>
+<p>The SDK mapping is <strong>testnet → mainnet</strong>. Tokens that do not implement the getter, revert, or return <code class="docutils literal notranslate"><span class="pre">address(0)</span></code> are omitted.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Sepolia</span> <span class="n">twin</span>  <span class="o">--</span><span class="n">mainnetSource</span><span class="p">()</span><span class="o">--&gt;</span>  <span class="n">Ethereum</span> <span class="n">mainnet</span> <span class="n">token</span>
+     <span class="o">^</span>                                      <span class="o">^</span>
+     <span class="o">|</span>                                      <span class="o">|</span>
+  <span class="n">intents</span><span class="p">,</span> <span class="n">whitelist</span><span class="p">,</span> <span class="n">vaults</span>           <span class="n">get_cost</span>
+</pre></div>
+</div>
+<section id="list-the-map">
+<h3>List the map<a class="headerlink" href="#list-the-map" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>list-asset-address-map
+</pre></div>
+</div>
+<p>Or from the interactive menu: <strong>Access and assets</strong> → <strong>List Asset Address Map</strong>. Each twin is printed as a Testnet / Mainnet pair.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_asset_address_map</span>
+
+<span class="n">address_map</span> <span class="o">=</span> <span class="n">build_asset_address_map</span><span class="p">()</span>
+<span class="c1"># {checksummed Sepolia address: checksummed mainnet address}</span>
+</pre></div>
+</div>
+<hr class="docutils" />
+</section>
+</section>
+<section id="vault-operations">
+<span id="id5"></span><h2>Vault operations<a class="headerlink" href="#vault-operations" title="Link to this heading">#</a></h2>
+<p>Managers create transparent or encrypted vaults with the CLI. Use the <a class="reference internal" href="#orion-console"><span class="std std-ref">interactive console</span></a> or the commands below.</p>
+<section id="deploy-a-vault">
+<h3>Deploy a vault<a class="headerlink" href="#deploy-a-vault" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>deploy-vault<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span><span class="s2">&quot;Algorithmic Liquidity Provision &amp; Hedging Agent&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--symbol<span class="w"> </span><span class="s2">&quot;ALPHA&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--fee-type<span class="w"> </span>hard_hurdle<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--performance-fee<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--management-fee<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--strategist-address<span class="w"> </span>0x...<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--vault-type<span class="w"> </span>transparent
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--vault-type</span> <span class="pre">encrypted</span></code> for confidential vaults. Default is <code class="docutils literal notranslate"><span class="pre">transparent</span></code>.</p>
+<p>This deploys an ERC-7540 vault, registers the manager from your <code class="docutils literal notranslate"><span class="pre">.env</span></code>, and sets fees.</p>
+</section>
+<section id="update-strategist-or-fees">
+<h3>Update strategist or fees<a class="headerlink" href="#update-strategist-or-fees" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>update-strategist<span class="w"> </span>--new-strategist-address<span class="w"> </span>0x...
+
+orion<span class="w"> </span>update-fee-model<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--fee-type<span class="w"> </span>high_water_mark<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--performance-fee<span class="w"> </span><span class="m">5</span>.5<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--management-fee<span class="w"> </span><span class="m">0</span>.1
+</pre></div>
+</div>
+</section>
+<section id="lp-deposit-redeem">
+<h3>LP deposit / redeem<a class="headerlink" href="#lp-deposit-redeem" title="Link to this heading">#</a></h3>
+<p>Needs <code class="docutils literal notranslate"><span class="pre">ORION_VAULT_ADDRESS</span></code> and <code class="docutils literal notranslate"><span class="pre">LP_PRIVATE_KEY</span></code>. Amounts for deposit/cancel-deposit are human units of the vault underlying.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>request-deposit<span class="w"> </span>--assets<span class="w"> </span><span class="m">1</span>.5
+orion<span class="w"> </span>cancel-deposit-request<span class="w"> </span>--amount<span class="w"> </span><span class="m">1</span>.5
+orion<span class="w"> </span>request-redeem<span class="w"> </span>--shares<span class="w"> </span><span class="m">500000</span>
+orion<span class="w"> </span>cancel-redeem-request<span class="w"> </span>--shares<span class="w"> </span><span class="m">500000</span>
+<span class="c1"># After full decommission only:</span>
+orion<span class="w"> </span>redeem<span class="w"> </span>--shares<span class="w"> </span><span class="m">500000</span><span class="w"> </span>--receiver<span class="w"> </span>0x...<span class="w"> </span>--owner<span class="w"> </span>0x...
+</pre></div>
+</div>
+</section>
+<section id="remove-decommission-vault-manager">
+<h3>Remove / decommission vault (manager)<a class="headerlink" href="#remove-decommission-vault-manager" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>remove-vault
+</pre></div>
+</div>
+<hr class="docutils" />
+</section>
+</section>
+<section id="submit-rebalancing-order-intents">
+<span id="submit-intents"></span><h2>Submit rebalancing order intents<a class="headerlink" href="#submit-rebalancing-order-intents" title="Link to this heading">#</a></h2>
+<p>Strategists (or managers who set themselves as strategist) submit portfolio allocation intents executed on the next rebalancing cycle.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">--order-intent</span></code></strong> (alias <strong><code class="docutils literal notranslate"><span class="pre">--order-intent-path</span></code></strong>) accepts a file or an inline string:</p>
+<ul class="simple">
+<li><p><strong>JSON file:</strong> object mapping token addresses → weights (fractions summing to <strong>1</strong>).</p></li>
+<li><p><strong>CSV / Parquet:</strong> tabular; Parquet needs <strong>pyarrow</strong> (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'orion-finance-sdk-py[parquet]'</span></code>).</p></li>
+<li><p><strong>Inline:</strong> JSON object or Python <code class="docutils literal notranslate"><span class="pre">dict</span></code> literal.</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>orion<span class="w"> </span>submit-intent<span class="w"> </span>--order-intent<span class="w"> </span>order_intent.json
+
+orion<span class="w"> </span>submit-intent<span class="w"> </span>--order-intent<span class="w"> </span><span class="s1">&#39;{&quot;0x...&quot;: 0.5, &quot;0x...&quot;: 0.5}&#39;</span>
+</pre></div>
+</div>
+<p>Intents are collected and executed at the <strong>next rebalance</strong> (bundling, batching, netting).</p>
+<section id="portfolio-file-schema">
+<h3>Portfolio file schema<a class="headerlink" href="#portfolio-file-schema" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column Name</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">address</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Token contract address (checksummed).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">percentage_of_tvl</span></code></p></td>
+<td><p>decimal</p></td>
+<td><p>Percentage of total vault value to allocate (0-100).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Aliases: <strong><code class="docutils literal notranslate"><span class="pre">token</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">addr</span></code></strong> for address; <strong><code class="docutils literal notranslate"><span class="pre">weight</span></code></strong>, <strong><code class="docutils literal notranslate"><span class="pre">value</span></code></strong>, or <strong><code class="docutils literal notranslate"><span class="pre">percentage</span></code></strong> for weights. Columns named <code class="docutils literal notranslate"><span class="pre">percentage_of_tvl</span></code> / <code class="docutils literal notranslate"><span class="pre">percentage</span></code> are treated as <strong>0–100</strong> and normalized to fractions.</p>
+<p>Example intent (addresses must be on the current <a class="reference internal" href="#investment-universe"><span class="std std-ref">investment universe</span></a> for the chain you are connected to):</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.2</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong> On <strong>transparent</strong> vaults, intents are visible onchain after submission. Confidential vault intents are sealed with Orion HPKE before submission, the chain stores an opaque <code class="docutils literal notranslate"><span class="pre">OrionCiphertext</span></code>:</p>
+</div></blockquote>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>0x693658254630f73ad8da78fb331bf976cd42f90e0e9c9e83f40c51072a6f7417
+bdb98ee21c5fbd63b638e332a609dad2c433b7dddcadec1f43586b8df178c488
+01bc357ad2b6b530cfd9d63a8da1e0506ad748b7445373c5028131d0133fd503
+172331decd5b2c69027a78699d713bb7426278f5cfa7754cb9e608f8cac946be
+f38dd79d43391007eb7e87cca2a60b9e8ba869ae6dcdeb9289a09fa9748fc6a7
+57160df5b25eb1fab133b18d11865a12f04a6ba70fa9a7f6c1dcf32fdffcabda
+cd028fb3317650842264ba149850c24af40f1351564153ed0e0e00594caf6cef
+a9981d8f622a44fe2c905be117a8d6a9c2cb51e787d6b27a7676bf6ccb89ed42
+e3b8d9b4c24e887030a7caf503ba52d1d44510f73f5e7d30a396b4662a409178
+234f21d6d9a3a1256b7ae0aac3a31c5f5242a66db00495f1a46f8d171dd7be9d
+60d6dbaf04562614a8176738d66cf746101efeb2721f44ff2ed3ed3c3a1882ac
+cbee5712dff0103eca8470ee5774e02e
+</pre></div>
+</div>
+<hr class="docutils" />
+</section>
+</section>
+<section id="analytics-and-reads">
+<span id="id6"></span><h2>Analytics and reads<a class="headerlink" href="#analytics-and-reads" title="Link to this heading">#</a></h2>
+<section id="point-in-time-prices-and-portfolio-weights">
+<h3>Point-in-time prices and portfolio weights<a class="headerlink" href="#point-in-time-prices-and-portfolio-weights" title="Link to this heading">#</a></h3>
+<p>Point-in-time oracle prices for the <a class="reference internal" href="#investment-universe"><span class="std std-ref">investment universe</span></a>, combined with vault holdings for portfolio weights:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OrionTransparentVault</span><span class="p">,</span>
+    <span class="n">PriceAdapterRegistry</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">registry</span> <span class="o">=</span> <span class="n">PriceAdapterRegistry</span><span class="p">()</span>
+<span class="n">prices</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">get_prices</span><span class="p">()</span>  <span class="c1"># address -&gt; price for every whitelisted asset</span>
+
+<span class="n">vault</span> <span class="o">=</span> <span class="n">OrionTransparentVault</span><span class="p">()</span>  <span class="c1"># or OrionTransparentVault(contract_address=&quot;0x...&quot;)</span>
+<span class="n">portfolio</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">get_portfolio</span><span class="p">()</span>  <span class="c1"># address -&gt; shares</span>
+<span class="n">pct_tvl</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">get_portfolio_pct_tvl</span><span class="p">()</span>  <span class="c1"># address -&gt; weight (sums to ~1)</span>
+<span class="n">pit_tvl</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">point_in_time_total_assets</span><span class="p">()</span>
+<span class="n">share_price</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">share_price</span>  <span class="c1"># value of 1 full share in underlying units</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">PriceAdapterRegistry</span></code> is resolved from <code class="docutils literal notranslate"><span class="pre">OrionConfig.price_adapter_registry</span></code>. Pass <code class="docutils literal notranslate"><span class="pre">assets=</span></code> to <code class="docutils literal notranslate"><span class="pre">get_prices</span></code> to price a subset.</p>
+</section>
+<section id="investment-universe-price-history">
+<h3>Investment universe price history<a class="headerlink" href="#investment-universe-price-history" title="Link to this heading">#</a></h3>
+<p>Screen whitelisted assets before deploying a vault - daily PIT prices from the adapter registry:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrionConfig</span><span class="p">,</span> <span class="n">PriceAdapterRegistry</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+<span class="n">registry</span> <span class="o">=</span> <span class="n">PriceAdapterRegistry</span><span class="p">()</span>
+<span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+<span class="n">start</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="n">series</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">price_history</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
+<span class="c1"># [{&quot;timestamp&quot;: int, &quot;block&quot;: int, &quot;prices&quot;: {addr: int, ...}}, ...]</span>
+
+<span class="c1"># Optional subset:</span>
+<span class="c1"># series = registry.price_history(</span>
+<span class="c1">#     start=start, end=end, assets=config.whitelisted_assets[:3]</span>
+<span class="c1"># )</span>
+</pre></div>
+</div>
+<p>For long series, set a dedicated <code class="docutils literal notranslate"><span class="pre">RPC_URL</span></code> - public endpoints are rate-limited.</p>
+<p>A longer research walkthrough (excess returns, covariance, a sample portfolio) is in <a class="reference external" href="https://github.com/OrionFinanceAI/orion-finance-sdk-py/blob/main/notebooks/investment_universe_research.ipynb" rel="noreferer noopener" target="_blank"><code class="docutils literal notranslate"><span class="pre">notebooks/investment_universe_research.ipynb</span></code></a>.</p>
+</section>
+<section id="vault-metadata-and-strategist-intent">
+<h3>Vault metadata and strategist intent<a class="headerlink" href="#vault-metadata-and-strategist-intent" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrionConfig</span><span class="p">,</span> <span class="n">OrionTransparentVault</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">orion_transparent_vaults</span><span class="p">:</span>
+    <span class="n">vault</span> <span class="o">=</span> <span class="n">OrionTransparentVault</span><span class="p">(</span><span class="n">contract_address</span><span class="o">=</span><span class="n">addr</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">vault</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">vault</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span> <span class="n">vault</span><span class="o">.</span><span class="n">decimals</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">vault</span><span class="o">.</span><span class="n">manager_address</span><span class="p">,</span> <span class="n">vault</span><span class="o">.</span><span class="n">strategist_address</span><span class="p">)</span>
+    <span class="n">intent</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">get_intent</span><span class="p">()</span>  <span class="c1"># address -&gt; fraction (sum ≈ 1); {} if unset</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">get_portfolio_pct_tvl</span><span class="p">()</span>
+    <span class="c1"># Diff intent vs current to reason about expected rebalancing</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">get_intent()</span></code> scales onchain weights by <code class="docutils literal notranslate"><span class="pre">OrionConfig.strategist_intent_decimals</span></code> so they match the fractional weights used when submitting intents.</p>
+</section>
+<section id="vault-share-price-history">
+<h3>Vault share price history<a class="headerlink" href="#vault-share-price-history" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrionConfig</span><span class="p">,</span> <span class="n">OrionTransparentVault</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">OrionConfig</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">orion_transparent_vaults</span><span class="p">:</span>
+    <span class="n">vault</span> <span class="o">=</span> <span class="n">OrionTransparentVault</span><span class="p">(</span><span class="n">contract_address</span><span class="o">=</span><span class="n">addr</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">share_price_history</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="s2">&quot;1d&quot;</span><span class="p">)</span>
+    <span class="c1"># [{&quot;timestamp&quot;: int, &quot;block&quot;: int, &quot;share_price&quot;: int}, ...]</span>
+</pre></div>
+</div>
+<p>You can also query a single past block with <code class="docutils literal notranslate"><span class="pre">vault.share_price_at(block)</span></code> or <code class="docutils literal notranslate"><span class="pre">registry.get_price(asset,</span> <span class="pre">block=...)</span></code>.</p>
+</section>
+</section>
+<section id="estimate-execution-cost">
+<span id="execution-cost"></span><h2>Estimate execution cost<a class="headerlink" href="#estimate-execution-cost" title="Link to this heading">#</a></h2>
+<p>Estimate Uniswap v3 execution cost (pool fee plus price impact) for a signed trade in an Orion universe asset versus USDC.</p>
+<p><code class="docutils literal notranslate"><span class="pre">signed_size</span></code> is human units of the risk asset: positive buys that many tokens (exact-output, matching adapter <code class="docutils literal notranslate"><span class="pre">buy</span></code>), negative sells them (exact-input, matching adapter <code class="docutils literal notranslate"><span class="pre">sell</span></code>).</p>
+<p>When constructing <code class="docutils literal notranslate"><span class="pre">ExecutionCostEstimator</span></code> without an explicit <code class="docutils literal notranslate"><span class="pre">rpc_url</span></code> or <code class="docutils literal notranslate"><span class="pre">MAINNET_RPC_URL</span></code>, the SDK probes public Ethereum mainnet RPCs (<code class="docutils literal notranslate"><span class="pre">publicnode</span></code> → Alchemy public → <code class="docutils literal notranslate"><span class="pre">1rpc</span></code> → <code class="docutils literal notranslate"><span class="pre">drpc</span></code>). Set <code class="docutils literal notranslate"><span class="pre">MAINNET_RPC_URL</span></code> to an archival endpoint for historical <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> queries and higher rate limits — public RPCs often cannot serve old <code class="docutils literal notranslate"><span class="pre">eth_call</span></code> snapshots.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">orion_finance_sdk_py</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExecutionCostEstimator</span>
+
+<span class="n">est</span> <span class="o">=</span> <span class="n">ExecutionCostEstimator</span><span class="p">()</span>
+<span class="n">now</span> <span class="o">=</span> <span class="n">est</span><span class="o">.</span><span class="n">get_cost</span><span class="p">(</span><span class="s2">&quot;WETH&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+<span class="n">btc</span> <span class="o">=</span> <span class="n">est</span><span class="o">.</span><span class="n">get_cost</span><span class="p">(</span><span class="s2">&quot;WBTC&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="n">past</span> <span class="o">=</span> <span class="n">est</span><span class="o">.</span><span class="n">get_cost</span><span class="p">(</span><span class="s2">&quot;WETH&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="s2">&quot;2026-08-01&quot;</span><span class="p">)</span>
+<span class="n">netted</span> <span class="o">=</span> <span class="n">est</span><span class="o">.</span><span class="n">get_cost</span><span class="p">(</span><span class="s2">&quot;WETH&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="s2">&quot;2026-08-01&quot;</span><span class="p">,</span> <span class="n">netting_eta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="c1"># now.fee_pct, now.slippage_pct, now.cost_pct</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>symbol:</strong> ticker (<code class="docutils literal notranslate"><span class="pre">WETH</span></code>, <code class="docutils literal notranslate"><span class="pre">WBTC</span></code>) or <strong>mainnet</strong> token address. Not a Sepolia twin — see <a class="reference internal" href="#testnet-sandbox"><span class="std std-ref">Testnet sandbox</span></a>.</p></li>
+<li><p><strong>timestamp:</strong> UTC <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code>. Omitted means now. Unix seconds and block numbers are internal.</p></li>
+<li><p><strong>netting_eta:</strong> shrinks the swap to <code class="docutils literal notranslate"><span class="pre">(1</span> <span class="pre">-</span> <span class="pre">η)</span> <span class="pre">*</span> <span class="pre">signed_size</span></code>, then runs the full non-linear cost model on that size.</p></li>
+</ul>
+<p>Cost coverage is a <strong>subset</strong> of the onchain <a class="reference internal" href="#investment-universe"><span class="std std-ref">investment universe</span></a>: WETH, WBTC, XAUt, USDT, and DAI versus USDC.</p>
+</section>
+<hr class="docutils" />
+<section id="api-reference">
+<h2>API reference<a class="headerlink" href="#api-reference" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#vaults">Vaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#factory">Factory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#liquidity-orchestrator">Liquidity Orchestrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#price-adapter-registry">Price Adapter Registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#execution-cost">Execution cost</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-orion_finance_sdk_py.rpc">RPC defaults</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">Quick start</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#manager-workflow">Manager workflow</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configure-environment">Configure environment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#orion-console">Orion Console</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scriptable-commands">Scriptable commands</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#investment-universe">Investment universe</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#list-from-the-console">List from the console</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#list-from-python">List from Python</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testnet-sandbox">Testnet sandbox</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#list-the-map">List the map</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vault-operations">Vault operations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deploy-a-vault">Deploy a vault</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#update-strategist-or-fees">Update strategist or fees</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lp-deposit-redeem">LP deposit / redeem</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#remove-decommission-vault-manager">Remove / decommission vault (manager)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submit-rebalancing-order-intents">Submit rebalancing order intents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-file-schema">Portfolio file schema</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analytics-and-reads">Analytics and reads</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point-in-time-prices-and-portfolio-weights">Point-in-time prices and portfolio weights</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#investment-universe-price-history">Investment universe price history</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vault-metadata-and-strategist-intent">Vault metadata and strategist intent</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vault-share-price-history">Vault share price history</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#estimate-execution-cost">Estimate execution cost</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-reference">API reference</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Orion Finance.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
