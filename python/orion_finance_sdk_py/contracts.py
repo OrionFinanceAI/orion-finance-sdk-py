@@ -23,7 +23,7 @@ from .utils import (
 
 load_dotenv()
 
-# Gas limit for eth_call (view) when using Hardhat fork (node cap 16M)
+# Gas limit for eth_call (view) when ORION_FORCE_VIEW_GAS is set (dev forks).
 _VIEW_CALL_GAS = 15_000_000
 _VIEW_CALL_TX = {"gas": _VIEW_CALL_GAS}
 
@@ -93,41 +93,6 @@ class OrionSmartContract:
             load_dotenv(os.getcwd() + "/.env")
             rpc_url = os.getenv("RPC_URL")
 
-        # Fork tests: load_dotenv() above can restore RPC_URL from disk; ORION_USE_APE_PROVIDER
-        # forces Ape's Hardhat web3 before the HTTP branch (see tests/test_fork.py sepolia_fork).
-        use_ape_provider = os.getenv("ORION_USE_APE_PROVIDER", "").strip().lower() in (
-            "1",
-            "true",
-            "yes",
-        )
-
-        if use_ape_provider:
-            ape_error = None
-            try:
-                from ape import networks
-
-                if networks.active_provider:
-                    self.w3 = networks.active_provider.web3
-                    self.chain_id = self.w3.eth.chain_id
-                    self.contract_name = contract_name
-                    self.contract_address = contract_address
-                    self.contract = self.w3.eth.contract(
-                        address=Web3.to_checksum_address(self.contract_address),
-                        abi=load_contract_abi(self.contract_name),
-                    )
-                    return
-            except (ImportError, AttributeError):
-                pass
-            except Exception as e:
-                ape_error = e
-            msg = (
-                "ORION_USE_APE_PROVIDER is set but Ape has no usable active_provider. "
-                "Run inside an Ape network context (e.g. sepolia_fork Hardhat)."
-            )
-            if ape_error is not None:
-                msg += f" ({ape_error})"
-            raise ValueError(msg)
-
         if rpc_url:
             rpc_url = validate_var(
                 rpc_url,
@@ -159,25 +124,6 @@ class OrionSmartContract:
             )
             return
 
-        ape_error = None
-        try:
-            from ape import networks
-
-            if networks.active_provider:
-                self.w3 = networks.active_provider.web3
-                self.chain_id = self.w3.eth.chain_id
-                self.contract_name = contract_name
-                self.contract_address = contract_address
-                self.contract = self.w3.eth.contract(
-                    address=Web3.to_checksum_address(self.contract_address),
-                    abi=load_contract_abi(self.contract_name),
-                )
-                return
-        except (ImportError, AttributeError):
-            pass
-        except Exception as e:
-            ape_error = e
-
         default_rpc = pick_default_rpc()
         if default_rpc:
             self.w3 = Web3(Web3.HTTPProvider(default_rpc))
@@ -190,15 +136,11 @@ class OrionSmartContract:
             )
             return
 
-        msg = (
+        raise ValueError(
             "RPC_URL environment variable is missing or invalid, and no default "
             "public RPC responded. Please set RPC_URL in your .env file or as an "
             "environment variable."
         )
-        if ape_error is not None:
-            msg += f" (Ape provider failed: {ape_error})"
-            raise ValueError(msg) from ape_error
-        raise ValueError(msg)
 
     def block_at_timestamp(self, timestamp: int) -> int:
         """Return the latest block number whose timestamp is <= ``timestamp``.
@@ -956,7 +898,7 @@ class OrionVault(OrionSmartContract):
         """Initialize the OrionVault contract.
 
         Args:
-            contract_name: On-chain contract name (ABI key).
+            contract_name: onchain contract name (ABI key).
             contract_address: Vault address. If omitted, uses ``ORION_VAULT_ADDRESS``.
         """
         if contract_address is None:
@@ -1486,7 +1428,7 @@ class OrionVault(OrionSmartContract):
         end: datetime | int | None = None,
         interval: str = "1d",
     ) -> list[dict]:
-        """Sample vault share price over a time range (on-chain ``eth_call`` at each point).
+        """Sample vault share price over a time range (onchain ``eth_call`` at each point).
 
         The SDK returns plain dicts; wrap in pandas in your notebook for correlation
         analysis. Public RPCs are rate-limited - use a dedicated ``RPC_URL`` for
@@ -1672,7 +1614,7 @@ class OrionTransparentVault(OrionVault):
     def get_intent(self) -> dict[str, float]:
         """Fetch the current strategist intent as fractional weights (sum ≈ 1).
 
-        On-chain weights are scaled by ``OrionConfig.strategist_intent_decimals``.
+        onchain weights are scaled by ``OrionConfig.strategist_intent_decimals``.
         Returns an empty dict when no intent is set. Compare with
         ``get_portfolio_pct_tvl()`` to see expected rebalancing.
         """

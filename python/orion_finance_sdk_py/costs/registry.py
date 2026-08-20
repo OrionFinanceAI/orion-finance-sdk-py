@@ -96,7 +96,7 @@ def resolve_symbol(symbol: str) -> VenueAsset:
             return _BY_ADDRESS[key]
         raise KeyError(
             f"Unknown mainnet asset {raw}. Pass a known ticker or use "
-            "on-chain factory lookup."
+            "onchain factory lookup."
         )
 
     ticker = raw.upper()

@@ -1,6 +1,9 @@
 import os
+import shutil
+import socket
+import subprocess
+import time
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from dotenv import load_dotenv
@@ -27,83 +30,95 @@ for _env_path in (
         load_dotenv(_env_path, override=True)
         break
 
-# Snapshot at import: sepolia_fork pops RPC_URL later, so skip logic cannot rely on env then.
-_HAS_FORK_UPSTREAM = bool(
-    (os.getenv("ALCHEMY_API_KEY") or "").strip()
-    or (os.getenv("RPC_URL") or "").strip()
-    or (os.getenv("WEB3_ETHEREUM_SEPOLIA_ALCHEMY_API_KEY") or "").strip()
-    or (os.getenv("WEB3_ALCHEMY_API_KEY") or "").strip()
-)
+_SEPOLIA_CHAIN_ID = 11155111
+_ANVIL_READY_TIMEOUT_S = 60.0
 
-try:
-    from ape import accounts, networks
 
-    HAS_APE = True
-except ImportError:
-    HAS_APE = False
-    accounts = networks = None  # type: ignore[assignment]
+def _alchemy_key() -> str:
+    return (
+        (os.getenv("ALCHEMY_API_KEY") or "").strip()
+        or (os.getenv("WEB3_ALCHEMY_API_KEY") or "").strip()
+        or (os.getenv("WEB3_ETHEREUM_SEPOLIA_ALCHEMY_API_KEY") or "").strip()
+    )
 
-try:
-    from ape_hardhat.exceptions import HardhatSubprocessError
-except ImportError:
-    HardhatSubprocessError = None  # type: ignore[misc,assignment]
+
+def _fork_upstream_url() -> str | None:
+    """Sepolia RPC for ``anvil --fork-url`` (not a local Anvil endpoint)."""
+    rpc = (os.getenv("RPC_URL") or "").strip()
+    if rpc and "127.0.0.1" not in rpc and "localhost" not in rpc:
+        return rpc
+    key = _alchemy_key()
+    if key:
+        return f"https://eth-sepolia.g.alchemy.com/v2/{key}"
+    return None
+
+
+_HAS_FORK_UPSTREAM = bool(_fork_upstream_url())
+
+
+def _free_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
 
 
 @pytest.fixture(autouse=True)
-def _require_ape_and_fork_config():
-    """Skip fork tests when ape is not installed or fork env is not set."""
-    if not HAS_APE:
-        pytest.skip("ape not installed")
+def _require_fork_config():
+    """Skip fork tests when Anvil or an upstream RPC is missing."""
+    if shutil.which("anvil") is None:
+        pytest.skip("anvil not found; install Foundry (https://getfoundry.sh)")
     if not _HAS_FORK_UPSTREAM:
-        pytest.skip(
-            "Fork not configured: set ALCHEMY_API_KEY or RPC_URL in .env "
-            "(or rely on tests/conftest.py mirroring from an Alchemy RPC_URL)"
-        )
+        pytest.skip("Fork not configured: set ALCHEMY_API_KEY or RPC_URL in .env")
 
 
 @pytest.fixture(scope="module")
 def sepolia_fork():
-    """Shared Hardhat Sepolia fork (module-scoped). Sets ORION_USE_APE_PROVIDER=1 because
-    OrionSmartContract.load_dotenv can restore RPC_URL and bypass the fork; pops RPC_URL
-    then restores both in finally."""
-    _prev_rpc = os.environ.pop("RPC_URL", None)
-    _prev_use_ape = os.environ.get("ORION_USE_APE_PROVIDER")
-    os.environ["ORION_USE_APE_PROVIDER"] = "1"
+    """Shared Anvil Sepolia fork (module-scoped). Points ``RPC_URL`` at localhost."""
+    upstream = _fork_upstream_url()
+    if not upstream:
+        pytest.skip("Fork not configured: set ALCHEMY_API_KEY or RPC_URL in .env")
+
+    port = _free_port()
+    local_rpc = f"http://127.0.0.1:{port}"
+    proc = subprocess.Popen(
+        [
+            "anvil",
+            "--fork-url",
+            upstream,
+            "--chain-id",
+            str(_SEPOLIA_CHAIN_ID),
+            "--port",
+            str(port),
+            "--silent",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    prev_rpc = os.environ.get("RPC_URL")
     try:
-        try:
-            with networks.ethereum.sepolia_fork.use_provider("hardhat"):
-                prov = networks.active_provider
-                w3 = getattr(prov, "web3", None) if prov is not None else None
-                if prov is None or w3 is None:
-                    pytest.skip(
-                        "Ape active provider is not connected (cannot run fork tests)"
-                    )
-                _is_conn = getattr(w3, "is_connected", None) or getattr(
-                    w3, "isConnected", None
-                )
-                if _is_conn is not None and not _is_conn():
-                    pytest.skip(
-                        "Ape active provider is not connected (cannot run fork tests)"
-                    )
-                yield
-        except Exception as exc:
-            if (
-                HardhatSubprocessError is not None
-                and isinstance(exc, HardhatSubprocessError)
-                and "Unable to find Hardhat binary" in str(exc)
-            ):
-                pytest.skip(
-                    "Hardhat CLI not found. From the repository root run: npm ci "
-                    "(same as CI 'Install root Node deps'); fork tests need node_modules/hardhat."
-                )
-            raise
-    finally:
-        if _prev_use_ape is None:
-            os.environ.pop("ORION_USE_APE_PROVIDER", None)
+        w3 = Web3(Web3.HTTPProvider(local_rpc, request_kwargs={"timeout": 5}))
+        deadline = time.monotonic() + _ANVIL_READY_TIMEOUT_S
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                pytest.skip("anvil exited before becoming ready")
+            if w3.is_connected():
+                break
+            time.sleep(0.2)
         else:
-            os.environ["ORION_USE_APE_PROVIDER"] = _prev_use_ape
-        if _prev_rpc is not None:
-            os.environ["RPC_URL"] = _prev_rpc
+            pytest.skip("anvil did not become ready")
+
+        os.environ["RPC_URL"] = local_rpc
+        yield
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        if prev_rpc is None:
+            os.environ.pop("RPC_URL", None)
+        else:
+            os.environ["RPC_URL"] = prev_rpc
 
 
 def test_comprehensive_config_on_fork(sepolia_fork):
@@ -192,9 +207,10 @@ def test_vault_pending_state_readable_on_fork(sepolia_fork, monkeypatch):
 
 
 def test_fork_connection(sepolia_fork):
-    block_number = networks.active_provider.get_block("latest").number
+    config = OrionConfig()
+    block_number = config.w3.eth.block_number
     assert block_number > 0
-    print(f"\n[Hardhat Fork] Latest Block: {block_number}")
+    print(f"\n[Anvil Fork] Latest Block: {block_number}")
 
 
 def test_orion_config_v2_properties_on_fork(sepolia_fork):
@@ -331,7 +347,7 @@ def test_vault_can_request_deposit_and_max_deposit_on_fork(sepolia_fork, monkeyp
     monkeypatch.setenv("ORION_VAULT_ADDRESS", vaults[0])
     vault = OrionTransparentVault()
 
-    receiver = accounts.test_accounts[0].address
+    receiver = Web3().eth.account.from_key(_HH_ACCOUNT0_KEY).address
     can_deposit = vault.can_request_deposit(receiver)
     assert isinstance(can_deposit, bool)
 
@@ -425,15 +441,6 @@ def test_vault_portfolio_pct_tvl_on_fork(sepolia_fork, monkeypatch):
     assert vault.point_in_time_total_assets() > 0
 
 
-def test_orion_config_uses_ape_provider_when_rpc_unset(sepolia_fork, monkeypatch):
-    """OrionConfig uses ape's active provider when RPC_URL is not set (user read path)."""
-    monkeypatch.delenv("RPC_URL", raising=False)
-    with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-        config = OrionConfig()
-    assert config.underlying_asset is not None
-    assert len(config.underlying_asset) == 42
-
-
 def test_orion_config_uses_env_address_when_set(sepolia_fork, monkeypatch):
     """OrionConfig uses ORION_CONFIG_ADDRESS when set (user/config override)."""
     from orion_finance_sdk_py.types import CHAIN_CONFIG
@@ -465,10 +472,9 @@ def test_get_investment_universe_on_fork(sepolia_fork):
         assert config.is_whitelisted(assets[0])
 
 
-# Hardhat / Anvil default funded account #0 (matches Ape test_accounts[0]).
-_HH_ACCOUNT0_KEY = (
-    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-)
+# Anvil / Hardhat default funded accounts (mnemonic: test test ... junk).
+_HH_ACCOUNT0_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+_HH_ACCOUNT1_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
 # §17.2 test-vector recipient public key (valid X25519 pkR for Orion HPKE).
 _HPKE_TEST_PK_R = bytes.fromhex(
     "b1f1b840de7a3241b02748cf9b05b74dc8c5e8451298738817bd76aa8ebe8c2b"
@@ -476,7 +482,7 @@ _HPKE_TEST_PK_R = bytes.fromhex(
 
 
 def _impersonate_send(w3, *, from_address: str, to: str, data: bytes) -> dict:
-    """Send an unlocked Hardhat tx from an impersonated account."""
+    """Send an unlocked tx from an impersonated account (Anvil hardhat_* APIs)."""
     from_address = Web3.to_checksum_address(from_address)
     to = Web3.to_checksum_address(to)
     w3.provider.make_request("hardhat_impersonateAccount", [from_address])
@@ -501,17 +507,6 @@ def _impersonate_send(w3, *, from_address: str, to: str, data: bytes) -> dict:
     return receipt
 
 
-def _ape_account_private_key(account) -> str:
-    """Return a 0x-prefixed private key for an Ape test account."""
-    key = getattr(account, "private_key", None)
-    if key is None:
-        raise AttributeError("Ape test account has no private_key")
-    if isinstance(key, bytes):
-        return "0x" + key.hex()
-    key_str = str(key)
-    return key_str if key_str.startswith("0x") else "0x" + key_str
-
-
 def test_encrypted_vault_deploy_encrypt_submit_on_fork(sepolia_fork, monkeypatch):
     """Whitelist manager → deploy encrypted vault → HPKE-seal intent → submitIntent."""
     config = OrionConfig()
@@ -526,26 +521,14 @@ def test_encrypted_vault_deploy_encrypt_submit_on_fork(sepolia_fork, monkeypatch
     if not assets:
         pytest.skip("No whitelisted assets for intent")
 
-    manager_acct = accounts.test_accounts[0]
-    # Prefer a distinct strategist; fall back to manager if private key unavailable.
-    strategist_acct = accounts.test_accounts[1]
-    try:
-        manager_key = _ape_account_private_key(manager_acct)
-    except AttributeError:
-        manager_key = _HH_ACCOUNT0_KEY
-        # Verify fallback matches Hardhat account #0
-        derived = config.w3.eth.account.from_key(manager_key).address
-        if derived.lower() != manager_acct.address.lower():
-            pytest.skip("Cannot resolve private key for manager test account")
-
-    try:
-        strategist_key = _ape_account_private_key(strategist_acct)
-        strategist_address = Web3.to_checksum_address(strategist_acct.address)
-    except AttributeError:
-        strategist_key = manager_key
-        strategist_address = Web3.to_checksum_address(manager_acct.address)
-
-    manager_address = Web3.to_checksum_address(manager_acct.address)
+    manager_key = _HH_ACCOUNT0_KEY
+    strategist_key = _HH_ACCOUNT1_KEY
+    manager_address = Web3.to_checksum_address(
+        config.w3.eth.account.from_key(manager_key).address
+    )
+    strategist_address = Web3.to_checksum_address(
+        config.w3.eth.account.from_key(strategist_key).address
+    )
 
     # Owner whitelist (admin path only for fork setup — not an SDK public API).
     owner = config.contract.functions.owner().call(_VIEW_CALL_TX)
@@ -561,7 +544,7 @@ def test_encrypted_vault_deploy_encrypt_submit_on_fork(sepolia_fork, monkeypatch
         )
     assert config.is_whitelisted_manager(manager_address)
 
-    # Ensure HPKE recipient key is set so Intent.encrypt() can seal on-chain pkR.
+    # Ensure HPKE recipient key is set so Intent.encrypt() can seal onchain pkR.
     try:
         pk = config.hpke_public_key
         assert len(pk) == 32

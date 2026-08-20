@@ -2,7 +2,7 @@
 
 ::::{container} orion-hero
 
-Python SDK and CLI for Orion's [on-chain portfolio management infrastructure](https://github.com/OrionFinanceAI/protocol): deploy transparent vaults, submit strategist intents, and read protocol state, including the whitelisted investment universe, without leaving Python or the shell.
+Python SDK and CLI for Orion's [onchain portfolio management infrastructure](https://github.com/OrionFinanceAI/protocol): deploy vaults, submit strategist intents, and read protocol state, including the whitelisted investment universe, without leaving Python or the shell.
 
 ::::{container} orion-hero-links
 
@@ -23,6 +23,27 @@ Python SDK and CLI for Orion's [on-chain portfolio management infrastructure](ht
 :link-type: ref
 
 Install the CLI or package, set environment variables, and connect to an RPC.
+:::
+
+:::{grid-item-card} Use the console
+:link: orion-console
+:link-type: ref
+
+Interactive `orion` menu and scriptable commands for every role.
+:::
+
+:::{grid-item-card} Investment universe
+:link: investment-universe
+:link-type: ref
+
+List the onchain whitelist: names, addresses, and how to query it.
+:::
+
+:::{grid-item-card} Testnet sandbox
+:link: testnet-sandbox
+:link-type: ref
+
+Sepolia twins, `mainnetSource()`, and which address to use where.
 :::
 
 :::{grid-item-card} Deploy and manage vaults
@@ -76,6 +97,8 @@ Or install from PyPI:
 ```bash
 pip install "orion-finance-sdk-py>=2.1.1"
 ```
+
+Running `orion` with no arguments opens the {ref}`interactive console <orion-console>`.
 :::
 
 :::{tab-item} Python
@@ -112,16 +135,95 @@ Create a `.env` in your project directory. Keep it private and never commit it.
 | Read vault data | Pass `contract_address=` in Python, or set `ORION_VAULT_ADDRESS` |
 | Estimate execution cost | Optional `MAINNET_RPC_URL` (public mainnet RPCs if unset) |
 
-**`RPC_URL` (optional).** If unset, the SDK probes default public Sepolia RPCs (`1rpc.io` → `0xrpc.io` → `publicnode` → `stupidtech`), matching `install.sh`. Set your own endpoint for higher rate limits, other networks, or long historical series.
+---
 
-**`MAINNET_RPC_URL` (optional).** Used for execution-cost estimates. If unset, the SDK probes public Ethereum mainnet RPCs (`publicnode` → Alchemy public → `1rpc` → `drpc`). Set an archival endpoint for historical `timestamp` queries and higher rate limits.
+(orion-console)=
 
-### Getting an RPC URL (optional)
+## Orion Console
 
-An RPC URL is the HTTP endpoint the SDK uses to talk to the chain. Popular options:
+The SDK ships a CLI named `orion`. With **no subcommand** it opens an interactive menu. With a subcommand it runs that action non-interactively.
 
-- **[Alchemy](https://alchemy.com/):** create an app → Ethereum / Sepolia → copy the HTTP URL → `RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY`
-- **[Infura](https://infura.io/):** create a project → Sepolia → copy the HTTPS endpoint → `RPC_URL=https://sepolia.infura.io/v3/YOUR_API_KEY`
+```bash
+orion          # interactive console
+orion --help   # list scriptable commands
+```
+
+### Scriptable commands
+
+```bash
+orion deploy-vault --help
+orion submit-intent --help
+orion list-whitelisted-assets
+orion list-asset-address-map
+```
+
+---
+
+(investment-universe)=
+
+## Investment universe
+
+The investment universe is the onchain whitelist in `OrionConfig`: the only tokens a vault may hold and the only keys allowed in a strategist intent. The list is maintained on the protocol, not in this SDK, so query it rather than copying a static table.
+
+Names come from `whitelisted_asset_names` (same order as the addresses).
+
+### List from the console
+
+```bash
+orion list-whitelisted-assets
+```
+
+Or from the interactive menu: **Access and assets** → **List Whitelisted Assets**. The table prints name, address, and a total count.
+
+On Sepolia, those addresses are **twins**. Map them to mainnet with `orion list-asset-address-map` ({ref}`testnet-sandbox`).
+
+### List from Python
+
+```python
+from orion_finance_sdk_py import OrionConfig
+
+config = OrionConfig()
+for name, address in zip(
+    config.whitelisted_asset_names,
+    config.whitelisted_assets,
+    strict=True,
+):
+    print(name.strip(), address)
+
+config.is_whitelisted("0x...")
+```
+
+---
+
+(testnet-sandbox)=
+
+## Testnet sandbox
+
+The operational sandbox is **Ethereum Sepolia**. Vaults, intents, and the {ref}`investment universe <investment-universe>` live there. Twin ERC-20s on Sepolia expose `mainnetSource()` so you can recover the Ethereum mainnet token they stand in for.
+
+The SDK mapping is **testnet → mainnet**. Tokens that do not implement the getter, revert, or return `address(0)` are omitted.
+
+```
+Sepolia twin  --mainnetSource()-->  Ethereum mainnet token
+     ^                                      ^
+     |                                      |
+  intents, whitelist, vaults           get_cost
+```
+
+### List the map
+
+```bash
+orion list-asset-address-map
+```
+
+Or from the interactive menu: **Access and assets** → **List Asset Address Map**. Each twin is printed as a Testnet / Mainnet pair.
+
+```python
+from orion_finance_sdk_py import build_asset_address_map
+
+address_map = build_asset_address_map()
+# {checksummed Sepolia address: checksummed mainnet address}
+```
 
 ---
 
@@ -129,7 +231,7 @@ An RPC URL is the HTTP endpoint the SDK uses to talk to the chain. Popular optio
 
 ## Vault operations
 
-Managers create transparent or encrypted vaults with the CLI.
+Managers create transparent or encrypted vaults with the CLI. Use the {ref}`interactive console <orion-console>` or the commands below.
 
 ### Deploy a vault
 
@@ -144,11 +246,9 @@ orion deploy-vault \
   --vault-type transparent
 ```
 
-Use `--vault-type encrypted` for confidential vaults (intents sealed with Orion HPKE). Default is `transparent`.
+Use `--vault-type encrypted` for confidential vaults. Default is `transparent`.
 
 This deploys an ERC-7540 vault, registers the manager from your `.env`, and sets fees.
-
-**Verify:** the CLI prints the vault contract address - store it and share it with LPs. Set `ORION_VAULT_ADDRESS` for later commands.
 
 ### Update strategist or fees
 
@@ -162,6 +262,8 @@ orion update-fee-model \
 ```
 
 ### LP deposit / redeem
+
+Needs `ORION_VAULT_ADDRESS` and `LP_PRIVATE_KEY`. Amounts for deposit/cancel-deposit are human units of the vault underlying.
 
 ```bash
 orion request-deposit --assets 1.5
@@ -209,7 +311,7 @@ Intents are collected and executed at the **next rebalance** (bundling, batching
 
 Aliases: **`token`** / **`addr`** for address; **`weight`**, **`value`**, or **`percentage`** for weights. Columns named `percentage_of_tvl` / `percentage` are treated as **0–100** and normalized to fractions.
 
-Example intent:
+Example intent (addresses must be on the current {ref}`investment universe <investment-universe>` for the chain you are connected to):
 
 ```json
 {
@@ -244,7 +346,7 @@ cbee5712dff0103eca8470ee5774e02e
 
 ### Point-in-time prices and portfolio weights
 
-Point-in-time oracle prices for the investment universe, combined with vault holdings for portfolio weights:
+Point-in-time oracle prices for the {ref}`investment universe <investment-universe>`, combined with vault holdings for portfolio weights:
 
 ```python
 from orion_finance_sdk_py import (
@@ -288,6 +390,8 @@ series = registry.price_history(start=start, end=end)
 
 For long series, set a dedicated `RPC_URL` - public endpoints are rate-limited.
 
+A longer research walkthrough (excess returns, covariance, a sample portfolio) is in [`notebooks/investment_universe_research.ipynb`](https://github.com/OrionFinanceAI/orion-finance-sdk-py/blob/main/notebooks/investment_universe_research.ipynb).
+
 ### Vault metadata and strategist intent
 
 ```python
@@ -303,7 +407,7 @@ for addr in config.orion_transparent_vaults:
     # Diff intent vs current to reason about expected rebalancing
 ```
 
-`get_intent()` scales on-chain weights by `OrionConfig.strategist_intent_decimals` so they match the fractional weights used when submitting intents.
+`get_intent()` scales onchain weights by `OrionConfig.strategist_intent_decimals` so they match the fractional weights used when submitting intents.
 
 ### Vault share price history
 
@@ -344,9 +448,11 @@ netted = est.get_cost("WETH", 1.5, timestamp="2026-08-01", netting_eta=0.3)
 # now.fee_pct, now.slippage_pct, now.cost_pct
 ```
 
-- **symbol:** ticker (`WETH`, `WBTC`) or mainnet token address. Not a Sepolia twin.
+- **symbol:** ticker (`WETH`, `WBTC`) or **mainnet** token address. Not a Sepolia twin — see {ref}`testnet-sandbox`.
 - **timestamp:** UTC `YYYY-MM-DD`. Omitted means now. Unix seconds and block numbers are internal.
 - **netting_eta:** shrinks the swap to `(1 - η) * signed_size`, then runs the full non-linear cost model on that size.
+
+Cost coverage is a **subset** of the onchain {ref}`investment universe <investment-universe>`: WETH, WBTC, XAUt, USDT, and DAI versus USDC.
 
 ---
 

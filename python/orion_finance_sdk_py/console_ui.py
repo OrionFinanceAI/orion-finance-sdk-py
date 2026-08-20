@@ -189,7 +189,7 @@ def _receipt_int(tx_result, key: str) -> int | None:
 
 @contextmanager
 def rpc_status(message: str) -> Iterator[None]:
-    """Show a spinner while an RPC or on-chain operation is in progress."""
+    """Show a spinner while an RPC or onchain operation is in progress."""
     with console.status(message, spinner="dots"):
         yield
 

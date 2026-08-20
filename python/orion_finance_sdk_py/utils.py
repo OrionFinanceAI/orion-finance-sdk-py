@@ -57,7 +57,7 @@ LP_PRIVATE_KEY=
 
 
 def to_base_units(amount: str | int | float | Decimal, decimals: int) -> int:
-    """Convert a human token amount to on-chain integer units.
+    """Convert a human token amount to onchain integer units.
 
     Args:
         amount: Human-readable token amount (e.g. ``"100.5"``).
