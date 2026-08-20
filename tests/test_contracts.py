@@ -1,10 +1,7 @@
 """Tests for the contracts module."""
 
-import builtins
 import json
 import os
-import sys
-import types
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
@@ -221,222 +218,39 @@ class TestOrionSmartContract:
             os.environ.clear()
             os.environ.update(saved)
 
-    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
-    def test_init_orion_use_ape_provider_success(self):
-        """ORION_USE_APE_PROVIDER uses ape.networks.active_provider.web3 (lines 89–103)."""
-        ape_mod = types.ModuleType("ape")
-        ape_mod.networks = MagicMock()
-        ape_mod.networks.active_provider = MagicMock()
-        ape_mod.networks.active_provider.web3 = MagicMock()
-        ape_mod.networks.active_provider.web3.eth.chain_id = 11155111
-        ape_mod.networks.active_provider.web3.eth.contract.return_value = MagicMock()
-        saved = sys.modules.get("ape")
-        sys.modules["ape"] = ape_mod
-        saved_env = dict(os.environ)
-        try:
-            os.environ.pop("RPC_URL", None)
-            os.environ["ORION_USE_APE_PROVIDER"] = "1"
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with patch("orion_finance_sdk_py.contracts.Web3") as mock_web3_cls:
-                    c = OrionSmartContract("TestContract", "0xAddress")
-            mock_web3_cls.assert_not_called()
-            assert c.chain_id == 11155111
-        finally:
-            os.environ.clear()
-            os.environ.update(saved_env)
-            if saved is None:
-                sys.modules.pop("ape", None)
-            else:
-                sys.modules["ape"] = saved
-
     @pytest.mark.usefixtures("mock_load_abi")
-    def test_init_orion_use_ape_provider_no_active_provider(self):
-        """ORION_USE_APE_PROVIDER set but no active_provider raises ValueError (lines 108–114)."""
-        ape_mod = types.ModuleType("ape")
-        ape_mod.networks = MagicMock()
-        ape_mod.networks.active_provider = None
-        saved = sys.modules.get("ape")
-        sys.modules["ape"] = ape_mod
+    def test_init_no_rpc_raises_when_no_default(self):
+        """No RPC_URL and public RPC cascade fails: ValueError."""
         saved_env = dict(os.environ)
         try:
             os.environ.pop("RPC_URL", None)
-            os.environ["ORION_USE_APE_PROVIDER"] = "true"
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with pytest.raises(ValueError, match="no usable active_provider"):
-                    OrionSmartContract("TestContract", "0xAddress")
-        finally:
-            os.environ.clear()
-            os.environ.update(saved_env)
-            if saved is None:
-                sys.modules.pop("ape", None)
-            else:
-                sys.modules["ape"] = saved
-
-    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
-    def test_init_orion_use_ape_provider_import_error(self):
-        """ORION_USE_APE: `from ape import networks` fails (lines 104–105)."""
-        saved = sys.modules.get("ape")
-        try:
-            sys.modules["ape"] = types.ModuleType("ape")
-            saved_env = dict(os.environ)
-            os.environ.pop("RPC_URL", None)
-            os.environ["ORION_USE_APE_PROVIDER"] = "1"
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with pytest.raises(ValueError, match="no usable active_provider"):
-                    OrionSmartContract("TestContract", "0xAddress")
-        finally:
-            os.environ.clear()
-            os.environ.update(saved_env)
-            if saved is None:
-                sys.modules.pop("ape", None)
-            else:
-                sys.modules["ape"] = saved
-
-    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
-    def test_init_orion_use_ape_provider_inner_exception(self):
-        """ORION_USE_APE: failure inside try appends cause (lines 106–107, 113)."""
-        ape_mod = types.ModuleType("ape")
-        nets = MagicMock()
-        nets.active_provider = MagicMock()
-        nets.active_provider.web3 = MagicMock()
-
-        class _EthBoom:
-            @property
-            def chain_id(self):
-                raise RuntimeError("chain boom")
-
-        nets.active_provider.web3.eth = _EthBoom()
-        ape_mod.networks = nets
-        saved = sys.modules.get("ape")
-        sys.modules["ape"] = ape_mod
-        saved_env = dict(os.environ)
-        try:
-            os.environ.pop("RPC_URL", None)
-            os.environ["ORION_USE_APE_PROVIDER"] = "yes"
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with pytest.raises(ValueError, match="chain boom"):
-                    OrionSmartContract("TestContract", "0xAddress")
-        finally:
-            os.environ.clear()
-            os.environ.update(saved_env)
-            if saved is None:
-                sys.modules.pop("ape", None)
-            else:
-                sys.modules["ape"] = saved
-
-    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
-    def test_init_fallback_ape_when_no_rpc_url(self):
-        """No RPC_URL: optional ape.networks.active_provider path (lines 147–160)."""
-        ape_mod = types.ModuleType("ape")
-        ape_mod.networks = MagicMock()
-        ape_mod.networks.active_provider = MagicMock()
-        ape_mod.networks.active_provider.web3 = MagicMock()
-        ape_mod.networks.active_provider.web3.eth.chain_id = 11155111
-        ape_mod.networks.active_provider.web3.eth.contract.return_value = MagicMock()
-        saved = sys.modules.get("ape")
-        sys.modules["ape"] = ape_mod
-        saved_env = dict(os.environ)
-        try:
-            os.environ.pop("RPC_URL", None)
-            os.environ.pop("ORION_USE_APE_PROVIDER", None)
-            # Block .env from re-setting RPC_URL (would skip ape fallback and use HTTP).
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with patch("orion_finance_sdk_py.contracts.Web3") as mock_web3_cls:
-                    c = OrionSmartContract("TestContract", "0xAddress")
-            mock_web3_cls.assert_not_called()
-            assert c.chain_id == 11155111
-        finally:
-            os.environ.clear()
-            os.environ.update(saved_env)
-            if saved is None:
-                sys.modules.pop("ape", None)
-            else:
-                sys.modules["ape"] = saved
-
-    @pytest.mark.usefixtures("mock_load_abi")
-    def test_init_no_rpc_ape_import_error(self):
-        """No RPC_URL, no ape, and public RPC cascade fails: ValueError."""
-        real_import = builtins.__import__
-
-        def _deny_ape(name, _globals=None, _locals=None, fromlist=(), level=0):
-            if name == "ape":
-                raise ImportError("no ape")
-            return real_import(name, _globals, _locals, fromlist, level)
-
-        saved_env = dict(os.environ)
-        try:
-            os.environ.pop("RPC_URL", None)
-            os.environ.pop("ORION_USE_APE_PROVIDER", None)
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with patch(
+            with (
+                patch("orion_finance_sdk_py.contracts.load_dotenv"),
+                patch(
                     "orion_finance_sdk_py.contracts.pick_default_rpc",
                     return_value=None,
-                ):
-                    with patch("builtins.__import__", side_effect=_deny_ape):
-                        with pytest.raises(
-                            ValueError, match="RPC_URL environment variable"
-                        ):
-                            OrionSmartContract("TestContract", "0xAddress")
+                ),
+                pytest.raises(ValueError, match="RPC_URL environment variable"),
+            ):
+                OrionSmartContract("TestContract", "0xAddress")
         finally:
             os.environ.clear()
             os.environ.update(saved_env)
-
-    @pytest.mark.usefixtures("mock_load_abi")
-    def test_init_no_rpc_ape_other_exception_chained(self):
-        """No RPC_URL: unexpected error from ape path chains ValueError."""
-        ape_mod = types.ModuleType("ape")
-
-        class _Ns:
-            @property
-            def active_provider(self):
-                raise RuntimeError("boom")
-
-        ape_mod.networks = _Ns()
-        saved = sys.modules.get("ape")
-        sys.modules["ape"] = ape_mod
-        saved_env = dict(os.environ)
-        try:
-            os.environ.pop("RPC_URL", None)
-            os.environ.pop("ORION_USE_APE_PROVIDER", None)
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with patch(
-                    "orion_finance_sdk_py.contracts.pick_default_rpc",
-                    return_value=None,
-                ):
-                    with pytest.raises(
-                        ValueError, match="RPC_URL environment variable"
-                    ) as exc:
-                        OrionSmartContract("TestContract", "0xAddress")
-            assert isinstance(exc.value.__cause__, RuntimeError)
-        finally:
-            os.environ.clear()
-            os.environ.update(saved_env)
-            if saved is None:
-                sys.modules.pop("ape", None)
-            else:
-                sys.modules["ape"] = saved
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_init_uses_default_public_rpc_when_no_rpc_url(self):
-        """When RPC_URL is unset and ape is unavailable, use pick_default_rpc()."""
-        real_import = builtins.__import__
-
-        def _deny_ape(name, _globals=None, _locals=None, fromlist=(), level=0):
-            if name == "ape":
-                raise ImportError("no ape")
-            return real_import(name, _globals, _locals, fromlist, level)
-
+        """When RPC_URL is unset, use pick_default_rpc()."""
         saved_env = dict(os.environ)
         try:
             os.environ.pop("RPC_URL", None)
-            os.environ.pop("ORION_USE_APE_PROVIDER", None)
-            with patch("orion_finance_sdk_py.contracts.load_dotenv"):
-                with patch(
+            with (
+                patch("orion_finance_sdk_py.contracts.load_dotenv"),
+                patch(
                     "orion_finance_sdk_py.contracts.pick_default_rpc",
                     return_value="https://1rpc.io/sepolia",
-                ) as mock_pick:
-                    with patch("builtins.__import__", side_effect=_deny_ape):
-                        c = OrionSmartContract("TestContract", "0xAddress")
+                ) as mock_pick,
+            ):
+                c = OrionSmartContract("TestContract", "0xAddress")
             mock_pick.assert_called_once()
             assert c.w3 is not None
         finally:
@@ -782,11 +596,12 @@ class TestPriceAdapterRegistry:
         )
         registry.get_prices = MagicMock(return_value={"0xA": 100})
 
-        series = registry.price_history(
-            start=10, end=20, interval="1d", assets=["0xA"]
-        )
+        series = registry.price_history(start=10, end=20, interval="1d", assets=["0xA"])
         assert len(series) == 2
-        assert all(call.kwargs.get("assets") == ["0xA"] for call in registry.get_prices.call_args_list)
+        assert all(
+            call.kwargs.get("assets") == ["0xA"]
+            for call in registry.get_prices.call_args_list
+        )
         assert all(point["prices"] == {"0xA": 100} for point in series)
 
 
@@ -1484,9 +1299,7 @@ class TestOrionVaults:
         config_instance = MockConfig.return_value
         config_instance.is_orion_vault.return_value = False
 
-        with pytest.raises(
-            ValueError, match="is NOT a valid Orion vault registered"
-        ):
+        with pytest.raises(ValueError, match="is NOT a valid Orion vault registered"):
             OrionVault("Test")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -1659,7 +1472,9 @@ class TestOrionVaults:
         mock_encrypt.return_value = ciphertext
 
         vault = OrionEncryptedVault()
-        vault.contract.functions.strategist.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.strategist.return_value.call.return_value = (
+            "0xDeployer"
+        )
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
             100000
         )
@@ -1773,9 +1588,7 @@ class TestOrionVaults:
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_lo_extra_views(self, MockConfig):
-        MockConfig.return_value.contract.functions.liquidityOrchestrator.return_value.call.return_value = (
-            "0xLO"
-        )
+        MockConfig.return_value.contract.functions.liquidityOrchestrator.return_value.call.return_value = "0xLO"
         lo = LiquidityOrchestrator()
         lo.contract.functions.bufferAmount().call.return_value = 123
         lo.contract.functions.currentPhase().call.return_value = 2
@@ -1907,7 +1720,9 @@ class TestOrionVaults:
         with pytest.raises(ValueError, match="not the vault strategist"):
             vault.submit_order_intent({"0xA": 1})
 
-        vault.contract.functions.strategist.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.strategist.return_value.call.return_value = (
+            "0xDeployer"
+        )
         mock_encrypt.return_value = b"\x01" * 48
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
             100000
