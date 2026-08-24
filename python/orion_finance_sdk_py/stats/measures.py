@@ -47,7 +47,13 @@ def _path_total_return(prices: pd.Series) -> float:
 
 
 def _cagr(prices: pd.Series, periods_per_year: int) -> float:
-    """Compound annual growth rate from a price path."""
+    """Compound annual growth rate from a price path.
+
+    Elapsed time is measured in calendar days
+    ``(index[-1] - index[0]).days``. ``periods_per_year`` must therefore be the
+    number of those same calendar periods in one year (typically ``365``), not
+    a trading-day count such as ``252``.
+    """
     valid = prices.dropna()
     if len(valid) < 2:
         return float("nan")

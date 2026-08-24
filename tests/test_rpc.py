@@ -161,3 +161,9 @@ def test_block_at_timestamp_respects_bounds():
     fetched = {int(c.args[0]) for c in w3.eth.get_block.call_args_list}
     assert 0 not in fetched
     assert fetched <= set(timestamps)
+
+
+def test_block_at_timestamp_rejects_negative():
+    w3 = MagicMock()
+    with pytest.raises(ValueError, match="non-negative"):
+        block_at_timestamp(w3, -1)

@@ -110,7 +110,8 @@ def rank_column(
 
     vsr = 1.0 - skew * sr_daily + ((kurt_full - 1.0) / 4.0) * sr_daily**2
     rho = _lag1_autocorr(values)
-    t_eff = n / (1.0 + 2.0 * rho)
+    lo_factor = max(1.0 + 2.0 * rho, 1e-6)
+    t_eff = n / lo_factor
     t_weeks = t_eff / 7.0
 
     dasr: float | None = None
@@ -118,7 +119,7 @@ def rank_column(
     w: float | None = None
     if vsr > 0.0:
         dasr = (sr_daily / np.sqrt(vsr)) * np.sqrt(ppy)
-        w = min(1.0, t_weeks / TRACK_RECORD_FULL_TRUST_WEEKS)
+        w = min(1.0, max(0.0, t_weeks / TRACK_RECORD_FULL_TRUST_WEEKS))
         sasr = dasr * w
 
     return RankingMetrics(
@@ -174,16 +175,16 @@ def expanding_sasr(
 ) -> pd.DataFrame:
     """SASR at each date using all contiguous daily returns up to that date.
 
-    Expanding window (not rolling): column ``j`` at date ``t`` is
-    ``rank_column`` on ``rs.returns[j].loc[:t]``. Matches SASR's track-record
-    weight growing with history.
+    Expanding window (not rolling): column ``j`` at row ``i`` is
+    ``rank_column`` on the positional prefix ``rs.returns[j].iloc[: i + 1]``.
+    Matches SASR's track-record weight growing with history.
     """
     ppy = rs.periods_per_year if periods_per_year is None else periods_per_year
     returns = rs.returns
     rows: list[dict[str, float]] = []
-    for ts in returns.index:
+    for i in range(len(returns.index)):
         row: dict[str, float] = {}
-        prefix = returns.loc[:ts]
+        prefix = returns.iloc[: i + 1]
         for col in returns.columns:
             metrics = rank_column(prefix[col], rfr, periods_per_year=ppy)
             row[str(col)] = (

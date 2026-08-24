@@ -127,7 +127,7 @@ def max_sharpe(
     rfr: float = 0.0,
     periods_per_year: int = DEFAULT_PERIODS_PER_YEAR,
 ) -> FittedPortfolio:
-    """Maximize Sharpe ratio (mean / variance)."""
+    """Maximize Sharpe ratio (mean excess return / standard deviation)."""
     frame, dropped = _prepare(returns)
     rf_period = daily_rfr(rfr, periods_per_year=periods_per_year)
     model = MeanRisk(

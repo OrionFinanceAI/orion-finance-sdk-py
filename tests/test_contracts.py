@@ -1190,6 +1190,144 @@ class TestOrionVaults:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_resolve_block_datetime_and_timestamp(self, MockConfig):
+        """Naive datetime and unix ints resolve via block_at_timestamp."""
+        from datetime import datetime, timezone
+
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        vault.block_at_timestamp = MagicMock(return_value=42)
+
+        naive = datetime(2024, 1, 1, 12, 0, 0)
+        assert vault._resolve_block(naive) == 42
+        vault.block_at_timestamp.assert_called()
+        call_ts = vault.block_at_timestamp.call_args[0][0]
+        assert call_ts == int(naive.replace(tzinfo=timezone.utc).timestamp())
+
+        vault.block_at_timestamp.reset_mock()
+        assert vault._resolve_block(1_700_000_000) == 42
+        vault.block_at_timestamp.assert_called_with(1_700_000_000)
+        assert vault._resolve_block(99) == 99
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_daily_sample_points_end_defaults_to_tip(self, MockConfig):
+        """end=None uses eth.block_number as the tip."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        start_ts = 1_700_000_000
+        tip = 20
+        vault.w3.eth.block_number = tip
+        vault.w3.eth.get_block.side_effect = lambda n: {
+            "timestamp": start_ts + (int(n) - 10) * 86_400
+        }
+        vault.block_at_timestamp = MagicMock(
+            side_effect=lambda ts, lo=None, hi=None: 10 if ts <= start_ts else tip
+        )
+        points = vault._daily_sample_points(10, end=None)
+        assert points[-1][1] == tip
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_daily_sample_points_appends_end_when_needed(self, MockConfig):
+        """End block is appended when the last daily step did not land on it."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        start_ts = 1_700_000_000
+        day = 86_400
+        # 1.5 days of blocks so daily cadence lands before end_block.
+        blocks = {
+            10: {"timestamp": start_ts},
+            15: {"timestamp": start_ts + day},
+            20: {"timestamp": start_ts + day + day // 2},
+        }
+
+        def get_block(n):
+            n = int(n)
+            if n in blocks:
+                return blocks[n]
+            return {"timestamp": start_ts + (n - 10) * (day // 10)}
+
+        vault.w3.eth.get_block.side_effect = get_block
+        vault.block_at_timestamp = MagicMock(
+            side_effect=lambda ts, lo=None, hi=None: {
+                start_ts: 10,
+                start_ts + day: 15,
+            }.get(ts, 15)
+        )
+        points = vault._daily_sample_points(10, 20)
+        assert points[-1][1] == 20
+        assert points[-1][0] == start_ts + day + day // 2
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_daily_sample_points_skips_duplicate_blocks(self, MockConfig):
+        """Stalled chain: consecutive days resolving to the same block are skipped."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        start_ts = 1_700_000_000
+        day = 86_400
+        blocks = {
+            10: {"timestamp": start_ts},
+            20: {"timestamp": start_ts + 3 * day},
+        }
+
+        def get_block(n):
+            n = int(n)
+            if n in blocks:
+                return blocks[n]
+            return {"timestamp": start_ts}
+
+        vault.w3.eth.get_block.side_effect = get_block
+        # Days 1 and 2 still map to start_block; day 3 reaches end.
+        vault.block_at_timestamp = MagicMock(
+            side_effect=lambda ts, lo=None, hi=None: (
+                10 if ts < start_ts + 3 * day else 20
+            )
+        )
+        points = vault._daily_sample_points(10, 20)
+        block_nums = [b for _, b in points]
+        assert block_nums == [10, 20]
+        assert len(points) == len(set(block_nums))
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_earliest_code_block_start_after_end_returns_none(self, MockConfig):
+        """_earliest_code_block returns None when start > end."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        assert vault._earliest_code_block(30, 10) is None
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_share_price_history_empty_points(self, MockConfig):
+        """share_price_history returns [] when sampling yields no points."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        vault._daily_sample_points = MagicMock(return_value=[])
+        assert vault.share_price_history(start=10, end=30) == []
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_share_price_history_bad_call_in_loop(self, MockConfig):
+        """BadFunctionCallOutput mid-history becomes a ValueError."""
+        from web3.exceptions import BadFunctionCallOutput
+
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        vault._daily_sample_points = MagicMock(
+            return_value=[(1_700_000_000, 10), (1_700_086_400, 20)]
+        )
+        vault._earliest_code_block = MagicMock(return_value=10)
+        vault.contract.functions.decimals().call.return_value = 18
+        vault.contract.functions.convertToAssets.return_value.call.side_effect = (
+            BadFunctionCallOutput("empty")
+        )
+        with pytest.raises(ValueError, match="may not have been deployed"):
+            vault.share_price_history(start=10, end=20)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_get_intent_normalizes_weights(self, MockConfig):
         """get_intent returns fractional weights scaled by strategist_intent_decimals."""
         MockConfig.return_value.is_orion_vault.return_value = True

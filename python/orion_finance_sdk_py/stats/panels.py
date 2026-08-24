@@ -15,7 +15,8 @@ def _asset_label(addr: str, names: Mapping[str, str] | None) -> str:
             if key in names:
                 return str(names[key])
     if len(addr) >= 10:
-        return f"{addr[:6]}...{addr[-4:]}"
+        lowered = addr.lower()
+        return f"{lowered[:6]}...{lowered[-4:]}"
     return addr
 
 
@@ -107,5 +108,8 @@ def normalized_prices(prices: pd.DataFrame) -> pd.DataFrame:
         valid = out[col].dropna()
         if valid.empty:
             continue
-        out[col] = out[col] / float(valid.iloc[0])
+        base = float(valid.iloc[0])
+        if base <= 0.0:
+            continue
+        out[col] = out[col] / base
     return out

@@ -42,6 +42,8 @@ def gap_boundary_mask(index: pd.Index) -> np.ndarray[Any, np.dtype[np.bool_]]:
 def mask_gap_boundary_returns(returns: pd.DataFrame) -> pd.DataFrame:
     """Set gap-boundary rows to NaN so multi-day jumps are not treated as daily."""
     idx = require_datetime_index(returns)
+    if not idx.is_monotonic_increasing:
+        raise ValueError("return panels must have a monotonically increasing index")
     out = returns.copy()
     out.loc[gap_boundary_mask(idx)] = np.nan
     return out

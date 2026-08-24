@@ -440,6 +440,8 @@ for addr in config.orion_transparent_vaults:
 Turn on-chain price or share-price history into a `ReturnSeries`, then rank products by **SASR** (statistically adjusted Sharpe). SASR is the only product ranking score: do not rank by raw Sharpe, window total return, PSR, or MinTRL.
 
 ```python
+from datetime import datetime, timedelta, timezone
+
 from orion_finance_sdk_py import (
     OrionConfig,
     PriceAdapterRegistry,
@@ -452,6 +454,8 @@ from orion_finance_sdk_py.stats import rfr_decimal
 
 config = OrionConfig()
 registry = PriceAdapterRegistry()
+end = datetime.now(timezone.utc)
+start = end - timedelta(days=30)
 series = registry.price_history(start=start, end=end)
 names = dict(zip(config.whitelisted_assets, config.whitelisted_asset_names))
 rs = ReturnSeries.from_price_history(

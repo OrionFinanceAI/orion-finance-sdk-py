@@ -137,7 +137,7 @@ def make_http_provider(rpc_url: str, *, timeout: float = 60.0):
         request_kwargs={"timeout": timeout},
         exception_retry_configuration=ExceptionRetryConfiguration(
             errors=(
-                ConnectionError,
+                requests.ConnectionError,
                 requests.HTTPError,
                 requests.Timeout,
             ),

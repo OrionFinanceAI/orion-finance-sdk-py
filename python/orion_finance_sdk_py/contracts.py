@@ -248,6 +248,9 @@ class OrionSmartContract:
                 sample_ts, lo=search_lo, hi=search_hi
             )
             block = max(start_block, min(block, end_block))
+            if block == prev_block:
+                sample_ts += _SECONDS_PER_DAY
+                continue
             block_data = get_block(self.w3, block)
             block_ts = int(block_data["timestamp"])
             points.append((block_ts, block))
