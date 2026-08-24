@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import time
+from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
     from web3 import Web3
@@ -25,6 +27,11 @@ DEFAULT_PUBLIC_MAINNET_RPC_URLS: tuple[str, ...] = (
 
 _DEFAULT_RPC_CACHE: str | None = None
 _DEFAULT_MAINNET_RPC_CACHE: str | None = None
+
+_RPC_RETRY_ATTEMPTS = 5
+_RPC_RETRY_BACKOFF = 0.25
+
+T = TypeVar("T")
 
 
 def clear_default_rpc_cache() -> None:
@@ -83,28 +90,106 @@ def pick_default_mainnet_rpc(timeout: float = 5.0) -> str | None:
     return url
 
 
-def block_at_timestamp(w3: Web3, timestamp: int) -> int:
-    """Return the latest block number whose timestamp is <= ``timestamp``."""
+def _transient_rpc_errors() -> tuple[type[BaseException], ...]:
+    """Errors that indicate a dropped / overloaded HTTP connection."""
+    errors: list[type[BaseException]] = [ConnectionError, TimeoutError]
+    try:
+        import requests
+
+        errors.append(requests.exceptions.RequestException)
+    except ImportError:
+        pass
+    return tuple(errors)
+
+
+def call_with_rpc_retry(
+    fn: Callable[[], T],
+    *,
+    retries: int = _RPC_RETRY_ATTEMPTS,
+    backoff_factor: float = _RPC_RETRY_BACKOFF,
+) -> T:
+    """Call ``fn``, retrying on transient transport failures.
+
+    Does not retry application-level RPC / contract errors.
+    """
+    transient = _transient_rpc_errors()
+    last_error: BaseException | None = None
+    for attempt in range(retries):
+        try:
+            return fn()
+        except transient as exc:
+            last_error = exc
+            if attempt >= retries - 1:
+                break
+            time.sleep(backoff_factor * (2**attempt))
+    assert last_error is not None
+    raise last_error
+
+
+def make_http_provider(rpc_url: str, *, timeout: float = 60.0):
+    """Build a ``Web3.HTTPProvider`` with timeout and connection-error retries."""
+    import requests
+    from web3 import Web3
+    from web3.providers.rpc.utils import ExceptionRetryConfiguration
+
+    return Web3.HTTPProvider(
+        rpc_url,
+        request_kwargs={"timeout": timeout},
+        exception_retry_configuration=ExceptionRetryConfiguration(
+            errors=(
+                ConnectionError,
+                requests.HTTPError,
+                requests.Timeout,
+            ),
+            retries=_RPC_RETRY_ATTEMPTS,
+            backoff_factor=_RPC_RETRY_BACKOFF,
+        ),
+    )
+
+
+def get_block(w3: Web3, block_identifier):
+    """``eth_getBlockByNumber`` with transient transport retries."""
+    return call_with_rpc_retry(lambda: w3.eth.get_block(block_identifier))
+
+
+def block_at_timestamp(
+    w3: Web3,
+    timestamp: int,
+    *,
+    lo: int | None = None,
+    hi: int | None = None,
+) -> int:
+    """Return the latest block number whose timestamp is <= ``timestamp``.
+
+    Optional ``lo`` / ``hi`` bound the binary search (inclusive). When omitted,
+    the search uses genesis and the chain tip.
+    """
     if timestamp < 0:
         raise ValueError("timestamp must be non-negative")
 
-    latest = w3.eth.block_number
-    latest_block = w3.eth.get_block(latest)
-    if timestamp >= latest_block["timestamp"]:
-        return latest
+    if hi is None:
+        hi = call_with_rpc_retry(lambda: w3.eth.block_number)
+    hi_block = get_block(w3, hi)
+    if timestamp >= hi_block["timestamp"]:
+        return hi
 
-    earliest = 0
-    earliest_block = w3.eth.get_block(earliest)
-    if timestamp < earliest_block["timestamp"]:
+    if lo is None:
+        lo = 0
+    lo_block = get_block(w3, lo)
+    if timestamp < lo_block["timestamp"]:
         raise ValueError(
             f"timestamp {timestamp} is before the earliest block "
-            f"({earliest_block['timestamp']})"
+            f"({lo_block['timestamp']})"
+            if lo == 0
+            else (
+                f"timestamp {timestamp} is before lower bound block {lo} "
+                f"({lo_block['timestamp']})"
+            )
         )
 
-    lo, hi = earliest, latest
     while lo < hi:
         mid = (lo + hi + 1) // 2
-        mid_ts = w3.eth.get_block(mid)["timestamp"]
+        mid_ts = get_block(w3, mid)["timestamp"]
         if mid_ts <= timestamp:
             lo = mid
         else:

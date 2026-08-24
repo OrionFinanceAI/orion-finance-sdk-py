@@ -64,6 +64,42 @@
 .. autofunction:: orion_finance_sdk_py.costs.estimator.get_cost
 ```
 
+## Return statistics
+
+```{eval-rst}
+.. autoclass:: orion_finance_sdk_py.stats.series.ReturnSeries
+   :members:
+   :undoc-members:
+
+.. autoclass:: orion_finance_sdk_py.stats.ranking.RankingMetrics
+   :members:
+   :undoc-members:
+
+.. autofunction:: orion_finance_sdk_py.stats.ranking.rank_products
+
+.. autofunction:: orion_finance_sdk_py.stats.ranking.expanding_sasr
+
+.. autofunction:: orion_finance_sdk_py.stats.ranking.ranking_metrics
+
+.. autofunction:: orion_finance_sdk_py.stats.measures.summary
+
+.. autofunction:: orion_finance_sdk_py.stats.measures.product_scoreboard
+
+.. autofunction:: orion_finance_sdk_py.stats.rfr.rfr_decimal
+
+.. automodule:: orion_finance_sdk_py.stats.covariance
+   :members:
+
+.. automodule:: orion_finance_sdk_py.stats.panels
+   :members:
+
+.. automodule:: orion_finance_sdk_py.stats.factors
+   :members:
+
+.. automodule:: orion_finance_sdk_py.stats.portfolio
+   :members:
+```
+
 ## RPC defaults
 
 ```{eval-rst}

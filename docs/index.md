@@ -67,6 +67,13 @@ Push rebalancing allocations from JSON, CSV, Parquet, or an inline dict.
 PIT prices, asset price history, share-price series, and intent vs holdings.
 :::
 
+:::{grid-item-card} Rank products and measure returns
+:link: return-stats
+:link-type: ref
+
+SASR ranking, skfolio Sharpe/vol/CVaR, covariance, PCA, and MeanRisk weights.
+:::
+
 :::{grid-item-card} Estimate execution cost
 :link: execution-cost
 :link-type: ref
@@ -390,7 +397,7 @@ series = registry.price_history(start=start, end=end)
 
 For long series, set a dedicated `RPC_URL` - public endpoints are rate-limited.
 
-A longer research walkthrough (excess returns, covariance, a sample portfolio) is in [`notebooks/investment_universe_research.ipynb`](https://github.com/OrionFinanceAI/orion-finance-sdk-py/blob/main/notebooks/investment_universe_research.ipynb).
+A longer research walkthrough (excess returns, covariance, a sample portfolio) is in [`notebooks/investment_universe_research.ipynb`](https://github.com/OrionFinanceAI/orion-finance-sdk-py/blob/main/notebooks/investment_universe_research.ipynb). Prefer {ref}`return-stats` for ranking and measures so notebooks do not reimplement SASR.
 
 ### Vault metadata and strategist intent
 
@@ -425,7 +432,56 @@ for addr in config.orion_transparent_vaults:
     # [{"timestamp": int, "block": int, "share_price": int}, ...]
 ```
 
-You can also query a single past block with `vault.share_price_at(block)` or `registry.get_price(asset, block=...)`.
+
+(return-stats)=
+
+## Return series, ranking, and risk measures
+
+Turn on-chain price or share-price history into a `ReturnSeries`, then rank products by **SASR** (statistically adjusted Sharpe). SASR is the only product ranking score: do not rank by raw Sharpe, window total return, PSR, or MinTRL.
+
+```python
+from orion_finance_sdk_py import (
+    OrionConfig,
+    PriceAdapterRegistry,
+    ReturnSeries,
+    covariance,
+    measures,
+    rank_products,
+)
+from orion_finance_sdk_py.stats import rfr_decimal
+
+config = OrionConfig()
+registry = PriceAdapterRegistry()
+series = registry.price_history(start=start, end=end)
+names = dict(zip(config.whitelisted_assets, config.whitelisted_asset_names))
+rs = ReturnSeries.from_price_history(
+    series, decimals=registry.price_adapter_decimals, names=names
+)
+rfr = rfr_decimal(config.risk_free_rate)  # 410 bps → 0.041
+ranking = rank_products(rs, rfr=rfr)      # SASR descending
+table = measures.product_scoreboard(rs, rfr=rfr)
+cov = covariance.sample(rs)
+```
+
+Vault share-price panels use `ReturnSeries.from_share_price_histories`.
+
+**Hygiene.** Ranking, Sharpe, covariance, PCA, and MeanRisk use only **contiguous one-calendar-day** observations: a gap longer than one day drops the gap-boundary return so a multi-day jump is not treated as a daily return. Path stats (total return, CAGR, max drawdown, normalized wealth) use the price path **including** gaps. Missing prices are not forward-filled.
+
+**Annualization.** Default `periods_per_year=365` (crypto/DeFi calendar). skfolio Portfolio objects default to 252; this pack passes 365. Sample Sharpe uses Bessel-corrected std (`ddof=1`), matching skfolio `standard_deviation(..., biased=False)`. Bailey `vSr` skew and kurtosis are **population** moments.
+
+**Risk-free rate.** `OrionConfig.risk_free_rate` is annualized basis points. Ranking and excess returns subtract the compounded daily rate `(1 + rfr) ** (1 / 365) - 1`.
+
+```python
+from orion_finance_sdk_py.stats import factors, portfolio
+
+excess = rs.excess_returns(rfr)
+pca_fit = factors.pca(excess)
+train, test = portfolio.chronological_split(excess)
+mv = portfolio.min_variance(train)
+# mv.weights  — labeled Series
+```
+
+---
 
 (execution-cost)=
 

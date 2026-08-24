@@ -17,6 +17,7 @@ from orion_finance_sdk_py.contracts import (
     SystemNotIdleError,
     TransactionResult,
     VaultFactory,
+    _call_view,
     _get_view_call_tx,
     load_contract_abi,
 )
@@ -26,9 +27,11 @@ from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
 @pytest.fixture
 def mock_w3():
     """Mock Web3 instance."""
-    with patch("orion_finance_sdk_py.contracts.Web3") as MockWeb3:
-        # Mock the provider to avoid connection errors in init
-        MockWeb3.HTTPProvider.return_value = MagicMock()
+    with (
+        patch("orion_finance_sdk_py.contracts.Web3") as MockWeb3,
+        patch("orion_finance_sdk_py.contracts.make_http_provider") as mock_provider,
+    ):
+        mock_provider.return_value = MagicMock()
 
         # Setup the mock instance
         w3_instance = MagicMock()
@@ -70,6 +73,16 @@ def mock_w3():
         MockWeb3.to_checksum_address.side_effect = lambda x: x
 
         yield w3_instance
+
+
+def test_call_view_retries_connection_error():
+    """_call_view retries transient ConnectionError then succeeds."""
+    fn = MagicMock()
+    fn.call.side_effect = [ConnectionError("reset"), "ok"]
+
+    with patch("orion_finance_sdk_py.rpc.time.sleep"):
+        assert _call_view(fn) == "ok"
+    assert fn.call.call_count == 2
 
 
 @pytest.fixture
@@ -557,7 +570,7 @@ class TestPriceAdapterRegistry:
 
         registry.w3.eth.get_block.side_effect = get_block
         registry.block_at_timestamp = MagicMock(
-            side_effect=lambda ts: {
+            side_effect=lambda ts, lo=None, hi=None: {
                 start_ts: 10,
                 start_ts + day: 20,
                 start_ts + 2 * day: 30,
@@ -1005,6 +1018,11 @@ class TestOrionVaults:
         with pytest.raises(ValueError, match="before the earliest"):
             contract.block_at_timestamp(500)
 
+        # Bounded search stays within [lo, hi]
+        assert contract.block_at_timestamp(1250, lo=1, hi=3) == 2
+        with pytest.raises(ValueError, match="lower bound"):
+            contract.block_at_timestamp(1050, lo=2, hi=4)
+
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_share_price_history_daily(self, MockConfig):
@@ -1028,22 +1046,93 @@ class TestOrionVaults:
 
         vault.w3.eth.get_block.side_effect = get_block
         vault.block_at_timestamp = MagicMock(
-            side_effect=lambda ts: {
+            side_effect=lambda ts, lo=None, hi=None: {
                 start_ts: 10,
                 start_ts + day: 20,
                 start_ts + 2 * day: 30,
             }.get(ts, 10)
         )
-        vault.share_price_at = MagicMock(side_effect=lambda b: b * 100)
+        vault.contract.functions.decimals().call.return_value = 18
+        vault.w3.eth.get_code.return_value = b"\x60"
+
+        def convert_side_effect(shares):
+            mock_call = MagicMock()
+            mock_call.call.return_value = shares // (10**16)  # scale down for asserts
+            return mock_call
+
+        vault.contract.functions.convertToAssets.side_effect = convert_side_effect
 
         series = vault.share_price_history(start=10, end=30, interval="1d")
         assert len(series) >= 2
         assert set(series[0].keys()) == {"timestamp", "block", "share_price"}
         assert series[0]["block"] == 10
         assert series[-1]["block"] == 30
+        # decimals warmed once for the series
+        assert vault.contract.functions.decimals().call.call_count == 1
 
         with pytest.raises(ValueError, match="Unsupported interval"):
             vault.share_price_history(start=10, end=30, interval="1h")
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_share_price_history_skips_pre_deployment(self, MockConfig):
+        """share_price_history omits samples from before the vault exists."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+
+        start_ts = 1_700_000_000
+        day = 86_400
+        blocks = {
+            10: {"timestamp": start_ts},
+            20: {"timestamp": start_ts + day},
+            30: {"timestamp": start_ts + 2 * day},
+        }
+        vault.w3.eth.block_number = 30
+
+        def get_block(n):
+            if n in blocks:
+                return blocks[n]
+            return {"timestamp": start_ts + (n - 10) * (2 * day) // 20}
+
+        vault.w3.eth.get_block.side_effect = get_block
+        vault.block_at_timestamp = MagicMock(
+            side_effect=lambda ts, lo=None, hi=None: {
+                start_ts: 10,
+                start_ts + day: 20,
+                start_ts + 2 * day: 30,
+            }.get(ts, 10)
+        )
+
+        def get_code(_addr, block_identifier=None):
+            if block_identifier is not None and int(block_identifier) < 20:
+                return b""
+            return b"\x60"
+
+        vault.w3.eth.get_code.side_effect = get_code
+        vault.contract.functions.decimals().call.return_value = 18
+        vault.contract.functions.convertToAssets.return_value.call.return_value = 100
+
+        series = vault.share_price_history(start=10, end=30, interval="1d")
+        assert [p["block"] for p in series] == [20, 30]
+
+        vault.w3.eth.get_code.side_effect = None
+        vault.w3.eth.get_code.return_value = b""
+        assert vault.share_price_history(start=10, end=30, interval="1d") == []
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_share_price_at_pre_deployment_error(self, MockConfig):
+        """share_price_at explains empty eth_call data before deployment."""
+        from web3.exceptions import BadFunctionCallOutput
+
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+        vault.contract.functions.decimals().call.return_value = 18
+        vault.contract.functions.convertToAssets.return_value.call.side_effect = (
+            BadFunctionCallOutput("Could not decode convertToAssets()")
+        )
+        with pytest.raises(ValueError, match="may not have been deployed"):
+            vault.share_price_at(50)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -1058,6 +1147,46 @@ class TestOrionVaults:
         assert vault.name == "Alpha Vault"
         assert vault.symbol == "ALPH"
         assert vault.decimals == 18
+        # Cached after first fetch
+        assert vault.symbol == "ALPH"
+        assert vault.contract.functions.symbol().call.call_count == 1
+        assert vault.decimals == 18
+        assert vault.contract.functions.decimals().call.call_count == 1
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_daily_sample_points_bounds_search(self, MockConfig):
+        """Daily sampling searches forward from the previous day, not from genesis."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        vault = OrionTransparentVault()
+
+        # 5 days, 100 blocks/day, 12s blocks → 86400/12 = 7200 would be realistic;
+        # keep the chain tiny for a clear call-count bound.
+        start_ts = 1_700_000_000
+        day = 86_400
+        block_time = 12
+        start_block = 1_000_000
+        n_days = 5
+        end_block = start_block + (n_days * day) // block_time
+
+        def get_block(n):
+            n = int(n)
+            return {"timestamp": start_ts + (n - start_block) * block_time}
+
+        vault.w3.eth.block_number = end_block
+        vault.w3.eth.get_block.side_effect = get_block
+
+        points = vault._daily_sample_points(start_block, end_block)
+        assert len(points) >= n_days
+        assert points[0][1] == start_block
+        assert points[-1][1] == end_block
+
+        # Unbounded binary search from genesis each day would be roughly
+        # n_days * log2(end_block) get_block calls (~100+ here). Bounded
+        # forward search must stay well under that.
+        full_chain_estimate = n_days * max(end_block.bit_length(), 1)
+        assert vault.w3.eth.get_block.call_count < full_chain_estimate
+        assert vault.w3.eth.get_block.call_count < 80
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")

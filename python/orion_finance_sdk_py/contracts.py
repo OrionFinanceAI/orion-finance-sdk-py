@@ -9,11 +9,19 @@ from typing import Any, Iterable, cast
 
 from dotenv import load_dotenv
 from web3 import Web3
+from web3.exceptions import BadFunctionCallOutput
 from web3.types import HexStr, TxReceipt
 
 from .console_ui import progress_step
-from .rpc import block_at_timestamp as lookup_block_at_timestamp
-from .rpc import pick_default_rpc
+from .rpc import (
+    block_at_timestamp as lookup_block_at_timestamp,
+)
+from .rpc import (
+    call_with_rpc_retry,
+    get_block,
+    make_http_provider,
+    pick_default_rpc,
+)
 from .types import CHAIN_CONFIG, ZERO_ADDRESS, VaultType
 from .utils import (
     MAX_MANAGEMENT_FEE,
@@ -29,6 +37,7 @@ _VIEW_CALL_TX = {"gas": _VIEW_CALL_GAS}
 
 _TIMESTAMP_THRESHOLD = 1_000_000_000
 _SECONDS_PER_DAY = 86_400
+_DEFAULT_BLOCK_TIME_SECONDS = 12.0
 
 
 def _get_view_call_tx():
@@ -46,9 +55,13 @@ def _call_view(contract_fn, block_identifier: int | str | None = None):
         block_identifier: Optional block number or tag (default: ``"latest"``).
     """
     tx = _get_view_call_tx()
-    if block_identifier is None:
-        return contract_fn.call(tx)
-    return contract_fn.call(tx, block_identifier=block_identifier)
+
+    def _do_call():
+        if block_identifier is None:
+            return contract_fn.call(tx)
+        return contract_fn.call(tx, block_identifier=block_identifier)
+
+    return call_with_rpc_retry(_do_call)
 
 
 @dataclass
@@ -102,7 +115,7 @@ class OrionSmartContract:
                 ),
             )
 
-            self.w3 = Web3(Web3.HTTPProvider(rpc_url))
+            self.w3 = Web3(make_http_provider(rpc_url))
             self.chain_id = self.w3.eth.chain_id
 
             env_chain_id = os.getenv("CHAIN_ID")
@@ -126,7 +139,7 @@ class OrionSmartContract:
 
         default_rpc = pick_default_rpc()
         if default_rpc:
-            self.w3 = Web3(Web3.HTTPProvider(default_rpc))
+            self.w3 = Web3(make_http_provider(default_rpc))
             self.chain_id = self.w3.eth.chain_id
             self.contract_name = contract_name
             self.contract_address = contract_address
@@ -142,13 +155,20 @@ class OrionSmartContract:
             "environment variable."
         )
 
-    def block_at_timestamp(self, timestamp: int) -> int:
+    def block_at_timestamp(
+        self,
+        timestamp: int,
+        *,
+        lo: int | None = None,
+        hi: int | None = None,
+    ) -> int:
         """Return the latest block number whose timestamp is <= ``timestamp``.
 
-        Uses binary search over ``eth_getBlockByNumber``. For long historical
-        series prefer a dedicated ``RPC_URL`` (public endpoints are rate-limited).
+        Uses binary search over ``eth_getBlockByNumber``. Optional ``lo`` / ``hi``
+        bound the search for sequential sampling. For long historical series prefer
+        a dedicated ``RPC_URL`` (public endpoints are rate-limited).
         """
-        return lookup_block_at_timestamp(self.w3, timestamp)
+        return lookup_block_at_timestamp(self.w3, timestamp, lo=lo, hi=hi)
 
     def _resolve_block(self, value: datetime | int) -> int:
         """Resolve a datetime, unix timestamp, or block number to a block number."""
@@ -171,40 +191,108 @@ class OrionSmartContract:
     ) -> list[tuple[int, int]]:
         """Sample ``(timestamp, block)`` pairs at daily cadence over a range.
 
-        Ensures the end block is included when the last daily step did not land
-        on it. Public RPCs are rate-limited - use a dedicated ``RPC_URL`` for
-        long series.
+        After the first day, each lookup searches only forward from the previous
+        sample (with a small estimated window) instead of binary-searching the
+        full chain. Ensures the end block is included when the last daily step
+        did not land on it.
         """
         start_block = self._resolve_block(start)
         end_block = (
-            self.w3.eth.block_number if end is None else self._resolve_block(end)
+            call_with_rpc_retry(lambda: self.w3.eth.block_number)
+            if end is None
+            else self._resolve_block(end)
         )
         if end_block < start_block:
             raise ValueError(
                 f"end block ({end_block}) is before start block ({start_block})"
             )
 
-        start_ts = int(self.w3.eth.get_block(start_block)["timestamp"])
-        end_ts = int(self.w3.eth.get_block(end_block)["timestamp"])
+        start_ts = int(get_block(self.w3, start_block)["timestamp"])
+        end_ts = int(get_block(self.w3, end_block)["timestamp"])
 
-        points: list[tuple[int, int]] = []
-        sample_ts = start_ts
+        if end_block > start_block and end_ts > start_ts:
+            avg_block_time = (end_ts - start_ts) / (end_block - start_block)
+        else:
+            avg_block_time = _DEFAULT_BLOCK_TIME_SECONDS
+
+        points: list[tuple[int, int]] = [(start_ts, start_block)]
+        prev_block = start_block
+        prev_ts = start_ts
+        sample_ts = start_ts + _SECONDS_PER_DAY
+
         while sample_ts <= end_ts:
-            block = self.block_at_timestamp(sample_ts)
-            # Clamp to the requested window (binary search can land slightly outside
-            # if the chain has gaps, but keep samples within [start_block, end_block]).
+            day_span = max(int(_SECONDS_PER_DAY / avg_block_time), 1)
+            estimated = prev_block + max(
+                1, int(round((sample_ts - prev_ts) / avg_block_time))
+            )
+            estimated = min(max(estimated, prev_block), end_block)
+
+            # Tight window around the estimate; expand until it covers sample_ts.
+            half = max(day_span // 16, 64)
+            while True:
+                search_lo = max(prev_block, estimated - half)
+                search_hi = min(end_block, estimated + half)
+                if search_hi <= search_lo:
+                    search_hi = min(end_block, search_lo + 1)
+
+                lo_ts = int(get_block(self.w3, search_lo)["timestamp"])
+                hi_ts = int(get_block(self.w3, search_hi)["timestamp"])
+                if lo_ts <= sample_ts <= hi_ts or search_hi >= end_block:
+                    # If lo overshot (estimate too high), fall back to prev_block.
+                    if lo_ts > sample_ts:
+                        search_lo = prev_block
+                    break
+                half *= 2
+
+            block = self.block_at_timestamp(
+                sample_ts, lo=search_lo, hi=search_hi
+            )
             block = max(start_block, min(block, end_block))
-            block_data = self.w3.eth.get_block(block)
-            points.append((int(block_data["timestamp"]), block))
+            block_data = get_block(self.w3, block)
+            block_ts = int(block_data["timestamp"])
+            points.append((block_ts, block))
+
+            if block > prev_block and block_ts > prev_ts:
+                avg_block_time = (block_ts - prev_ts) / (block - prev_block)
+
+            prev_block = block
+            prev_ts = block_ts
             sample_ts += _SECONDS_PER_DAY
 
         # Ensure the end of the range is represented when the last daily step
         # did not land on end_ts.
         if not points or points[-1][1] != end_block:
-            end_data = self.w3.eth.get_block(end_block)
-            points.append((int(end_data["timestamp"]), end_block))
+            points.append((end_ts, end_block))
 
         return points
+
+    def _has_code_at(self, block: int) -> bool:
+        """Return True if this address has contract code at ``block``."""
+        address = Web3.to_checksum_address(self.contract_address)
+        code = call_with_rpc_retry(
+            lambda: self.w3.eth.get_code(address, block_identifier=block)
+        )
+        return bool(code)
+
+    def _earliest_code_block(self, start_block: int, end_block: int) -> int | None:
+        """Binary-search the first block in ``[start_block, end_block]`` with code.
+
+        Returns ``None`` if the contract is missing at ``end_block``.
+        """
+        if start_block > end_block:
+            return None
+        if not self._has_code_at(end_block):
+            return None
+        if self._has_code_at(start_block):
+            return start_block
+        lo, hi = start_block, end_block
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if self._has_code_at(mid):
+                hi = mid
+            else:
+                lo = mid + 1
+        return lo
 
     def _wait_for_transaction_receipt(
         self, tx_hash: str, timeout: int = 120
@@ -929,17 +1017,32 @@ class OrionVault(OrionSmartContract):
     @property
     def name(self) -> str:
         """Fetch the vault ERC-20 name."""
-        return _call_view(self.contract.functions.name())
+        cached = getattr(self, "_cached_name", None)
+        if cached is not None:
+            return cached
+        value = _call_view(self.contract.functions.name())
+        self._cached_name = value
+        return value
 
     @property
     def symbol(self) -> str:
         """Fetch the vault ERC-20 symbol."""
-        return _call_view(self.contract.functions.symbol())
+        cached = getattr(self, "_cached_symbol", None)
+        if cached is not None:
+            return cached
+        value = _call_view(self.contract.functions.symbol())
+        self._cached_symbol = value
+        return value
 
     @property
     def decimals(self) -> int:
         """Fetch the vault share token decimals."""
-        return _call_view(self.contract.functions.decimals())
+        cached = getattr(self, "_cached_decimals", None)
+        if cached is not None:
+            return cached
+        value = _call_view(self.contract.functions.decimals())
+        self._cached_decimals = value
+        return value
 
     @property
     def max_performance_fee(self) -> int:
@@ -1382,18 +1485,23 @@ class OrionVault(OrionSmartContract):
     @property
     def share_price(self) -> int:
         """Fetch the current share price (value of 1 share unit)."""
-        decimals = _call_view(self.contract.functions.decimals())
-        return _call_view(self.contract.functions.convertToAssets(10**decimals))
+        return _call_view(
+            self.contract.functions.convertToAssets(10**self.decimals)
+        )
 
     def share_price_at(self, block: int) -> int:
         """Fetch the share price (value of 1 full share) at a historical block."""
-        decimals = _call_view(
-            self.contract.functions.decimals(), block_identifier=block
-        )
-        return _call_view(
-            self.contract.functions.convertToAssets(10**decimals),
-            block_identifier=block,
-        )
+        try:
+            # Share token decimals are immutable; reuse the cached latest value.
+            return _call_view(
+                self.contract.functions.convertToAssets(10**self.decimals),
+                block_identifier=block,
+            )
+        except BadFunctionCallOutput as exc:
+            raise ValueError(
+                f"Could not read share price at block {block} for "
+                f"{self.contract_address}. The vault may not have been deployed yet."
+            ) from exc
 
     def convert_to_assets(self, shares: int, block: int | None = None) -> int:
         """Convert shares to assets.
@@ -1442,21 +1550,47 @@ class OrionVault(OrionSmartContract):
 
         Returns:
             List of ``{"timestamp", "block", "share_price"}`` dicts (unix timestamp,
-            block number, share price in underlying units).
+            block number, share price in underlying units). Points before the
+            vault was deployed are omitted.
         """
         if interval != "1d":
             raise ValueError(
                 f"Unsupported interval {interval!r}. Only '1d' is supported."
             )
 
-        return [
-            {
-                "timestamp": timestamp,
-                "block": block,
-                "share_price": self.share_price_at(block),
-            }
-            for timestamp, block in self._daily_sample_points(start, end)
-        ]
+        points = self._daily_sample_points(start, end)
+        if not points:
+            return []
+
+        deployed = self._earliest_code_block(points[0][1], points[-1][1])
+        if deployed is None:
+            return []
+
+        # Warm decimals cache once for the whole series.
+        one_share = 10**self.decimals
+
+        result: list[dict] = []
+        for timestamp, block in points:
+            if block < deployed:
+                continue
+            try:
+                share_price = _call_view(
+                    self.contract.functions.convertToAssets(one_share),
+                    block_identifier=block,
+                )
+            except BadFunctionCallOutput as exc:
+                raise ValueError(
+                    f"Could not read share price at block {block} for "
+                    f"{self.contract_address}. The vault may not have been deployed yet."
+                ) from exc
+            result.append(
+                {
+                    "timestamp": timestamp,
+                    "block": block,
+                    "share_price": share_price,
+                }
+            )
+        return result
 
     def _portfolio_position_values(
         self, portfolio: dict[str, int] | None = None
