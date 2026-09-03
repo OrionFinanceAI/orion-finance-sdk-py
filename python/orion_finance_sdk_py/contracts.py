@@ -1793,7 +1793,7 @@ class OrionVault(OrionSmartContract):
         getter_name: str,
         abi_name: str,
         fn_name: str,
-        *call_args,
+        *call_args: str | bytes,
     ) -> bool:
         """Return True if the ACL is unset/missing, else call the ACL view."""
         try:
