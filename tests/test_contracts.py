@@ -15,6 +15,7 @@ from orion_finance_sdk_py.contracts import (
     OrionVault,
     PriceAdapterRegistry,
     SystemNotIdleError,
+    TransactionFailedError,
     TransactionResult,
     VaultFactory,
     _call_view,
@@ -896,7 +897,9 @@ class TestVaultFactory:
             "logs": [],
         }
 
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             factory.create_orion_vault("0xStrategist", "N", "S", 0, 0, 0)
 
 
@@ -1495,7 +1498,9 @@ class TestOrionVaults:
             "logs": [],
         }
 
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             vault.request_deposit(100)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -1535,6 +1540,28 @@ class TestOrionVaults:
         # Simulate ABI missing function or call error
         vault.contract.functions.depositAccessControl.side_effect = AttributeError
 
+        assert vault.can_request_deposit("0xUser") is True
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_can_request_deposit_omitted_getter_abi(self, MockConfig):
+        """Missing depositAccessControl on the vault ABI short-circuits to True."""
+        from web3 import Web3
+
+        MockConfig.return_value.orion_transparent_vaults = ["0xVault"]
+        vault = OrionTransparentVault()
+        vault.contract = Web3().eth.contract(
+            address="0x" + "11" * 20,
+            abi=[
+                {
+                    "type": "function",
+                    "name": "manager",
+                    "stateMutability": "view",
+                    "inputs": [],
+                    "outputs": [{"type": "address", "name": ""}],
+                }
+            ],
+        )
         assert vault.can_request_deposit("0xUser") is True
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -1623,7 +1650,9 @@ class TestOrionVaults:
             "logs": [],
         }
 
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             vault.submit_order_intent({"0xA": 1})
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -1721,7 +1750,9 @@ class TestOrionVaults:
             "logs": [],
         }
 
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             vault.update_fee_model(0, 0, 0)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -1767,7 +1798,9 @@ class TestOrionVaults:
             "logs": [],
         }
 
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             vault.update_strategist("0xNew")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -1801,7 +1834,9 @@ class TestOrionVaults:
             "status": 0,
             "logs": [],
         }
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             vault.set_deposit_access_control("0xNew")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -1957,7 +1992,9 @@ class TestOrionVaults:
             "status": 0,
             "logs": [],
         }
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             config.remove_orion_vault("0xVault")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -2068,7 +2105,9 @@ class TestOrionVaults:
             "status": 0,
             "logs": [],
         }
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             vault.transfer_manager_fees(100)
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
@@ -2111,5 +2150,7 @@ class TestOrionVaults:
             "status": 0,
             "logs": [],
         }
-        with pytest.raises(Exception, match="Transaction failed with status"):
+        with pytest.raises(
+            TransactionFailedError, match="Transaction failed with status"
+        ):
             vault.submit_order_intent({"0xA": 1})

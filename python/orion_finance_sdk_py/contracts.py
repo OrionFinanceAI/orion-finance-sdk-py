@@ -77,6 +77,10 @@ class SystemNotIdleError(RuntimeError):
     """Raised when the protocol is not idle for the requested operation."""
 
 
+class TransactionFailedError(RuntimeError):
+    """Raised when a mined transaction receipt has a non-success status."""
+
+
 def load_contract_abi(contract_name: str) -> list[dict]:
     """Load the ABI for a given contract."""
     try:
@@ -610,7 +614,9 @@ class OrionConfig(OrionSmartContract):
         progress_step("Waiting for confirmation")
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
         return TransactionResult(
             tx_hash=tx_hash.hex(),
             receipt=receipt,
@@ -964,7 +970,9 @@ class VaultFactory(OrionSmartContract):
 
         # Check if transaction was successful
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
 
         # Decode logs from the transaction receipt
         decoded_logs = self._decode_logs(receipt)
@@ -1227,7 +1235,9 @@ class OrionVault(OrionSmartContract):
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())
 
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
 
         decoded_logs = self._decode_logs(receipt)
 
@@ -1390,7 +1400,9 @@ class OrionVault(OrionSmartContract):
         receipt = self._wait_for_transaction_receipt(tx_hash_hex)
 
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
 
         decoded_logs = self._decode_logs(receipt)
 
@@ -1447,7 +1459,9 @@ class OrionVault(OrionSmartContract):
         receipt = self._wait_for_transaction_receipt(tx_hash_hex)
 
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
 
         decoded_logs = self._decode_logs(receipt)
 
@@ -1503,7 +1517,9 @@ class OrionVault(OrionSmartContract):
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = self._wait_for_transaction_receipt(tx_hash.hex())
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
         return TransactionResult(
             tx_hash=tx_hash.hex(),
             receipt=receipt,
@@ -1711,7 +1727,9 @@ class OrionVault(OrionSmartContract):
         tx_hash_hex = tx_hash.hex()
         receipt = self._wait_for_transaction_receipt(tx_hash_hex)
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
         return TransactionResult(
             tx_hash=tx_hash_hex,
             receipt=receipt,
@@ -1772,13 +1790,14 @@ class OrionVault(OrionSmartContract):
 
     def _acl_allows(
         self,
-        getter,
+        getter_name: str,
         abi_name: str,
         fn_name: str,
         *call_args,
     ) -> bool:
         """Return True if the ACL is unset/missing, else call the ACL view."""
         try:
+            getter = getattr(self.contract.functions, getter_name)
             access_control_address = _call_view(getter())
         except AttributeError:
             return True
@@ -1798,7 +1817,7 @@ class OrionVault(OrionSmartContract):
         On-chain signature is ``canRequestDeposit(address sender, bytes data)``.
         """
         return self._acl_allows(
-            self.contract.functions.depositAccessControl,
+            "depositAccessControl",
             "IOrionDepositAccessControl",
             "canRequestDeposit",
             Web3.to_checksum_address(user),
@@ -1811,7 +1830,7 @@ class OrionVault(OrionSmartContract):
         If no holder access control is set (zero address), returns True.
         """
         return self._acl_allows(
-            self.contract.functions.holderAccessControl,
+            "holderAccessControl",
             "IOrionHolderAccessControl",
             "canHoldShares",
             Web3.to_checksum_address(account),
@@ -1824,7 +1843,7 @@ class OrionVault(OrionSmartContract):
         On-chain signature is ``canTransferShares(address sender, bytes data)``.
         """
         return self._acl_allows(
-            self.contract.functions.transferAccessControl,
+            "transferAccessControl",
             "IOrionTransferAccessControl",
             "canTransferShares",
             Web3.to_checksum_address(sender),
@@ -1930,7 +1949,9 @@ class OrionTransparentVault(OrionVault):
         receipt = self._wait_for_transaction_receipt(tx_hash_hex)
 
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
 
         decoded_logs = self._decode_logs(receipt)
 
@@ -2035,7 +2056,9 @@ class OrionEncryptedVault(OrionVault):
         receipt = self._wait_for_transaction_receipt(tx_hash_hex)
 
         if receipt["status"] != 1:
-            raise Exception(f"Transaction failed with status: {receipt['status']}")
+            raise TransactionFailedError(
+                f"Transaction failed with status: {receipt['status']}"
+            )
 
         decoded_logs = self._decode_logs(receipt)
 
