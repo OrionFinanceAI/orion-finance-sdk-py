@@ -1792,6 +1792,18 @@ class TestOrionVaults:
         with pytest.raises(ValueError, match="Signer .* is not the vault manager"):
             vault.set_deposit_access_control("0xNew")
 
+        # Failed receipt
+        vault.contract.functions.manager.return_value.call.return_value = "0xDeployer"
+        vault.contract.functions.setDepositAccessControl.return_value.build_transaction.return_value = {}
+        mock_w3 = vault.w3
+        mock_w3.eth.account.from_key.return_value.address = "0xDeployer"
+        mock_w3.eth.wait_for_transaction_receipt.return_value = {
+            "status": 0,
+            "logs": [],
+        }
+        with pytest.raises(Exception, match="Transaction failed with status"):
+            vault.set_deposit_access_control("0xNew")
+
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_submit_intent_error(self, MockConfig):

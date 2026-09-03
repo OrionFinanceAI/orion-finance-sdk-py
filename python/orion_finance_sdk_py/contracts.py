@@ -1710,6 +1710,8 @@ class OrionVault(OrionSmartContract):
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
         tx_hash_hex = tx_hash.hex()
         receipt = self._wait_for_transaction_receipt(tx_hash_hex)
+        if receipt["status"] != 1:
+            raise Exception(f"Transaction failed with status: {receipt['status']}")
         return TransactionResult(
             tx_hash=tx_hash_hex,
             receipt=receipt,
@@ -1778,7 +1780,7 @@ class OrionVault(OrionSmartContract):
         """Return True if the ACL is unset/missing, else call the ACL view."""
         try:
             access_control_address = _call_view(getter())
-        except (AttributeError, ValueError):
+        except AttributeError:
             return True
         if access_control_address == ZERO_ADDRESS:
             return True

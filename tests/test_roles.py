@@ -19,7 +19,6 @@ from orion_finance_sdk_py.errors import (
     format_revert,
 )
 from orion_finance_sdk_py.events import parse_lp_events_from_receipt
-from orion_finance_sdk_py.types import ZERO_ADDRESS
 
 
 @pytest.fixture
@@ -124,7 +123,9 @@ def test_manager_create_vault(MockFactory):
         fee_type=0,
         performance_fee=100,
         management_fee=10,
-        deposit_access_control="0x0",
+        deposit_access_control="0xDepositAcl",
+        holder_access_control="0xHolderAcl",
+        transfer_access_control="0xTransferAcl",
     )
     MockFactory.assert_called_once_with(vault_type="encrypted")
     factory.create_orion_vault.assert_called_once_with(
@@ -134,9 +135,9 @@ def test_manager_create_vault(MockFactory):
         fee_type=0,
         performance_fee=100,
         management_fee=10,
-        deposit_access_control="0x0",
-        holder_access_control=ZERO_ADDRESS,
-        transfer_access_control=ZERO_ADDRESS,
+        deposit_access_control="0xDepositAcl",
+        holder_access_control="0xHolderAcl",
+        transfer_access_control="0xTransferAcl",
     )
 
 
