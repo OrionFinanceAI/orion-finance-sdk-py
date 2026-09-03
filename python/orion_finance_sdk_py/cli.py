@@ -70,6 +70,8 @@ def _deploy_vault_logic(
     performance_fee_bp: int,
     management_fee_bp: int,
     deposit_access_control: str,
+    holder_access_control: str = ZERO_ADDRESS,
+    transfer_access_control: str = ZERO_ADDRESS,
 ):
     """Logic for deploying a vault."""
     vault_factory = VaultFactory(vault_type=vault_type)
@@ -83,6 +85,8 @@ def _deploy_vault_logic(
             performance_fee=performance_fee_bp,
             management_fee=management_fee_bp,
             deposit_access_control=deposit_access_control,
+            holder_access_control=holder_access_control,
+            transfer_access_control=transfer_access_control,
         )
 
     format_transaction_logs(tx_result, "Vault deployment transaction completed")
@@ -496,6 +500,16 @@ def interactive_menu():
                 )
                 if not dac:
                     dac = ZERO_ADDRESS
+                hac = ask_or_exit(
+                    _q_text("Holder Access Control (Address):", default="")
+                )
+                if not hac:
+                    hac = ZERO_ADDRESS
+                tac = ask_or_exit(
+                    _q_text("Transfer Access Control (Address):", default="")
+                )
+                if not tac:
+                    tac = ZERO_ADDRESS
 
                 _deploy_vault_logic(
                     vault_type,
@@ -506,6 +520,8 @@ def interactive_menu():
                     int(perf_fee * BASIS_POINTS_FACTOR),
                     int(mgmt_fee * BASIS_POINTS_FACTOR),
                     dac,
+                    hac,
+                    tac,
                 )
 
             elif choice == "Submit Intent":
@@ -686,6 +702,12 @@ def deploy_vault(
     deposit_access_control: str = typer.Option(
         ZERO_ADDRESS, help="Address of the deposit access control contract"
     ),
+    holder_access_control: str = typer.Option(
+        ZERO_ADDRESS, help="Address of the holder access control contract"
+    ),
+    transfer_access_control: str = typer.Option(
+        ZERO_ADDRESS, help="Address of the transfer access control contract"
+    ),
     vault_type: VaultType = typer.Option(
         VaultType.TRANSPARENT,
         help="Vault type: transparent or encrypted",
@@ -702,6 +724,8 @@ def deploy_vault(
         int(performance_fee * BASIS_POINTS_FACTOR),
         int(management_fee * BASIS_POINTS_FACTOR),
         deposit_access_control,
+        holder_access_control,
+        transfer_access_control,
     )
 
 

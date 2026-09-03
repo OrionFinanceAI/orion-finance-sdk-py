@@ -10,7 +10,7 @@ from orion_finance_sdk_py.cli import (
     validate_name,
     validate_symbol,
 )
-from orion_finance_sdk_py.types import VaultType
+from orion_finance_sdk_py.types import ZERO_ADDRESS, VaultType
 
 
 def test_ask_or_exit_success():
@@ -64,6 +64,8 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
         "",  # Perf Fee (empty -> 0.0)
         "",  # Mgmt Fee (empty -> 0.0)
         "0x0",  # DAC
+        "",  # HAC (empty -> zero address)
+        "",  # TAC (empty -> zero address)
         "Exit",  # Main menu loop again
     ]
 
@@ -88,6 +90,8 @@ def test_interactive_menu_deploy_vault(mock_deploy_logic, mock_questionary, mock
     assert args[5] == 0  # 0.0 * 100
     assert args[6] == 0  # 0.0 * 100
     assert args[7] == "0x0"
+    assert args[8] == ZERO_ADDRESS
+    assert args[9] == ZERO_ADDRESS
 
 
 @patch("builtins.input")
@@ -301,6 +305,8 @@ def test_interactive_menu_error_handling(
         "1",
         "1",
         "0x0",
+        "",
+        "",
         "Exit",
     ]
     iterator = iter(ask_side_effect)

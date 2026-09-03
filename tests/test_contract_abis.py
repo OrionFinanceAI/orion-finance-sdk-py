@@ -47,6 +47,51 @@ def test_abi_structure():
     assert len(function_items) > 0, "ABI should contain function definitions"
 
 
+def _create_vault_inputs(factory_name: str) -> list[str]:
+    abi = load_contract_abi(factory_name)
+    create = next(
+        item
+        for item in abi
+        if item.get("type") == "function" and item.get("name") == "createVault"
+    )
+    return [inp["name"] for inp in create["inputs"]]
+
+
+def test_factory_create_vault_has_nine_inputs():
+    expected = [
+        "strategist",
+        "name",
+        "symbol",
+        "feeType",
+        "performanceFee",
+        "managementFee",
+        "depositAccessControl",
+        "holderAccessControl",
+        "transferAccessControl",
+    ]
+    assert _create_vault_inputs("TransparentVaultFactory") == expected
+    assert _create_vault_inputs("EncryptedVaultFactory") == expected
+
+
+def test_vault_abi_includes_272_methods():
+    abi = load_contract_abi("OrionVault")
+    names = {
+        item["name"]
+        for item in abi
+        if isinstance(item, dict) and item.get("type") == "function"
+    }
+    for name in (
+        "requestDepositFor",
+        "pendingUnderlyingClaim",
+        "setHolderAccessControl",
+        "setTransferAccessControl",
+        "holderAccessControl",
+        "transferAccessControl",
+        "claimUnderlying",
+    ):
+        assert name in names, f"OrionVault ABI missing {name}"
+
+
 def test_invalid_abi_name():
     """Test that invalid ABI names raise appropriate exceptions."""
     with pytest.raises(Exception):

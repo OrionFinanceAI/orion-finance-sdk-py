@@ -255,6 +255,8 @@ orion deploy-vault \
 
 Use `--vault-type encrypted` for confidential vaults. Default is `transparent`.
 
+`--deposit-access-control`, `--holder-access-control`, and `--transfer-access-control` default to the zero address (permissionless). Pass the same plugin address to all three for a unified whitelist.
+
 This deploys an ERC-7540 vault, registers the manager from your `.env`, and sets fees.
 
 ### Update strategist or fees

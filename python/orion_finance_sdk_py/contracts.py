@@ -244,9 +244,7 @@ class OrionSmartContract:
                     break
                 half *= 2
 
-            block = self.block_at_timestamp(
-                sample_ts, lo=search_lo, hi=search_hi
-            )
+            block = self.block_at_timestamp(sample_ts, lo=search_lo, hi=search_hi)
             block = max(start_block, min(block, end_block))
             if block == prev_block:
                 sample_ts += _SECONDS_PER_DAY
@@ -840,8 +838,13 @@ class VaultFactory(OrionSmartContract):
         performance_fee: int,
         management_fee: int,
         deposit_access_control: str = ZERO_ADDRESS,
+        holder_access_control: str = ZERO_ADDRESS,
+        transfer_access_control: str = ZERO_ADDRESS,
     ) -> TransactionResult:
-        """Create an Orion vault for a given strategist address."""
+        """Create an Orion vault for a given strategist address.
+
+        Omitted ACL addresses default to ``address(0)`` (permissionless).
+        """
         config = OrionConfig()
 
         progress_step("Verifying manager whitelist")
@@ -901,8 +904,7 @@ class VaultFactory(OrionSmartContract):
         account = self.w3.eth.account.from_key(manager_private_key)
         nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
-        # Estimate gas needed for the transaction
-        gas_estimate = self.contract.functions.createVault(
+        create_vault_args = (
             strategist_address,
             name,
             symbol,
@@ -910,6 +912,13 @@ class VaultFactory(OrionSmartContract):
             performance_fee,
             management_fee,
             Web3.to_checksum_address(deposit_access_control),
+            Web3.to_checksum_address(holder_access_control),
+            Web3.to_checksum_address(transfer_access_control),
+        )
+
+        # Estimate gas needed for the transaction
+        gas_estimate = self.contract.functions.createVault(
+            *create_vault_args,
         ).estimate_gas({"from": account.address, "nonce": nonce})
 
         # Add 20% buffer to gas estimate
@@ -927,13 +936,7 @@ class VaultFactory(OrionSmartContract):
             )
 
         tx = self.contract.functions.createVault(
-            strategist_address,
-            name,
-            symbol,
-            fee_type,
-            performance_fee,
-            management_fee,
-            Web3.to_checksum_address(deposit_access_control),
+            *create_vault_args,
         ).build_transaction(
             {
                 "from": account.address,
@@ -1123,6 +1126,16 @@ class OrionVault(OrionSmartContract):
         return _call_view(self.contract.functions.depositAccessControl())
 
     @property
+    def holder_access_control(self) -> str:
+        """Fetch the holder access control contract address (``address(0)`` if none)."""
+        return _call_view(self.contract.functions.holderAccessControl())
+
+    @property
+    def transfer_access_control(self) -> str:
+        """Fetch the transfer access control contract address (``address(0)`` if none)."""
+        return _call_view(self.contract.functions.transferAccessControl())
+
+    @property
     def asset(self) -> str:
         """Fetch the vault underlying asset address."""
         return _call_view(self.contract.functions.asset())
@@ -1230,6 +1243,18 @@ class OrionVault(OrionSmartContract):
         """Submit an asynchronous deposit request (signed with LP key by default)."""
         return self._execute_vault_tx(
             self.contract.functions.requestDeposit(assets),
+            key_env=key_env,
+            error_msg=f"{key_env} missing for deposit request.",
+        )
+
+    def request_deposit_for(
+        self, beneficiary: str, assets: int, *, key_env: str = "LP_PRIVATE_KEY"
+    ) -> TransactionResult:
+        """Submit a deposit request credited to ``beneficiary``."""
+        return self._execute_vault_tx(
+            self.contract.functions.requestDepositFor(
+                Web3.to_checksum_address(beneficiary), assets
+            ),
             key_env=key_env,
             error_msg=f"{key_env} missing for deposit request.",
         )
@@ -1488,9 +1513,7 @@ class OrionVault(OrionSmartContract):
     @property
     def share_price(self) -> int:
         """Fetch the current share price (value of 1 share unit)."""
-        return _call_view(
-            self.contract.functions.convertToAssets(10**self.decimals)
-        )
+        return _call_view(self.contract.functions.convertToAssets(10**self.decimals))
 
     def share_price_at(self, block: int) -> int:
         """Fetch the share price (value of 1 full share) at a historical block."""
@@ -1657,14 +1680,14 @@ class OrionVault(OrionSmartContract):
             return {}
         return {token: value / total for token, value in position_values.items()}
 
-    def set_deposit_access_control(
-        self, access_control_address: str
+    def _set_access_control(
+        self, setter_name: str, access_control_address: str, action: str
     ) -> TransactionResult:
-        """Set the deposit access control contract address."""
+        """Set a vault access-control address. Manager signer; protocol must be idle."""
         config = OrionConfig()
         if not config.is_system_idle():
             raise SystemNotIdleError(
-                "System is not idle. Cannot set deposit access control at this time."
+                f"System is not idle. Cannot {action} at this time."
             )
 
         manager_private_key = validate_var(
@@ -1672,17 +1695,16 @@ class OrionVault(OrionSmartContract):
             error_message="MANAGER_PRIVATE_KEY environment variable is missing or invalid.",
         )
         account = self.w3.eth.account.from_key(manager_private_key)
-        # Validate that the signer is the manager
         if account.address != self.manager_address:
             raise ValueError(
-                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot set deposit access control."
+                f"Signer {account.address} is not the vault manager {self.manager_address}. Cannot {action}."
             )
 
         nonce = self.w3.eth.get_transaction_count(account.address, "pending")
-
-        tx = self.contract.functions.setDepositAccessControl(
-            Web3.to_checksum_address(access_control_address)
-        ).build_transaction({"from": account.address, "nonce": nonce})
+        setter = getattr(self.contract.functions, setter_name)
+        tx = setter(Web3.to_checksum_address(access_control_address)).build_transaction(
+            {"from": account.address, "nonce": nonce}
+        )
 
         signed = account.sign_transaction(tx)
         tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
@@ -1694,46 +1716,155 @@ class OrionVault(OrionSmartContract):
             decoded_logs=self._decode_logs(receipt),
         )
 
+    def set_deposit_access_control(
+        self, access_control_address: str
+    ) -> TransactionResult:
+        """Set the deposit access control contract address."""
+        return self._set_access_control(
+            "setDepositAccessControl",
+            access_control_address,
+            "set deposit access control",
+        )
+
+    def set_holder_access_control(
+        self, access_control_address: str
+    ) -> TransactionResult:
+        """Set the holder access control contract address."""
+        return self._set_access_control(
+            "setHolderAccessControl",
+            access_control_address,
+            "set holder access control",
+        )
+
+    def set_transfer_access_control(
+        self, access_control_address: str
+    ) -> TransactionResult:
+        """Set the transfer access control contract address."""
+        return self._set_access_control(
+            "setTransferAccessControl",
+            access_control_address,
+            "set transfer access control",
+        )
+
+    def pending_underlying_claim(self, account: str) -> int:
+        """Fetch escrowed underlying claimable by ``account`` (failed fulfill)."""
+        return _call_view(
+            self.contract.functions.pendingUnderlyingClaim(
+                Web3.to_checksum_address(account)
+            )
+        )
+
+    def claim_underlying(self, *, key_env: str = "LP_PRIVATE_KEY") -> TransactionResult:
+        """Claim escrowed underlying after a failed deposit or redemption fulfill."""
+        return self._execute_vault_tx(
+            self.contract.functions.claimUnderlying(),
+            key_env=key_env,
+            error_msg=f"{key_env} missing for claim underlying.",
+        )
+
     def max_deposit(self, receiver: str) -> int:
         """Fetch the maximum deposit amount for a receiver."""
         return _call_view(
             self.contract.functions.maxDeposit(Web3.to_checksum_address(receiver))
         )
 
-    def can_request_deposit(self, user: str) -> bool:
-        """Check if a user is allowed to request a deposit.
-
-        This method queries the vault's depositAccessControl contract.
-        If no access control is set (zero address), it returns True.
-        """
+    def _acl_allows(
+        self,
+        getter,
+        abi: list[dict],
+        *call_args,
+    ) -> bool:
+        """Return True if the ACL is unset/missing, else call the ACL view."""
         try:
-            access_control_address = _call_view(
-                self.contract.functions.depositAccessControl()
-            )
+            access_control_address = _call_view(getter())
         except (AttributeError, ValueError):
-            # If function doesn't exist in ABI or call fails due to missing method
             return True
-
         if access_control_address == ZERO_ADDRESS:
             return True
+        access_control = self.w3.eth.contract(address=access_control_address, abi=abi)
+        fn = getattr(access_control.functions, abi[0]["name"])
+        return _call_view(fn(*call_args))
 
-        # Minimal ABI for IOrionAccessControl to check permissions
-        access_control_abi = [
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "sender", "type": "address"}
-                ],
-                "name": "canRequestDeposit",
-                "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-                "stateMutability": "view",
-                "type": "function",
-            }
-        ]
-        access_control = self.w3.eth.contract(
-            address=access_control_address, abi=access_control_abi
+    def can_request_deposit(self, user: str, data: bytes = b"") -> bool:
+        """Check if a user is allowed to request a deposit.
+
+        Queries the vault's depositAccessControl contract.
+        If no access control is set (zero address), returns True.
+        On-chain signature is ``canRequestDeposit(address sender, bytes data)``.
+        """
+        return self._acl_allows(
+            self.contract.functions.depositAccessControl,
+            [
+                {
+                    "inputs": [
+                        {
+                            "internalType": "address",
+                            "name": "sender",
+                            "type": "address",
+                        },
+                        {"internalType": "bytes", "name": "data", "type": "bytes"},
+                    ],
+                    "name": "canRequestDeposit",
+                    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+                    "stateMutability": "view",
+                    "type": "function",
+                }
+            ],
+            Web3.to_checksum_address(user),
+            data,
         )
-        return _call_view(
-            access_control.functions.canRequestDeposit(Web3.to_checksum_address(user))
+
+    def can_hold_shares(self, account: str) -> bool:
+        """Check if ``account`` may hold vault shares.
+
+        If no holder access control is set (zero address), returns True.
+        """
+        return self._acl_allows(
+            self.contract.functions.holderAccessControl,
+            [
+                {
+                    "inputs": [
+                        {
+                            "internalType": "address",
+                            "name": "account",
+                            "type": "address",
+                        }
+                    ],
+                    "name": "canHoldShares",
+                    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+                    "stateMutability": "view",
+                    "type": "function",
+                }
+            ],
+            Web3.to_checksum_address(account),
+        )
+
+    def can_transfer_shares(self, sender: str, data: bytes = b"") -> bool:
+        """Check if ``sender`` may transfer vault shares.
+
+        If no transfer access control is set (zero address), returns True.
+        On-chain signature is ``canTransferShares(address sender, bytes data)``.
+        """
+        return self._acl_allows(
+            self.contract.functions.transferAccessControl,
+            [
+                {
+                    "inputs": [
+                        {
+                            "internalType": "address",
+                            "name": "sender",
+                            "type": "address",
+                        },
+                        {"internalType": "bytes", "name": "data", "type": "bytes"},
+                    ],
+                    "name": "canTransferShares",
+                    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+                    "stateMutability": "view",
+                    "type": "function",
+                }
+            ],
+            Web3.to_checksum_address(sender),
+            data,
         )
 
 

@@ -656,10 +656,44 @@ class TestVaultFactory:
         # Verify call arguments (checking if strategist address from env is used)
         factory.contract.functions.createVault.assert_called()
         args = factory.contract.functions.createVault.call_args[0]
+        assert len(args) == 9
         assert args[0] == "0xStrategist"  # First arg is strategist
-
-        # Check deposit access control passed
         assert args[6] == ZERO_ADDRESS
+        assert args[7] == ZERO_ADDRESS
+        assert args[8] == ZERO_ADDRESS
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_create_orion_vault_passes_holder_and_transfer_acl(self, MockConfig):
+        """createVault calldata includes holder and transfer ACL addresses."""
+        config_instance = MockConfig.return_value
+        config_instance.is_system_idle.return_value = True
+        config_instance.is_whitelisted_manager.return_value = True
+        config_instance.contract.functions.transparentVaultFactory().call.return_value = "0xTVF"
+        config_instance.max_performance_fee = 3000
+        config_instance.max_management_fee = 300
+
+        factory = VaultFactory(VaultType.TRANSPARENT)
+        factory.contract.functions.createVault.return_value.estimate_gas.return_value = 100000
+        factory.contract.functions.createVault.return_value.build_transaction.return_value = {}
+
+        factory.create_orion_vault(
+            strategist_address="0xStrategist",
+            name="Test",
+            symbol="TST",
+            fee_type=0,
+            performance_fee=0,
+            management_fee=0,
+            deposit_access_control="0xDeposit",
+            holder_access_control="0xHolder",
+            transfer_access_control="0xTransfer",
+        )
+
+        args = factory.contract.functions.createVault.call_args[0]
+        assert len(args) == 9
+        assert args[6] == "0xDeposit"
+        assert args[7] == "0xHolder"
+        assert args[8] == "0xTransfer"
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_load_abi", "mock_env")
@@ -903,6 +937,16 @@ class TestOrionVaults:
         res = vault.set_deposit_access_control("0xControl")
         assert res.receipt["status"] == 1
 
+        res = vault.set_holder_access_control("0xHolder")
+        assert res.receipt["status"] == 1
+        vault.contract.functions.setHolderAccessControl.assert_called_with("0xHolder")
+
+        res = vault.set_transfer_access_control("0xTransfer")
+        assert res.receipt["status"] == 1
+        vault.contract.functions.setTransferAccessControl.assert_called_with(
+            "0xTransfer"
+        )
+
         # Mock view methods
         vault.contract.functions.totalAssets().call.return_value = 1000
 
@@ -979,10 +1023,20 @@ class TestOrionVaults:
         vault.contract.functions.depositAccessControl().call.return_value = "0xAC"
         with patch.object(mock_w3.eth, "contract") as mock_ac_contract:
             mock_ac_instance = mock_ac_contract.return_value
-            mock_ac_instance.functions.canRequestDeposit().call.return_value = True
+            mock_fn = mock_ac_instance.functions.canRequestDeposit
+            mock_fn.return_value.call.return_value = True
             assert vault.can_request_deposit("0xUser") is True
-            mock_ac_instance.functions.canRequestDeposit().call.return_value = False
+            mock_fn.assert_called_with("0xUser", b"")
+            mock_fn.return_value.call.return_value = False
             assert vault.can_request_deposit("0xUser") is False
+            mock_fn.assert_called_with("0xUser", b"")
+
+        vault.contract.functions.holderAccessControl().call.return_value = ZERO_ADDRESS
+        assert vault.can_hold_shares("0xUser") is True
+        vault.contract.functions.transferAccessControl().call.return_value = (
+            ZERO_ADDRESS
+        )
+        assert vault.can_transfer_shares("0xUser") is True
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -1393,6 +1447,21 @@ class TestOrionVaults:
         assert res.receipt["status"] == 1
         vault.contract.functions.requestDeposit.assert_called_with(100)
 
+        vault.contract.functions.requestDepositFor.return_value.build_transaction.return_value = {}
+        res = vault.request_deposit_for("0xBeneficiary", 50)
+        assert res.receipt["status"] == 1
+        vault.contract.functions.requestDepositFor.assert_called_with(
+            "0xBeneficiary", 50
+        )
+
+        vault.contract.functions.pendingUnderlyingClaim.return_value.call.return_value = 7
+        assert vault.pending_underlying_claim("0xUser") == 7
+
+        vault.contract.functions.claimUnderlying.return_value.build_transaction.return_value = {}
+        res = vault.claim_underlying()
+        assert res.receipt["status"] == 1
+        vault.contract.functions.claimUnderlying.assert_called_with()
+
         # cancel_deposit_request
         vault.contract.functions.cancelDepositRequest.return_value.build_transaction.return_value = {}
         res = vault.cancel_deposit_request(50)
@@ -1467,6 +1536,33 @@ class TestOrionVaults:
         vault.contract.functions.depositAccessControl.side_effect = AttributeError
 
         assert vault.can_request_deposit("0xUser") is True
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_can_hold_and_can_transfer_shares(self, MockConfig, mock_w3):
+        """Holder/transfer ACL views short-circuit on zero and forward otherwise."""
+        MockConfig.return_value.orion_transparent_vaults = ["0xVault"]
+        vault = OrionTransparentVault()
+
+        vault.contract.functions.holderAccessControl.side_effect = AttributeError
+        assert vault.can_hold_shares("0xUser") is True
+        vault.contract.functions.holderAccessControl.side_effect = None
+
+        vault.contract.functions.holderAccessControl().call.return_value = "0xHolderAcl"
+        with patch.object(mock_w3.eth, "contract") as mock_ac_contract:
+            mock_fn = mock_ac_contract.return_value.functions.canHoldShares
+            mock_fn.return_value.call.return_value = True
+            assert vault.can_hold_shares("0xUser") is True
+            mock_fn.assert_called_with("0xUser")
+
+        vault.contract.functions.transferAccessControl().call.return_value = (
+            "0xTransferAcl"
+        )
+        with patch.object(mock_w3.eth, "contract") as mock_ac_contract:
+            mock_fn = mock_ac_contract.return_value.functions.canTransferShares
+            mock_fn.return_value.call.return_value = False
+            assert vault.can_transfer_shares("0xUser") is False
+            mock_fn.assert_called_with("0xUser", b"")
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -1903,6 +1999,10 @@ class TestOrionVaults:
 
         fn.depositAccessControl().call.return_value = "0xAcl"
         assert vault.deposit_access_control == "0xAcl"
+        fn.holderAccessControl().call.return_value = "0xHolderAcl"
+        assert vault.holder_access_control == "0xHolderAcl"
+        fn.transferAccessControl().call.return_value = "0xTransferAcl"
+        assert vault.transfer_access_control == "0xTransferAcl"
 
         fn.asset().call.return_value = "0xAsset"
         fn.balanceOf("0xAcc").call.return_value = 8

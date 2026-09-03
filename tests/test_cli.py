@@ -58,6 +58,8 @@ def test_deploy_vault(mock_ensure_env, MockVaultFactory):
         performance_fee=1000,
         management_fee=100,
         deposit_access_control=ZERO_ADDRESS,
+        holder_access_control=ZERO_ADDRESS,
+        transfer_access_control=ZERO_ADDRESS,
         strategist_address="0xStrategist",
     )
     MockVaultFactory.assert_called_with(vault_type="transparent")
