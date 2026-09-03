@@ -19,6 +19,9 @@ CONTRACTS_TO_DOWNLOAD = [
     "LiquidityOrchestrator",
     "PriceAdapterRegistry",
     "ErrorsLib",
+    "IOrionDepositAccessControl",
+    "IOrionHolderAccessControl",
+    "IOrionTransferAccessControl",
 ]
 
 

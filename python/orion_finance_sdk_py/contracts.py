@@ -1771,7 +1771,8 @@ class OrionVault(OrionSmartContract):
     def _acl_allows(
         self,
         getter,
-        abi: list[dict],
+        abi_name: str,
+        fn_name: str,
         *call_args,
     ) -> bool:
         """Return True if the ACL is unset/missing, else call the ACL view."""
@@ -1781,9 +1782,11 @@ class OrionVault(OrionSmartContract):
             return True
         if access_control_address == ZERO_ADDRESS:
             return True
-        access_control = self.w3.eth.contract(address=access_control_address, abi=abi)
-        fn = getattr(access_control.functions, abi[0]["name"])
-        return _call_view(fn(*call_args))
+        access_control = self.w3.eth.contract(
+            address=access_control_address,
+            abi=load_contract_abi(abi_name),
+        )
+        return _call_view(getattr(access_control.functions, fn_name)(*call_args))
 
     def can_request_deposit(self, user: str, data: bytes = b"") -> bool:
         """Check if a user is allowed to request a deposit.
@@ -1794,22 +1797,8 @@ class OrionVault(OrionSmartContract):
         """
         return self._acl_allows(
             self.contract.functions.depositAccessControl,
-            [
-                {
-                    "inputs": [
-                        {
-                            "internalType": "address",
-                            "name": "sender",
-                            "type": "address",
-                        },
-                        {"internalType": "bytes", "name": "data", "type": "bytes"},
-                    ],
-                    "name": "canRequestDeposit",
-                    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-                    "stateMutability": "view",
-                    "type": "function",
-                }
-            ],
+            "IOrionDepositAccessControl",
+            "canRequestDeposit",
             Web3.to_checksum_address(user),
             data,
         )
@@ -1821,21 +1810,8 @@ class OrionVault(OrionSmartContract):
         """
         return self._acl_allows(
             self.contract.functions.holderAccessControl,
-            [
-                {
-                    "inputs": [
-                        {
-                            "internalType": "address",
-                            "name": "account",
-                            "type": "address",
-                        }
-                    ],
-                    "name": "canHoldShares",
-                    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-                    "stateMutability": "view",
-                    "type": "function",
-                }
-            ],
+            "IOrionHolderAccessControl",
+            "canHoldShares",
             Web3.to_checksum_address(account),
         )
 
@@ -1847,22 +1823,8 @@ class OrionVault(OrionSmartContract):
         """
         return self._acl_allows(
             self.contract.functions.transferAccessControl,
-            [
-                {
-                    "inputs": [
-                        {
-                            "internalType": "address",
-                            "name": "sender",
-                            "type": "address",
-                        },
-                        {"internalType": "bytes", "name": "data", "type": "bytes"},
-                    ],
-                    "name": "canTransferShares",
-                    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-                    "stateMutability": "view",
-                    "type": "function",
-                }
-            ],
+            "IOrionTransferAccessControl",
+            "canTransferShares",
             Web3.to_checksum_address(sender),
             data,
         )

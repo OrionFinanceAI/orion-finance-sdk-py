@@ -23,6 +23,9 @@ def test_abi_loading():
         "LiquidityOrchestrator",
         "PriceAdapterRegistry",
         "ErrorsLib",
+        "IOrionDepositAccessControl",
+        "IOrionHolderAccessControl",
+        "IOrionTransferAccessControl",
     ]
 
     for abi_name in abis:
@@ -90,6 +93,28 @@ def test_vault_abi_includes_272_methods():
         "claimUnderlying",
     ):
         assert name in names, f"OrionVault ABI missing {name}"
+
+
+def test_access_control_interface_abis():
+    """Interface ABIs from abis-v2.7.2 include the ACL view methods."""
+    deposit = {
+        item["name"]
+        for item in load_contract_abi("IOrionDepositAccessControl")
+        if item.get("type") == "function"
+    }
+    holder = {
+        item["name"]
+        for item in load_contract_abi("IOrionHolderAccessControl")
+        if item.get("type") == "function"
+    }
+    transfer = {
+        item["name"]
+        for item in load_contract_abi("IOrionTransferAccessControl")
+        if item.get("type") == "function"
+    }
+    assert "canRequestDeposit" in deposit
+    assert "canHoldShares" in holder
+    assert "canTransferShares" in transfer
 
 
 def test_invalid_abi_name():
