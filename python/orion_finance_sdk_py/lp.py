@@ -31,7 +31,9 @@ def request_deposit(
     if config.is_decommissioning_vault(vault.contract_address) or (
         config.is_decommissioned_vault(vault.contract_address)
     ):
-        raise ValueError("Cannot request deposit while vault is decommissioning/decommissioned.")
+        raise ValueError(
+            "Cannot request deposit while vault is decommissioning/decommissioned."
+        )
 
     progress_step("Approving underlying token allowance")
     approve(

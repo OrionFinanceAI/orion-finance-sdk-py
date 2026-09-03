@@ -43,9 +43,7 @@ def parse_lp_events_from_receipt(
         List of ``{"event", "args", "address", "logIndex"}`` dicts.
     """
     contract = w3.eth.contract(abi=_vault_event_abis())
-    vault_filter = (
-        Web3.to_checksum_address(vault_address) if vault_address else None
-    )
+    vault_filter = Web3.to_checksum_address(vault_address) if vault_address else None
     decoded: list[dict[str, Any]] = []
     for log in receipt.get("logs", []):
         if vault_filter and Web3.to_checksum_address(log["address"]) != vault_filter:
