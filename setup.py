@@ -7,7 +7,7 @@ import urllib.request
 from setuptools import find_packages, setup
 from setuptools.command.build_py import build_py
 
-DEFAULT_ABI_VERSION = "abis-v2.6.0"
+DEFAULT_ABI_VERSION = "abis-v2.7.2"
 
 CONTRACTS_TO_DOWNLOAD = [
     "OrionConfig",
@@ -19,6 +19,9 @@ CONTRACTS_TO_DOWNLOAD = [
     "LiquidityOrchestrator",
     "PriceAdapterRegistry",
     "ErrorsLib",
+    "IOrionDepositAccessControl",
+    "IOrionHolderAccessControl",
+    "IOrionTransferAccessControl",
 ]
 
 

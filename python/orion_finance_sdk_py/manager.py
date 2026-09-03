@@ -7,7 +7,7 @@ from .contracts import (
     TransactionResult,
     VaultFactory,
 )
-from .types import VaultType
+from .types import ZERO_ADDRESS, VaultType
 from .vault_resolve import resolve_vault
 
 
@@ -21,6 +21,8 @@ def create_vault(
     performance_fee: int,
     management_fee: int,
     deposit_access_control: str,
+    holder_access_control: str = ZERO_ADDRESS,
+    transfer_access_control: str = ZERO_ADDRESS,
 ) -> TransactionResult:
     """Create a transparent or encrypted vault via the matching factory."""
     factory = VaultFactory(vault_type=vault_type)
@@ -32,6 +34,8 @@ def create_vault(
         performance_fee=performance_fee,
         management_fee=management_fee,
         deposit_access_control=deposit_access_control,
+        holder_access_control=holder_access_control,
+        transfer_access_control=transfer_access_control,
     )
 
 
@@ -53,6 +57,26 @@ def set_deposit_access_control(
     """Set vault deposit access control address (``address(0)`` = open)."""
     vault = resolve_vault(vault_address)
     return vault.set_deposit_access_control(access_control_address)
+
+
+def set_holder_access_control(
+    access_control_address: str,
+    *,
+    vault_address: str | None = None,
+) -> TransactionResult:
+    """Set vault holder access control address (``address(0)`` = open)."""
+    vault = resolve_vault(vault_address)
+    return vault.set_holder_access_control(access_control_address)
+
+
+def set_transfer_access_control(
+    access_control_address: str,
+    *,
+    vault_address: str | None = None,
+) -> TransactionResult:
+    """Set vault transfer access control address (``address(0)`` = open)."""
+    vault = resolve_vault(vault_address)
+    return vault.set_transfer_access_control(access_control_address)
 
 
 def update_fee_model(

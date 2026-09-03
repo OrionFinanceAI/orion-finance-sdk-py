@@ -64,7 +64,9 @@ def decode_revert_data(data: bytes | str | None) -> str | None:
     return _error_selector_map().get(selector)
 
 
-def format_revert(data: bytes | str | None, fallback: str = "Transaction reverted") -> str:
+def format_revert(
+    data: bytes | str | None, fallback: str = "Transaction reverted"
+) -> str:
     """Human-readable revert message including custom error name when known."""
     name = decode_revert_data(data)
     if name:

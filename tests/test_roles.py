@@ -123,10 +123,22 @@ def test_manager_create_vault(MockFactory):
         fee_type=0,
         performance_fee=100,
         management_fee=10,
-        deposit_access_control="0x0",
+        deposit_access_control="0xDepositAcl",
+        holder_access_control="0xHolderAcl",
+        transfer_access_control="0xTransferAcl",
     )
     MockFactory.assert_called_once_with(vault_type="encrypted")
-    factory.create_orion_vault.assert_called_once()
+    factory.create_orion_vault.assert_called_once_with(
+        strategist_address="0xS",
+        name="Priv",
+        symbol="P",
+        fee_type=0,
+        performance_fee=100,
+        management_fee=10,
+        deposit_access_control="0xDepositAcl",
+        holder_access_control="0xHolderAcl",
+        transfer_access_control="0xTransferAcl",
+    )
 
 
 @patch("orion_finance_sdk_py.manager.OrionConfig")
@@ -369,6 +381,10 @@ def test_manager_update_strategist_and_fee_and_dac(mock_resolve):
     vault.update_strategist.assert_called_once_with("0xNew")
     manager.set_deposit_access_control("0xAcl")
     vault.set_deposit_access_control.assert_called_once_with("0xAcl")
+    manager.set_holder_access_control("0xHolder")
+    vault.set_holder_access_control.assert_called_once_with("0xHolder")
+    manager.set_transfer_access_control("0xTransfer")
+    vault.set_transfer_access_control.assert_called_once_with("0xTransfer")
     manager.update_fee_model(0, 100, 10)
     vault.update_fee_model.assert_called_once_with(0, 100, 10)
     manager.claim_vault_fees(42)

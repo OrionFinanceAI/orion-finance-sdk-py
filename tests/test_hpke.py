@@ -16,12 +16,8 @@ from orion_finance_sdk_py.intent import Intent
 from pyhpke import OpenError
 
 # §17.1 / §17.2
-SK_R = bytes.fromhex(
-    "91f7a467df4ef97053ec2a47b6e619f632df9547bb009fd0bcc747909f1b7bd4"
-)
-PK_R = bytes.fromhex(
-    "b1f1b840de7a3241b02748cf9b05b74dc8c5e8451298738817bd76aa8ebe8c2b"
-)
+SK_R = bytes.fromhex("91f7a467df4ef97053ec2a47b6e619f632df9547bb009fd0bcc747909f1b7bd4")
+PK_R = bytes.fromhex("b1f1b840de7a3241b02748cf9b05b74dc8c5e8451298738817bd76aa8ebe8c2b")
 IKM_E = bytes.fromhex(
     "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
 )

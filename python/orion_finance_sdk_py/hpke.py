@@ -36,9 +36,7 @@ def _checksum_addresses(tokens: Sequence[str]) -> list[str]:
     return [Web3.to_checksum_address(t) for t in tokens]
 
 
-def encode_intent_plaintext(
-    tokens: Sequence[str], weights: Sequence[int]
-) -> bytes:
+def encode_intent_plaintext(tokens: Sequence[str], weights: Sequence[int]) -> bytes:
     """ABI-encode intent plaintext as ``abi.encode(address[], uint32[])``."""
     if len(tokens) != len(weights):
         raise ValueError("tokens and weights must have the same length")
@@ -48,9 +46,7 @@ def encode_intent_plaintext(
     )
 
 
-def encode_portfolio_plaintext(
-    tokens: Sequence[str], shares: Sequence[int]
-) -> bytes:
+def encode_portfolio_plaintext(tokens: Sequence[str], shares: Sequence[int]) -> bytes:
     """ABI-encode portfolio plaintext as ``abi.encode(address[], uint256[])``."""
     if len(tokens) != len(shares):
         raise ValueError("tokens and shares must have the same length")

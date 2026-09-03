@@ -60,7 +60,9 @@ def test_short_track_confidence_scales_sasr() -> None:
     assert (
         metrics.w is not None and metrics.dasr is not None and metrics.sasr is not None
     )
-    expected_w = min(1.0, max(0.0, (metrics.t_eff / 7.0) / TRACK_RECORD_FULL_TRUST_WEEKS))
+    expected_w = min(
+        1.0, max(0.0, (metrics.t_eff / 7.0) / TRACK_RECORD_FULL_TRUST_WEEKS)
+    )
     assert metrics.w == pytest.approx(expected_w)
     assert metrics.w < 1.0
     assert metrics.sasr == pytest.approx(metrics.dasr * metrics.w)
