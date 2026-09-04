@@ -1,8 +1,7 @@
 """Admin helpers for mapping Sepolia twin assets to mainnet sources."""
 
-from web3 import Web3
-
 from .types import ZERO_ADDRESS
+from .utils import checksum_address
 
 _MAINNET_SOURCE_ABI = [
     {
@@ -31,16 +30,16 @@ def build_asset_address_map() -> dict[str, str]:
     address_map: dict[str, str] = {}
 
     for asset in config.whitelisted_assets:
-        testnet = Web3.to_checksum_address(asset)
+        testnet = checksum_address(asset)
         try:
             twin = config.w3.eth.contract(address=testnet, abi=_MAINNET_SOURCE_ABI)
             mainnet = twin.functions.mainnetSource().call()
         except Exception:
             continue
 
-        if not mainnet or Web3.to_checksum_address(mainnet) == ZERO_ADDRESS:
+        if not mainnet or checksum_address(mainnet) == ZERO_ADDRESS:
             continue
 
-        address_map[testnet] = Web3.to_checksum_address(mainnet)
+        address_map[testnet] = checksum_address(mainnet)
 
     return address_map

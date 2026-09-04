@@ -228,6 +228,46 @@ def test_interactive_menu_update_dac(mock_dac_logic, mock_questionary, mock_inpu
 
 @patch("builtins.input")
 @patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._update_holder_access_control_logic")
+def test_interactive_menu_update_hac(mock_hac_logic, mock_questionary, mock_input):
+    """Test interactive menu Update Holder Access Control flow."""
+    ask_side_effect = [
+        "Update Holder Access Control",
+        "0xHAC",
+        "Exit",
+    ]
+    iterator = iter(ask_side_effect)
+
+    mock_questionary.select.return_value.ask.side_effect = lambda: next(iterator)
+    mock_questionary.text.return_value.ask.side_effect = lambda: next(iterator)
+
+    interactive_menu()
+
+    mock_hac_logic.assert_called_once_with("0xHAC")
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
+@patch("orion_finance_sdk_py.cli._update_transfer_access_control_logic")
+def test_interactive_menu_update_tac(mock_tac_logic, mock_questionary, mock_input):
+    """Test interactive menu Update Transfer Access Control flow."""
+    ask_side_effect = [
+        "Update Transfer Access Control",
+        "0xTAC",
+        "Exit",
+    ]
+    iterator = iter(ask_side_effect)
+
+    mock_questionary.select.return_value.ask.side_effect = lambda: next(iterator)
+    mock_questionary.text.return_value.ask.side_effect = lambda: next(iterator)
+
+    interactive_menu()
+
+    mock_tac_logic.assert_called_once_with("0xTAC")
+
+
+@patch("builtins.input")
+@patch("orion_finance_sdk_py.cli.questionary")
 @patch("orion_finance_sdk_py.cli._claim_fees_logic")
 def test_interactive_menu_claim_fees(mock_claim_logic, mock_questionary, mock_input):
     """Test interactive menu Claim Fees flow."""
@@ -440,6 +480,8 @@ def test_main_menu_choice_values():
         "Cancel Redeem Request",
         "Redeem (Decommissioned)",
         "Update Deposit Access Control",
+        "Update Holder Access Control",
+        "Update Transfer Access Control",
         "List Whitelisted Assets",
         "List Asset Address Map",
         "Claim Fees",

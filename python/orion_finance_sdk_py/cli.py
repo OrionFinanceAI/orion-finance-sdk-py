@@ -40,6 +40,7 @@ from .types import (
 )
 from .utils import (
     BASIS_POINTS_FACTOR,
+    checksum_address,
     ensure_env_file,
     format_transaction_logs,
     to_base_units,
@@ -54,9 +55,10 @@ def _resolve_vault(
     config: OrionConfig, vault_address: str
 ) -> OrionTransparentVault | OrionEncryptedVault:
     """Return the SDK vault wrapper for a registered Orion vault address."""
+    vault_address = checksum_address(vault_address)
     if config.is_encrypted_vault(vault_address):
         return OrionEncryptedVault()
-    if vault_address in config.orion_transparent_vaults:
+    if config.is_orion_vault(vault_address):
         return OrionTransparentVault()
     raise ValueError(f"Vault address {vault_address} not in OrionConfig contract.")
 
@@ -74,6 +76,10 @@ def _deploy_vault_logic(
     transfer_access_control: str = ZERO_ADDRESS,
 ):
     """Logic for deploying a vault."""
+    strategist_address = checksum_address(strategist_address)
+    deposit_access_control = checksum_address(deposit_access_control)
+    holder_access_control = checksum_address(holder_access_control)
+    transfer_access_control = checksum_address(transfer_access_control)
     vault_factory = VaultFactory(vault_type=vault_type)
 
     with operation_progress("Deploy vault"):
@@ -129,6 +135,7 @@ def _submit_intent_logic(intent_source: str):
 
 def _update_strategist_logic(new_strategist_address: str):
     """Logic for updating strategist."""
+    new_strategist_address = checksum_address(new_strategist_address)
     vault_address = validate_var(
         os.getenv("ORION_VAULT_ADDRESS"),
         error_message=(
@@ -171,6 +178,7 @@ def _update_fee_model_logic(
 
 def _update_deposit_access_control_logic(new_dac_address: str):
     """Logic for updating deposit access control."""
+    new_dac_address = checksum_address(new_dac_address)
     vault_address = validate_var(
         os.getenv("ORION_VAULT_ADDRESS"),
         error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
@@ -182,6 +190,38 @@ def _update_deposit_access_control_logic(new_dac_address: str):
     with operation_progress("Update deposit access control"):
         tx_result = vault.set_deposit_access_control(new_dac_address)
     format_transaction_logs(tx_result, "Deposit access control updated successfully")
+
+
+def _update_holder_access_control_logic(new_hac_address: str):
+    """Logic for updating holder access control."""
+    new_hac_address = checksum_address(new_hac_address)
+    vault_address = validate_var(
+        os.getenv("ORION_VAULT_ADDRESS"),
+        error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
+    )
+
+    config = OrionConfig()
+    vault = _resolve_vault(config, vault_address)
+
+    with operation_progress("Update holder access control"):
+        tx_result = vault.set_holder_access_control(new_hac_address)
+    format_transaction_logs(tx_result, "Holder access control updated successfully")
+
+
+def _update_transfer_access_control_logic(new_tac_address: str):
+    """Logic for updating transfer access control."""
+    new_tac_address = checksum_address(new_tac_address)
+    vault_address = validate_var(
+        os.getenv("ORION_VAULT_ADDRESS"),
+        error_message="ORION_VAULT_ADDRESS environment variable is missing or invalid.",
+    )
+
+    config = OrionConfig()
+    vault = _resolve_vault(config, vault_address)
+
+    with operation_progress("Update transfer access control"):
+        tx_result = vault.set_transfer_access_control(new_tac_address)
+    format_transaction_logs(tx_result, "Transfer access control updated successfully")
 
 
 def _claim_fees_logic(amount: int):
@@ -394,6 +434,8 @@ def _main_menu_choices():
         _menu_choice("Redeem (Decommissioned)", "Sync exit after decommission"),
         _menu_section("Access and assets"),
         _menu_choice("Update Deposit Access Control", "Set deposit allowlist"),
+        _menu_choice("Update Holder Access Control", "Set share-holder allowlist"),
+        _menu_choice("Update Transfer Access Control", "Set share-transfer allowlist"),
         _menu_choice("List Whitelisted Assets", "Show protocol asset list"),
         _menu_choice("List Asset Address Map", "Testnet to mainnet twins"),
         _menu_section("Fees"),
@@ -618,6 +660,14 @@ def interactive_menu():
             elif choice == "Update Deposit Access Control":
                 addr = ask_or_exit(_q_text("New Access Control Address:"))
                 _update_deposit_access_control_logic(addr)
+
+            elif choice == "Update Holder Access Control":
+                addr = ask_or_exit(_q_text("New Access Control Address:"))
+                _update_holder_access_control_logic(addr)
+
+            elif choice == "Update Transfer Access Control":
+                addr = ask_or_exit(_q_text("New Access Control Address:"))
+                _update_transfer_access_control_logic(addr)
 
             elif choice == "Claim Fees":
                 amount = int(

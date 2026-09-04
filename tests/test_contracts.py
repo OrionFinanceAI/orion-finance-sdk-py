@@ -31,6 +31,9 @@ def mock_w3():
     with (
         patch("orion_finance_sdk_py.contracts.Web3") as MockWeb3,
         patch("orion_finance_sdk_py.contracts.make_http_provider") as mock_provider,
+        patch(
+            "orion_finance_sdk_py.contracts.checksum_address", side_effect=lambda x: x
+        ),
     ):
         mock_provider.return_value = MagicMock()
 

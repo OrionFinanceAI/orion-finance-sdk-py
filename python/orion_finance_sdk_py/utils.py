@@ -7,6 +7,8 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import numpy as np
+from eth_typing import ChecksumAddress
+from web3 import Web3
 
 from .console_ui import print_env_created, print_tx_result, progress_step
 from .types import ZERO_ADDRESS
@@ -94,6 +96,18 @@ def validate_var(var: str | None, error_message: str) -> str:
     return var
 
 
+def checksum_address(address: str) -> ChecksumAddress:
+    """Return the EIP-55 checksummed form of ``address``.
+
+    Accepts lowercase or mixed-case hex. Raises ``ValueError`` only when the
+    value is not a valid 20-byte Ethereum address.
+    """
+    try:
+        return Web3.to_checksum_address(address.strip())
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid Ethereum address: {address!r}") from exc
+
+
 def validate_performance_fee(performance_fee: int) -> None:
     """Validate that the performance fee is within acceptable bounds."""
     if performance_fee > MAX_PERFORMANCE_FEE:
@@ -119,18 +133,22 @@ def validate_order(
     orion_config = OrionConfig()
 
     progress_step("Validating tokens against whitelist")
-    # Validate all tokens are whitelisted
-    for token_address in order_intent.keys():
+    # Validate all tokens are whitelisted (normalize casing first)
+    normalized_intent = {
+        checksum_address(token_address): weight
+        for token_address, weight in order_intent.items()
+    }
+    for token_address in normalized_intent:
         if not orion_config.is_whitelisted(token_address):
             raise ValueError(f"Token {token_address} is not whitelisted")
 
     # Validate all amounts are positive
-    if any(weight <= 0 for weight in order_intent.values()):
+    if any(weight <= 0 for weight in normalized_intent.values()):
         raise ValueError("All amounts must be positive")
 
     # Validate the sum of amounts is approximately 1 (within tolerance for floating point error)
     TOLERANCE = 1e-10
-    if not np.isclose(sum(order_intent.values()), 1, atol=TOLERANCE):
+    if not np.isclose(sum(normalized_intent.values()), 1, atol=TOLERANCE):
         raise ValueError(
             "The sum of amounts is not 1 (within floating point tolerance)."
         )
@@ -140,7 +158,7 @@ def validate_order(
     progress_step("Scaling weights to protocol decimals")
     order_intent = {
         token: weight * 10**strategist_intent_decimals
-        for token, weight in order_intent.items()
+        for token, weight in normalized_intent.items()
     }
     rounded_values = round_with_fixed_sum(
         list(order_intent.values()), 10**strategist_intent_decimals

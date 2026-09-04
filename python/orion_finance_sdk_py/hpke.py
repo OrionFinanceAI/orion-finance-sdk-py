@@ -11,7 +11,8 @@ from typing import Sequence
 
 from eth_abi import encode
 from pyhpke import AEADId, CipherSuite, KDFId, KEMId, KEMKeyPair
-from web3 import Web3
+
+from .utils import checksum_address
 
 INFO_PORTFOLIO = b"ORION_PORTFOLIO_V1"
 INFO_INTENT = b"ORION_INTENT_V1"
@@ -33,7 +34,7 @@ def _require_pk_r(pk_r: bytes) -> bytes:
 
 
 def _checksum_addresses(tokens: Sequence[str]) -> list[str]:
-    return [Web3.to_checksum_address(t) for t in tokens]
+    return [checksum_address(t) for t in tokens]
 
 
 def encode_intent_plaintext(tokens: Sequence[str], weights: Sequence[int]) -> bytes:

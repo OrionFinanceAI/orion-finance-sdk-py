@@ -19,6 +19,8 @@ from orion_finance_sdk_py.costs.venues.uniswap_v3.rpc import factory_get_pool
 from orion_finance_sdk_py.erc20 import symbol as erc20_symbol
 from orion_finance_sdk_py.types import ZERO_ADDRESS
 
+from ..utils import checksum_address
+
 XAUT_ADDRESS = "0x68749665FF8D2d112Fa859AA293F07A622782F38"
 USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
 DAI_ADDRESS = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
@@ -122,7 +124,7 @@ def resolve_symbol_onchain(symbol: str, w3: Web3, block_number: int) -> VenueAss
             f"Unknown symbol {raw!r}. Use a ticker (e.g. WETH) or a mainnet address."
         )
 
-    token = Web3.to_checksum_address(raw)
+    token = checksum_address(raw)
     if token.lower() == USDC_ADDRESS.lower():
         raise ValueError("USDC is the quote asset; pass the risk-asset symbol")
 

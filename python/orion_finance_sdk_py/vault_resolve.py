@@ -10,7 +10,7 @@ from .contracts import (
     OrionEncryptedVault,
     OrionTransparentVault,
 )
-from .utils import validate_var
+from .utils import checksum_address, validate_var
 
 
 def resolve_vault(
@@ -24,6 +24,7 @@ def resolve_vault(
             "Pass vault_address=... or set ORION_VAULT_ADDRESS."
         ),
     )
+    address = checksum_address(address)
     config = OrionConfig()
     progress_step("Checking vault registration and type")
     if config.is_encrypted_vault(address):

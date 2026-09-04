@@ -28,6 +28,8 @@ from orion_finance_sdk_py.costs.venues.uniswap_v3.rpc import connect_mainnet
 from orion_finance_sdk_py.costs.venues.uniswap_v3.simulator import simulate_asset_swap
 from orion_finance_sdk_py.rpc import block_at_timestamp, pick_default_mainnet_rpc
 
+from ..utils import checksum_address
+
 load_dotenv()
 
 _SUPPORTED_VENUES = frozenset({"uniswap_v3"})
@@ -100,11 +102,11 @@ class ExecutionCostEstimator:
         else:
             raise ValueError(f"Preloaded pool {state.meta.address} is not an USDC pair")
         if looks_like_address(str(symbol).strip()):
-            address = Web3.to_checksum_address(symbol)
+            address = checksum_address(symbol)
         return VenueAsset(
             symbol=str(ticker),
-            address=Web3.to_checksum_address(address),
-            pool=Web3.to_checksum_address(state.meta.address),
+            address=checksum_address(address),
+            pool=checksum_address(state.meta.address),
             fee=int(state.meta.fee),
         )
 
@@ -208,7 +210,7 @@ class ExecutionCostEstimator:
             return cached
 
         w3 = self._web3()
-        meta = PoolMeta(address=Web3.to_checksum_address(spec.pool), fee=spec.fee)
+        meta = PoolMeta(address=checksum_address(spec.pool), fee=spec.fee)
         enrich_pool_meta(w3, meta, block)
         state = fetch_pool_state(w3, meta, block)
         if state.liquidity == 0:

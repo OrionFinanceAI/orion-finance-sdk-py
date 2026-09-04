@@ -12,6 +12,7 @@ from web3.types import HexStr, TxParams
 from orion_finance_sdk_py.costs.venues.uniswap_v3.constants import (
     MULTICALL3_ADDRESS,
 )
+from orion_finance_sdk_py.utils import checksum_address
 
 POOL_ABI_FUNCTIONS = {
     "slot0": "0x3850c7bd",
@@ -58,7 +59,7 @@ def connect_mainnet(rpc_url: str) -> Web3:
 
 def _eth_call(w3: Web3, to: str, data: str, block_number: int) -> bytes:
     tx: TxParams = {
-        "to": Web3.to_checksum_address(to),
+        "to": checksum_address(to),
         "data": HexStr(data),
     }
     try:
@@ -108,7 +109,7 @@ def pool_fee(w3: Web3, pool: str, block_number: int) -> int:
 def pool_token(w3: Web3, pool: str, fn: str, block_number: int) -> str:
     """Return ``token0`` or ``token1`` for ``fn``."""
     raw = call_contract(w3, pool, POOL_ABI_FUNCTIONS[fn], b"", block_number)
-    return Web3.to_checksum_address(decode(["address"], raw)[0])
+    return checksum_address(decode(["address"], raw)[0])
 
 
 def factory_get_pool(
@@ -118,13 +119,13 @@ def factory_get_pool(
     encoded = encode(
         ["address", "address", "uint24"],
         [
-            Web3.to_checksum_address(token_a),
-            Web3.to_checksum_address(token_b),
+            checksum_address(token_a),
+            checksum_address(token_b),
             fee,
         ],
     )
     raw = call_contract(w3, factory, FACTORY_GET_POOL, encoded, block_number)
-    return Web3.to_checksum_address(decode(["address"], raw)[0])
+    return checksum_address(decode(["address"], raw)[0])
 
 
 def multicall_aggregate3(
@@ -143,7 +144,7 @@ def multicall_aggregate3(
     for i in range(0, len(calls), batch_size):
         chunk = calls[i : i + batch_size]
         tuples = [
-            (Web3.to_checksum_address(target), True, data) for target, data in chunk
+            (checksum_address(target), True, data) for target, data in chunk
         ]
         encoded = encode(["(address,bool,bytes)[]"], [tuples])
         raw = _eth_call(

@@ -239,13 +239,17 @@ def test_vault_redeem_requires_decommissioned(MockConfig, mock_exec):
             MockWeb3.return_value = w3
             MockWeb3.to_checksum_address.side_effect = lambda x: x
             with patch(
-                "orion_finance_sdk_py.contracts.load_contract_abi",
-                return_value=[],
+                "orion_finance_sdk_py.contracts.checksum_address",
+                side_effect=lambda x: x,
             ):
-                vault = OrionTransparentVault()
-                with pytest.raises(ValueError, match="decommissioned"):
-                    vault.redeem(1, "0xR", "0xO")
-                mock_exec.assert_not_called()
+                with patch(
+                    "orion_finance_sdk_py.contracts.load_contract_abi",
+                    return_value=[],
+                ):
+                    vault = OrionTransparentVault()
+                    with pytest.raises(ValueError, match="decommissioned"):
+                        vault.redeem(1, "0xR", "0xO")
+                    mock_exec.assert_not_called()
 
 
 @patch("orion_finance_sdk_py.lp.resolve_vault")

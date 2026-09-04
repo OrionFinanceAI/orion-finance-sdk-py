@@ -10,7 +10,7 @@ from web3 import Web3
 
 from .console_ui import progress_step
 from .contracts import TransactionResult
-from .utils import validate_var
+from .utils import checksum_address, validate_var
 
 IERC20_ABI: list[dict[str, Any]] = [
     {
@@ -81,7 +81,7 @@ IERC20_ABI: list[dict[str, Any]] = [
 def get_erc20(w3: Web3, token_address: str):
     """Return a web3 contract instance for an ERC-20 token."""
     return w3.eth.contract(
-        address=Web3.to_checksum_address(token_address),
+        address=checksum_address(token_address),
         abi=IERC20_ABI,
     )
 
@@ -90,15 +90,15 @@ def allowance(w3: Web3, token_address: str, owner: str, spender: str) -> int:
     """Read ERC-20 allowance."""
     token = get_erc20(w3, token_address)
     return token.functions.allowance(
-        Web3.to_checksum_address(owner),
-        Web3.to_checksum_address(spender),
+        checksum_address(owner),
+        checksum_address(spender),
     ).call()
 
 
 def balance_of(w3: Web3, token_address: str, account: str) -> int:
     """Read ERC-20 balance."""
     token = get_erc20(w3, token_address)
-    return token.functions.balanceOf(Web3.to_checksum_address(account)).call()
+    return token.functions.balanceOf(checksum_address(account)).call()
 
 
 def decimals(w3: Web3, token_address: str, block: int | None = None) -> int:
@@ -122,7 +122,7 @@ def symbol(w3: Web3, token_address: str, block: int | None = None) -> str:
         value = _call_symbol(token, block)
     except (OverflowError, DecodingError):
         token = w3.eth.contract(
-            address=Web3.to_checksum_address(token_address),
+            address=checksum_address(token_address),
             abi=[
                 {
                     "type": "function",
@@ -174,7 +174,7 @@ def approve(
         error_message=f"{key_env} environment variable is missing or invalid.",
     )
     token = get_erc20(w3, token_address)
-    fn = token.functions.approve(Web3.to_checksum_address(spender), amount)
+    fn = token.functions.approve(checksum_address(spender), amount)
     return _send_token_tx(w3, fn, key, "approve")
 
 
@@ -193,5 +193,5 @@ def transfer(
         error_message=f"{key_env} environment variable is missing or invalid.",
     )
     token = get_erc20(w3, token_address)
-    fn = token.functions.transfer(Web3.to_checksum_address(to), amount)
+    fn = token.functions.transfer(checksum_address(to), amount)
     return _send_token_tx(w3, fn, key, "transfer")

@@ -8,6 +8,7 @@ from web3 import Web3
 from web3.types import TxReceipt
 
 from .contracts import load_contract_abi
+from .utils import checksum_address
 
 _LP_EVENT_NAMES = (
     "DepositRequest",
@@ -43,10 +44,10 @@ def parse_lp_events_from_receipt(
         List of ``{"event", "args", "address", "logIndex"}`` dicts.
     """
     contract = w3.eth.contract(abi=_vault_event_abis())
-    vault_filter = Web3.to_checksum_address(vault_address) if vault_address else None
+    vault_filter = checksum_address(vault_address) if vault_address else None
     decoded: list[dict[str, Any]] = []
     for log in receipt.get("logs", []):
-        if vault_filter and Web3.to_checksum_address(log["address"]) != vault_filter:
+        if vault_filter and checksum_address(log["address"]) != vault_filter:
             continue
         for event_abi in _vault_event_abis():
             event = contract.events[event_abi["name"]]()
@@ -58,7 +59,7 @@ def parse_lp_events_from_receipt(
                 {
                     "event": parsed["event"],
                     "args": dict(parsed["args"]),
-                    "address": Web3.to_checksum_address(parsed["address"]),
+                    "address": checksum_address(parsed["address"]),
                     "logIndex": parsed.get("logIndex"),
                 }
             )
@@ -80,7 +81,7 @@ def get_lp_events(
     Public RPCs may rate-limit large ranges — prefer a dedicated ``RPC_URL``.
     """
     names = event_names or _LP_EVENT_NAMES
-    vault = Web3.to_checksum_address(vault_address)
+    vault = checksum_address(vault_address)
     contract = w3.eth.contract(address=vault, abi=_vault_event_abis())
     results: list[dict[str, Any]] = []
     for name in names:
@@ -91,7 +92,7 @@ def get_lp_events(
                 {
                     "event": parsed["event"],
                     "args": dict(parsed["args"]),
-                    "address": Web3.to_checksum_address(parsed["address"]),
+                    "address": checksum_address(parsed["address"]),
                     "blockNumber": parsed.get("blockNumber"),
                     "transactionHash": (
                         parsed["transactionHash"].hex()

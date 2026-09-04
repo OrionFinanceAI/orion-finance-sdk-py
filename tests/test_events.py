@@ -48,8 +48,7 @@ _MIN_EVENT_ABI = [
 
 
 @patch("orion_finance_sdk_py.events.load_contract_abi", return_value=_MIN_EVENT_ABI)
-@patch("orion_finance_sdk_py.events.Web3.to_checksum_address", side_effect=lambda x: x)
-def test_parse_lp_events_decodes_matching_log(mock_checksum, mock_abi):
+def test_parse_lp_events_decodes_matching_log(mock_abi):
     w3 = MagicMock()
     contract = MagicMock()
     w3.eth.contract.return_value = contract
@@ -117,8 +116,7 @@ def test_parse_lp_events_decodes_matching_log(mock_checksum, mock_abi):
 
 
 @patch("orion_finance_sdk_py.events.load_contract_abi", return_value=_MIN_EVENT_ABI)
-@patch("orion_finance_sdk_py.events.Web3.to_checksum_address", side_effect=lambda x: x)
-def test_parse_lp_events_filters_by_vault_address(mock_checksum, mock_abi):
+def test_parse_lp_events_filters_by_vault_address(mock_abi):
     w3 = MagicMock()
     contract = MagicMock()
     w3.eth.contract.return_value = contract
@@ -139,8 +137,7 @@ def test_parse_lp_events_filters_by_vault_address(mock_checksum, mock_abi):
 
 
 @patch("orion_finance_sdk_py.events.load_contract_abi", return_value=_MIN_EVENT_ABI)
-@patch("orion_finance_sdk_py.events.Web3.to_checksum_address", side_effect=lambda x: x)
-def test_parse_lp_events_skips_non_matching_log(mock_checksum, mock_abi):
+def test_parse_lp_events_skips_non_matching_log(mock_abi):
     w3 = MagicMock()
     contract = MagicMock()
     w3.eth.contract.return_value = contract
@@ -161,8 +158,7 @@ def test_parse_lp_events_skips_non_matching_log(mock_checksum, mock_abi):
 
 
 @patch("orion_finance_sdk_py.events.load_contract_abi", return_value=_MIN_EVENT_ABI)
-@patch("orion_finance_sdk_py.events.Web3.to_checksum_address", side_effect=lambda x: x)
-def test_get_lp_events_aggregates_and_sorts(mock_checksum, mock_abi):
+def test_get_lp_events_aggregates_and_sorts(mock_abi):
     w3 = MagicMock()
     contract = MagicMock()
     w3.eth.contract.return_value = contract
@@ -207,8 +203,7 @@ def test_get_lp_events_aggregates_and_sorts(mock_checksum, mock_abi):
 
 
 @patch("orion_finance_sdk_py.events.load_contract_abi", return_value=_MIN_EVENT_ABI)
-@patch("orion_finance_sdk_py.events.Web3.to_checksum_address", side_effect=lambda x: x)
-def test_get_lp_events_custom_names_and_null_tx_hash(mock_checksum, mock_abi):
+def test_get_lp_events_custom_names_and_null_tx_hash(mock_abi):
     w3 = MagicMock()
     contract = MagicMock()
     w3.eth.contract.return_value = contract

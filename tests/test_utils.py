@@ -4,7 +4,9 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
+from orion_finance_sdk_py.types import ZERO_ADDRESS
 from orion_finance_sdk_py.utils import (
+    checksum_address,
     ensure_env_file,
     format_transaction_logs,
     round_with_fixed_sum,
@@ -46,13 +48,29 @@ def test_validate_var():
     with pytest.raises(ValueError, match="Error"):
         validate_var(None, "Error")
 
-    from orion_finance_sdk_py.types import ZERO_ADDRESS
-
     with pytest.raises(ValueError, match="Error"):
         validate_var(ZERO_ADDRESS, "Error")
 
     # Should not raise
     validate_var("0x123", "Error")
+
+
+def test_checksum_address_lower_and_mixed_case():
+    """Lowercase and already-checksummed addresses normalize to EIP-55."""
+    lower = "0x6121eaa1d94a519653721904ceab48edd98f2c3a"
+    checksummed = "0x6121Eaa1D94A519653721904CEAb48eDD98f2c3a"
+    assert checksum_address(lower) == checksummed
+    assert checksum_address(checksummed) == checksummed
+    assert checksum_address(f"  {lower}  ") == checksummed
+    assert checksum_address(ZERO_ADDRESS) == ZERO_ADDRESS
+
+
+def test_checksum_address_invalid_raises():
+    """Non-address strings fail after checksum attempt."""
+    with pytest.raises(ValueError, match="Invalid Ethereum address"):
+        checksum_address("notanaddr")
+    with pytest.raises(ValueError, match="Invalid Ethereum address"):
+        checksum_address("0x123")
 
 
 def test_validate_performance_fee():
@@ -111,33 +129,36 @@ def test_round_with_fixed_sum():
 @patch("orion_finance_sdk_py.contracts.OrionConfig")
 def test_validate_order(MockOrionConfig):
     """Test order validation."""
+    token_a = "0x1111111111111111111111111111111111111111"
+    token_b = "0x2222222222222222222222222222222222222222"
+
     # Setup mock
     mock_config = MockOrionConfig.return_value
     mock_config.is_whitelisted.return_value = True
     mock_config.strategist_intent_decimals = 9
 
-    order = {"0xA": 0.5, "0xB": 0.5}
+    order = {token_a: 0.5, token_b: 0.5}
 
     # Normal case
     result = validate_order(order)
-    assert "0xA" in result
-    assert result["0xA"] == 500000000
+    assert token_a in result
+    assert result[token_a] == 500000000
 
     # Not whitelisted
-    mock_config.is_whitelisted.side_effect = lambda x: x == "0xA"
+    mock_config.is_whitelisted.side_effect = lambda x: x == token_a
     with pytest.raises(ValueError, match="not whitelisted"):
-        validate_order({"0xB": 1.0})
+        validate_order({token_b: 1.0})
 
     mock_config.is_whitelisted.return_value = True
     mock_config.is_whitelisted.side_effect = None
 
     # Negative weights
     with pytest.raises(ValueError, match="must be positive"):
-        validate_order({"0xA": -0.1, "0xB": 1.1})
+        validate_order({token_a: -0.1, token_b: 1.1})
 
     # Sum not 1
     with pytest.raises(ValueError, match="sum of amounts is not 1"):
-        validate_order({"0xA": 0.5, "0xB": 0.4})
+        validate_order({token_a: 0.5, token_b: 0.4})
 
 
 def test_format_transaction_logs(capsys):

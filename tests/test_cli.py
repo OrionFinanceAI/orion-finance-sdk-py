@@ -3,12 +3,35 @@
 import os
 from unittest.mock import MagicMock, patch
 
+import pytest
 from orion_finance_sdk_py.cli import app
 from orion_finance_sdk_py.types import ZERO_ADDRESS
+from orion_finance_sdk_py.utils import checksum_address
 from typer.testing import CliRunner
 
 # Initialize CliRunner
 runner = CliRunner()
+
+VAULT_LOWER = "0x6121eaa1d94a519653721904ceab48edd98f2c3a"
+VAULT_CHECKSUM = checksum_address(VAULT_LOWER)
+ACL_LOWER = "0x98055287504d8288d0f1438d41c9e1b6d69717ac"
+ACL_CHECKSUM = checksum_address(ACL_LOWER)
+
+
+@pytest.fixture(autouse=True)
+def _identity_cli_checksum(request):
+    """Keep fake test addresses working unless marked with ``real_checksum``."""
+    if getattr(request.function, "real_checksum", False):
+        yield
+        return
+    with patch("orion_finance_sdk_py.cli.checksum_address", side_effect=lambda x: x):
+        yield
+
+
+def _real_checksum(fn):
+    """Skip the identity checksum fixture for this test."""
+    fn.real_checksum = True
+    return fn
 
 
 def _cli_output(result) -> str:
@@ -112,6 +135,7 @@ def test_submit_intent_transparent(
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xTransVault"]
+    mock_config.is_orion_vault.return_value = True
 
     mock_vault = MockVault.return_value
     mock_vault.submit_order_intent.return_value = MagicMock(decoded_logs=[])
@@ -168,6 +192,7 @@ def test_submit_intent_inline_json(mock_validate, mock_ensure, MockConfig, MockV
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xTransVault"]
+    mock_config.is_orion_vault.return_value = True
 
     mock_vault = MockVault.return_value
     mock_vault.submit_order_intent.return_value = MagicMock(decoded_logs=[])
@@ -190,6 +215,7 @@ def test_update_strategist(mock_ensure, MockConfig, MockVault):
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xVault"]
+    mock_config.is_orion_vault.return_value = True
 
     mock_vault = MockVault.return_value
     mock_vault.update_strategist.return_value = MagicMock(decoded_logs=[])
@@ -212,6 +238,7 @@ def test_update_fee_model(mock_ensure, MockConfig, MockVault):
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xVault"]
+    mock_config.is_orion_vault.return_value = True
 
     mock_vault = MockVault.return_value
     mock_vault.update_fee_model.return_value = MagicMock(decoded_logs=[])
@@ -274,6 +301,7 @@ def test_submit_intent_unknown_vault(mock_ensure_env, MockOrionConfig, tmp_path)
     mock_config = MockOrionConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xTrans"]
+    mock_config.is_orion_vault.return_value = False
 
     # Create dummy order file
     order_file = tmp_path / "order.json"
@@ -299,6 +327,7 @@ def test_get_pending_fees(mock_ensure, MockConfig, MockVault):
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xVault"]
+    mock_config.is_orion_vault.return_value = True
 
     mock_vault = MockVault.return_value
     mock_vault.pending_vault_fees = 12345
@@ -334,6 +363,7 @@ def test_claim_fees_logic(mock_ensure, MockConfig, MockVault):
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xVault"]
+    mock_config.is_orion_vault.return_value = True
 
     mock_vault = MockVault.return_value
     mock_vault.transfer_manager_fees.return_value = MagicMock(decoded_logs=[])
@@ -359,10 +389,53 @@ def test_update_dac_logic(mock_ensure, MockVault):
             mock_config = MockConfig.return_value
             mock_config.is_encrypted_vault.return_value = False
             mock_config.orion_transparent_vaults = ["0xVault"]
+            mock_config.is_orion_vault.return_value = True
 
             _update_deposit_access_control_logic("0xNewDAC")
 
     mock_vault.set_deposit_access_control.assert_called_with("0xNewDAC")
+
+
+@patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_update_hac_logic(mock_ensure, MockVault):
+    """Test update holder access control logic function directly."""
+    from orion_finance_sdk_py.cli import _update_holder_access_control_logic
+
+    mock_vault = MockVault.return_value
+    mock_vault.set_holder_access_control.return_value = MagicMock(decoded_logs=[])
+
+    with patch.dict(os.environ, {"ORION_VAULT_ADDRESS": "0xVault"}):
+        with patch("orion_finance_sdk_py.cli.OrionConfig") as MockConfig:
+            mock_config = MockConfig.return_value
+            mock_config.is_encrypted_vault.return_value = False
+            mock_config.orion_transparent_vaults = ["0xVault"]
+            mock_config.is_orion_vault.return_value = True
+
+            _update_holder_access_control_logic("0xNewHAC")
+
+    mock_vault.set_holder_access_control.assert_called_with("0xNewHAC")
+
+
+@patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_update_tac_logic(mock_ensure, MockVault):
+    """Test update transfer access control logic function directly."""
+    from orion_finance_sdk_py.cli import _update_transfer_access_control_logic
+
+    mock_vault = MockVault.return_value
+    mock_vault.set_transfer_access_control.return_value = MagicMock(decoded_logs=[])
+
+    with patch.dict(os.environ, {"ORION_VAULT_ADDRESS": "0xVault"}):
+        with patch("orion_finance_sdk_py.cli.OrionConfig") as MockConfig:
+            mock_config = MockConfig.return_value
+            mock_config.is_encrypted_vault.return_value = False
+            mock_config.orion_transparent_vaults = ["0xVault"]
+            mock_config.is_orion_vault.return_value = True
+
+            _update_transfer_access_control_logic("0xNewTAC")
+
+    mock_vault.set_transfer_access_control.assert_called_with("0xNewTAC")
 
 
 @patch("orion_finance_sdk_py.cli.interactive_menu")
@@ -622,3 +695,47 @@ def test_entry_point_value_error(mock_app, mock_print_error):
         entry_point()
     mock_print_error.assert_called_once_with("boom")
     mock_exit.assert_called_once_with(1)
+
+
+@_real_checksum
+@patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+def test_resolve_vault_accepts_lowercase_address(MockConfig, MockVault):
+    """Lowercase vault env is checksummed; case-sensitive list membership is not used."""
+    from orion_finance_sdk_py.cli import _resolve_vault
+
+    mock_config = MockConfig.return_value
+    mock_config.is_encrypted_vault.return_value = False
+    mock_config.is_orion_vault.return_value = True
+
+    vault = _resolve_vault(mock_config, VAULT_LOWER)
+
+    mock_config.is_orion_vault.assert_called_once_with(VAULT_CHECKSUM)
+    assert vault is MockVault.return_value
+
+
+@_real_checksum
+@patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+def test_update_dac_logic_checksums_address(MockConfig, MockVault):
+    """ACL setter args are checksummed before the vault call."""
+    from orion_finance_sdk_py.cli import _update_deposit_access_control_logic
+
+    mock_config = MockConfig.return_value
+    mock_config.is_encrypted_vault.return_value = False
+    mock_config.is_orion_vault.return_value = True
+    mock_vault = MockVault.return_value
+    mock_vault.set_deposit_access_control.return_value = MagicMock(decoded_logs=[])
+
+    with patch.dict(os.environ, {"ORION_VAULT_ADDRESS": VAULT_LOWER}):
+        _update_deposit_access_control_logic(ACL_LOWER)
+
+    mock_vault.set_deposit_access_control.assert_called_once_with(ACL_CHECKSUM)
+
+
+@_real_checksum
+def test_cli_checksum_rejects_invalid_address():
+    from orion_finance_sdk_py.cli import _update_deposit_access_control_logic
+
+    with pytest.raises(ValueError, match="Invalid Ethereum address"):
+        _update_deposit_access_control_logic("not-an-address")
