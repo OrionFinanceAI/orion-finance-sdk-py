@@ -15,7 +15,9 @@ from web3.types import HexStr, TxReceipt
 from .console_ui import progress_step
 from .orion_config_env import (
     MAINNET_CHAIN_ID,
+    has_explicit_chain_selection,
     resolve_active_chain_id,
+    resolve_ambiguous_write_rpc_url,
     resolve_configured_write_rpc_url,
     resolve_orion_config_address,
     write_rpc_env_name,
@@ -115,55 +117,73 @@ def load_contract_abi(contract_name: str) -> list[dict]:
             return json.load(f)["abi"]
 
 
+def _connect_write_web3() -> Web3:
+    """Connect to the configured write RPC and validate chain selection."""
+    chain_id = resolve_active_chain_id()
+    rpc_url: str | None
+    if has_explicit_chain_selection():
+        rpc_url = resolve_configured_write_rpc_url(chain_id)
+    else:
+        rpc_url = resolve_ambiguous_write_rpc_url()
+
+    if not rpc_url:
+        load_dotenv(os.getcwd() + "/.env")
+        chain_id = resolve_active_chain_id()
+        if has_explicit_chain_selection():
+            rpc_url = resolve_configured_write_rpc_url(chain_id)
+        else:
+            rpc_url = resolve_ambiguous_write_rpc_url()
+
+    rpc_env_name = write_rpc_env_name(chain_id)
+    if rpc_url:
+        rpc_url = validate_var(
+            rpc_url,
+            error_message=(
+                f"{rpc_env_name} environment variable is missing or invalid. "
+                f"Please set {rpc_env_name} in your .env file or as an environment variable. "
+            ),
+        )
+    else:
+        default_rpc = (
+            pick_default_mainnet_rpc()
+            if chain_id == MAINNET_CHAIN_ID
+            else pick_default_rpc()
+        )
+        if not default_rpc:
+            raise ValueError(
+                f"{rpc_env_name} environment variable is missing or invalid, and no default "
+                f"public RPC responded. Please set {rpc_env_name} in your .env file or as an "
+                "environment variable."
+            )
+        rpc_url = default_rpc
+
+    w3 = Web3(make_http_provider(rpc_url))
+    rpc_chain_id = w3.eth.chain_id
+
+    if has_explicit_chain_selection():
+        expected_chain_id = resolve_active_chain_id()
+        if expected_chain_id != rpc_chain_id:
+            raise ValueError(
+                f"Configured chain ({expected_chain_id}) does not match RPC chain ID "
+                f"({rpc_chain_id}). Fix CHAIN/CHAIN_ID or use the matching RPC URL."
+            )
+
+    return w3
+
+
 class OrionSmartContract:
     """Base class for Orion smart contracts."""
 
-    def __init__(self, contract_name: str, contract_address: str):
+    def __init__(
+        self,
+        contract_name: str,
+        contract_address: str,
+        *,
+        w3: Web3 | None = None,
+    ):
         """Initialize a smart contract."""
-        chain_id = resolve_active_chain_id()
-        rpc_url = resolve_configured_write_rpc_url(chain_id)
-        if not rpc_url:
-            # Try loading from current directory explicitly
-            load_dotenv(os.getcwd() + "/.env")
-            chain_id = resolve_active_chain_id()
-            rpc_url = resolve_configured_write_rpc_url(chain_id)
-
-        rpc_env_name = write_rpc_env_name(chain_id)
-        if rpc_url:
-            rpc_url = validate_var(
-                rpc_url,
-                error_message=(
-                    f"{rpc_env_name} environment variable is missing or invalid. "
-                    f"Please set {rpc_env_name} in your .env file or as an environment variable. "
-                ),
-            )
-        else:
-            default_rpc = (
-                pick_default_mainnet_rpc()
-                if chain_id == MAINNET_CHAIN_ID
-                else pick_default_rpc()
-            )
-            if not default_rpc:
-                raise ValueError(
-                    f"{rpc_env_name} environment variable is missing or invalid, and no default "
-                    f"public RPC responded. Please set {rpc_env_name} in your .env file or as an "
-                    "environment variable."
-                )
-            rpc_url = default_rpc
-
-        self.w3 = Web3(make_http_provider(rpc_url))
+        self.w3 = w3 if w3 is not None else _connect_write_web3()
         self.chain_id = self.w3.eth.chain_id
-
-        env_chain_id = os.getenv("CHAIN_ID")
-        if env_chain_id:
-            try:
-                env_chain_id_int = int(env_chain_id)
-                if env_chain_id_int != self.chain_id:
-                    print(
-                        f"⚠️ Warning: CHAIN_ID in env ({env_chain_id}) does not match RPC chain ID ({self.chain_id})"
-                    )
-            except ValueError:
-                print(f"⚠️ Warning: Invalid CHAIN_ID in env: {env_chain_id}")
 
         self.contract_name = contract_name
         self.contract_address = checksum_address(contract_address)
@@ -357,10 +377,12 @@ class OrionConfig(OrionSmartContract):
 
     def __init__(self):
         """Initialize the OrionConfig contract."""
-        contract_address = resolve_orion_config_address()
+        w3 = _connect_write_web3()
+        contract_address = resolve_orion_config_address(chain_id=w3.eth.chain_id)
         super().__init__(
             contract_name="OrionConfig",
             contract_address=contract_address,
+            w3=w3,
         )
 
     @property

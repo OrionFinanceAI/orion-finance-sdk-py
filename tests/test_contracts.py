@@ -287,8 +287,9 @@ class TestOrionSmartContract:
             os.environ.update(saved_env)
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
-    def test_init_mainnet_uses_mainnet_rpc_and_default(self):
+    def test_init_mainnet_uses_mainnet_rpc_and_default(self, mock_w3):
         """CHAIN=mainnet uses MAINNET_RPC_URL / pick_default_mainnet_rpc, not Sepolia."""
+        mock_w3.eth.chain_id = 1
         saved_env = dict(os.environ)
         try:
             os.environ.pop("SEPOLIA_RPC_URL", None)
@@ -457,8 +458,9 @@ class TestOrionConfig:
         assert config.price_adapter_decimals == 8
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
-    def test_init_mainnet_requires_mainnet_env(self):
+    def test_init_mainnet_requires_mainnet_env(self, mock_w3):
         """CHAIN=mainnet reads MAINNET_* only; SEPOLIA_* and ORION_CONFIG_ADDRESS are ignored."""
+        mock_w3.eth.chain_id = 1
         with patch.dict(
             os.environ,
             {
@@ -476,7 +478,7 @@ class TestOrionConfig:
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_init_chain_mismatch(self):
-        """Test init with chain ID mismatch warning."""
+        """Explicit CHAIN/CHAIN_ID must match the RPC provider chain ID."""
         # mock_w3 provides chain_id=11155111
         with patch.dict(
             os.environ,
@@ -485,13 +487,42 @@ class TestOrionConfig:
                 "CHAIN": "mainnet",
                 "MAINNET_RPC_URL": "http://localhost",
             },
+            clear=True,
         ):
-            with patch("builtins.print") as mock_print:
-                # We instantiate a base contract which does the check
+            with pytest.raises(ValueError, match="does not match RPC chain ID"):
                 OrionSmartContract("Test", "0xAddress")
-                mock_print.assert_called_with(
-                    "⚠️ Warning: CHAIN_ID in env (1) does not match RPC chain ID (11155111)"
-                )
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
+    def test_orion_config_resolves_address_from_rpc_without_chain_id(self, mock_w3):
+        """Mainnet RPC with no CHAIN_ID uses MAINNET_ORION_CONFIG_ADDRESS."""
+        mainnet_config = "0x1111111111111111111111111111111111111111"
+        mock_w3.eth.chain_id = 1
+        with patch.dict(
+            os.environ,
+            {
+                "MAINNET_RPC_URL": "http://localhost",
+                "MAINNET_ORION_CONFIG_ADDRESS": mainnet_config,
+            },
+            clear=True,
+        ):
+            config = OrionConfig()
+            assert config.chain_id == 1
+            assert config.contract_address == mainnet_config
+
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
+    def test_orion_config_rejects_both_rpc_urls_without_chain(self):
+        """Both RPC URLs set without CHAIN/CHAIN_ID is rejected."""
+        with patch.dict(
+            os.environ,
+            {
+                "MAINNET_RPC_URL": "http://mainnet",
+                "SEPOLIA_RPC_URL": "http://sepolia",
+                "SEPOLIA_ORION_CONFIG_ADDRESS": "0xbDe3025d08681a02a1c6cf70375baBe2152DD06f",
+            },
+            clear=True,
+        ):
+            with pytest.raises(ValueError, match="CHAIN or CHAIN_ID is required"):
+                OrionConfig()
 
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_init_invalid_chain_id_env(self):

@@ -28,6 +28,38 @@ def parse_chain_name(name: str) -> int:
     return SUPPORTED_CHAIN_NAMES[key]
 
 
+def has_explicit_chain_selection(
+    env: Mapping[str, str] | None = None,
+) -> bool:
+    """Return True when ``CHAIN`` or ``CHAIN_ID`` is set in the environment."""
+    source: Mapping[str, str | None] = env if env is not None else os.environ
+    if (source.get("CHAIN") or "").strip():
+        return True
+    return bool((source.get("CHAIN_ID") or "").strip())
+
+
+def resolve_ambiguous_write_rpc_url(
+    env: Mapping[str, str] | None = None,
+) -> str | None:
+    """Pick the sole configured write RPC when ``CHAIN`` / ``CHAIN_ID`` is unset.
+
+    Raises ``ValueError`` when both chain-scoped RPC URLs are set.
+    """
+    source: Mapping[str, str | None] = env if env is not None else os.environ
+    mainnet = (source.get("MAINNET_RPC_URL") or "").strip()
+    sepolia = (source.get("SEPOLIA_RPC_URL") or "").strip()
+    if mainnet and sepolia:
+        raise ValueError(
+            "CHAIN or CHAIN_ID is required when both MAINNET_RPC_URL and "
+            "SEPOLIA_RPC_URL are set."
+        )
+    if mainnet:
+        return mainnet
+    if sepolia:
+        return sepolia
+    return None
+
+
 def resolve_active_chain_id(
     chain_cli: str | None = None,
     env: Mapping[str, str] | None = None,
