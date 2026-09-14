@@ -5,8 +5,10 @@ from orion_finance_sdk_py.orion_config_env import (
     MAINNET_CHAIN_ID,
     SEPOLIA_CHAIN_ID,
     SEPOLIA_ORION_CONFIG,
+    has_explicit_chain_selection,
     parse_chain_name,
     resolve_active_chain_id,
+    resolve_ambiguous_write_rpc_url,
     resolve_configured_write_rpc_url,
     resolve_orion_config_address,
     write_rpc_env_name,
@@ -98,6 +100,23 @@ def test_parse_and_resolve_active_chain():
     assert resolve_active_chain_id("sepolia", {"CHAIN": "mainnet"}) == SEPOLIA_CHAIN_ID
     with pytest.raises(ValueError, match="Unsupported chain"):
         parse_chain_name("base")
+
+
+def test_ambiguous_write_rpc_url():
+    assert resolve_ambiguous_write_rpc_url({"MAINNET_RPC_URL": "http://m"}) == "http://m"
+    assert resolve_ambiguous_write_rpc_url({"SEPOLIA_RPC_URL": "http://s"}) == "http://s"
+    assert resolve_ambiguous_write_rpc_url({}) is None
+    with pytest.raises(ValueError, match="CHAIN or CHAIN_ID is required"):
+        resolve_ambiguous_write_rpc_url(
+            {"MAINNET_RPC_URL": "http://m", "SEPOLIA_RPC_URL": "http://s"}
+        )
+
+
+def test_has_explicit_chain_selection():
+    assert has_explicit_chain_selection({}) is False
+    assert has_explicit_chain_selection({"CHAIN": "mainnet"}) is True
+    assert has_explicit_chain_selection({"CHAIN_ID": "1"}) is True
+    assert has_explicit_chain_selection({"CHAIN": " ", "CHAIN_ID": " "}) is False
 
 
 def test_write_rpc_env_is_chain_scoped():
