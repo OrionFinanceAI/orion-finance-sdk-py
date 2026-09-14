@@ -239,6 +239,31 @@ class TestOrionSmartContract:
             os.environ.clear()
             os.environ.update(saved)
 
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
+    def test_init_load_dotenv_before_chain_selection(self, mock_w3):
+        """load_dotenv runs before chain/RPC selection even when one RPC is set."""
+        mock_w3.eth.chain_id = 1
+        saved = dict(os.environ)
+        try:
+            os.environ.clear()
+            os.environ["SEPOLIA_RPC_URL"] = "http://sepolia-should-not-be-used"
+
+            def _inject_chain_from_dotenv(*_a, **_k):
+                os.environ["CHAIN"] = "mainnet"
+                os.environ["CHAIN_ID"] = "1"
+                os.environ["MAINNET_RPC_URL"] = "http://localhost"
+
+            with patch(
+                "orion_finance_sdk_py.contracts.load_dotenv",
+                side_effect=_inject_chain_from_dotenv,
+            ) as mock_load:
+                c = OrionSmartContract("TestContract", "0xAddress")
+            mock_load.assert_called_once()
+            assert c.chain_id == 1
+        finally:
+            os.environ.clear()
+            os.environ.update(saved)
+
     @pytest.mark.usefixtures("mock_load_abi")
     def test_init_no_rpc_raises_when_no_default(self):
         """No chain-scoped RPC and public RPC cascade fails: ValueError."""

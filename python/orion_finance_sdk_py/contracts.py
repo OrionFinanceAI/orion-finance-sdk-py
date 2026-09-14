@@ -119,20 +119,13 @@ def load_contract_abi(contract_name: str) -> list[dict]:
 
 def _connect_write_web3() -> Web3:
     """Connect to the configured write RPC and validate chain selection."""
+    load_dotenv(os.getcwd() + "/.env")
     chain_id = resolve_active_chain_id()
     rpc_url: str | None
     if has_explicit_chain_selection():
         rpc_url = resolve_configured_write_rpc_url(chain_id)
     else:
         rpc_url = resolve_ambiguous_write_rpc_url()
-
-    if not rpc_url:
-        load_dotenv(os.getcwd() + "/.env")
-        chain_id = resolve_active_chain_id()
-        if has_explicit_chain_selection():
-            rpc_url = resolve_configured_write_rpc_url(chain_id)
-        else:
-            rpc_url = resolve_ambiguous_write_rpc_url()
 
     rpc_env_name = write_rpc_env_name(chain_id)
     if rpc_url:
