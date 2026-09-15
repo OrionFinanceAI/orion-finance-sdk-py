@@ -102,7 +102,7 @@ orion --help
 Or install from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=2.2.2"
+pip install "orion-finance-sdk-py>=2.2.3"
 ```
 
 Running `orion` with no arguments opens the {ref}`interactive console <orion-console>`.

@@ -102,6 +102,7 @@ def mock_env():
     """Mock environment variables."""
     env_vars = {
         "SEPOLIA_RPC_URL": "http://localhost:8545",
+        "CHAIN": "sepolia",
         "CHAIN_ID": "11155111",
         "STRATEGIST_ADDRESS": "0xStrategist",
         "CURATOR_ADDRESS": "0xCurator",
@@ -1118,17 +1119,50 @@ class TestOrionVaults:
         assert vault.convert_to_assets(10, block=50) == 100
         assert vault.get_portfolio(block=50) == {"0xA": 100, "0xB": 200}
 
+        config_instance.underlying_asset = "0xUnderlying"
+        config_instance.token_decimals = MagicMock(return_value=6)
+
         with patch(
             "orion_finance_sdk_py.contracts.PriceAdapterRegistry"
         ) as MockRegistry:
             reg = MockRegistry.return_value
             reg.get_prices.return_value = {"0xA": 10**8, "0xB": 10**8}
             reg.price_adapter_decimals = 8
-            # values: 100*1e8/1e8=100, 200*1e8/1e8=200 → total 300 → 1/3, 2/3
+            # Same token/underlying decimals (6): value = shares * price / 10**8
+            # → 100 + 200 = 300 → weights 1/3, 2/3
             assert vault.point_in_time_total_assets() == 300
             pct = vault.get_portfolio_pct_tvl()
             assert abs(pct["0xA"] - 100 / 300) < 1e-9
             assert abs(pct["0xB"] - 200 / 300) < 1e-9
+            reg.get_prices.assert_called_with(assets=vault.get_portfolio().keys())
+
+        # Mixed 6- vs 18-decimal holdings: equal whole-token notionals → equal weights
+        vault.contract.functions.getPortfolio().call.return_value = (
+            ["0xA", "0xB"],
+            [1_000_000, 10**18],  # 1 whole token each
+        )
+
+        def _token_decimals(addr: str) -> int:
+            return 6 if addr in ("0xUnderlying", "0xA") else 18
+
+        config_instance.token_decimals = MagicMock(side_effect=_token_decimals)
+        with patch(
+            "orion_finance_sdk_py.contracts.PriceAdapterRegistry"
+        ) as MockRegistry:
+            reg = MockRegistry.return_value
+            reg.get_prices.return_value = {"0xA": 10**8, "0xB": 10**8}
+            reg.price_adapter_decimals = 8
+            # Each position → 1e6 underlying base units; total 2e6
+            assert vault.point_in_time_total_assets() == 2_000_000
+            pct = vault.get_portfolio_pct_tvl()
+            assert abs(pct["0xA"] - 0.5) < 1e-9
+            assert abs(pct["0xB"] - 0.5) < 1e-9
+
+        vault.contract.functions.getPortfolio().call.return_value = (
+            ["0xA", "0xB"],
+            [100, 200],
+        )
+        config_instance.token_decimals = MagicMock(return_value=6)
 
         with patch(
             "orion_finance_sdk_py.contracts.PriceAdapterRegistry"
@@ -1149,8 +1183,6 @@ class TestOrionVaults:
             assert vault.point_in_time_total_assets() == 0
             assert vault.get_portfolio_pct_tvl() == {}
 
-        config_instance.token_decimals = MagicMock(return_value=6)
-        config_instance.underlying_asset = "0xUnderlying"
         vault.contract.functions.pendingVaultFees().call.return_value = 1_000_000
         assert vault.pending_vault_fees == 1.0
 
