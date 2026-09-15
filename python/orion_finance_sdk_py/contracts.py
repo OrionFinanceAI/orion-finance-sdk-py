@@ -1658,7 +1658,14 @@ class OrionVault(OrionSmartContract):
     ) -> dict[str, int]:
         """Value each portfolio position using PIT prices from the registry.
 
-        Position value (underlying units) is ``shares * price / 10**decimals``.
+        Position value in underlying base units (same scaling as ``total_assets``):
+
+        ``shares * price * 10**underlying_decimals
+          / (10**price_adapter_decimals * 10**token_decimals)``
+
+        ``getPortfolio`` balances and ``OrionConfig.token_decimals`` are both in
+        raw ERC-20 base units; registry prices are scaled by
+        ``price_adapter_decimals`` as ~underlying per 1 whole token.
         """
         if portfolio is None:
             raw_portfolio = self.get_portfolio()
@@ -1671,10 +1678,12 @@ class OrionVault(OrionSmartContract):
         if not portfolio:
             return {}
 
+        config = OrionConfig()
+        underlying_decimals = config.token_decimals(config.underlying_asset)
         registry = PriceAdapterRegistry()
-        prices = registry.get_prices()
-        decimals = registry.price_adapter_decimals
-        scale = 10**decimals
+        prices = registry.get_prices(assets=portfolio.keys())
+        price_scale = 10**registry.price_adapter_decimals
+        underlying_scale = 10**underlying_decimals
 
         # Normalize price keys for lookup (checksum + lowercase)
         price_by_lower = {addr.lower(): price for addr, price in prices.items()}
@@ -1688,22 +1697,27 @@ class OrionVault(OrionSmartContract):
                     "Token may not be in the investment universe."
                 )
             price = price_by_lower[checksum.lower()]
-            values[checksum] = (int(shares) * int(price)) // scale
+            token_scale = 10 ** config.token_decimals(checksum)
+            values[checksum] = (
+                int(shares) * int(price) * underlying_scale
+            ) // (price_scale * token_scale)
         return values
 
     def point_in_time_total_assets(self) -> int:
         """Estimate vault TVL from portfolio shares and PIT oracle prices.
 
         Returns:
-            Sum of position values in underlying units (same scaling as registry
-            prices after dividing by ``price_adapter_decimals``).
+            Sum of position values in underlying base units (same scaling as
+            ``total_assets``). Uses ``OrionConfig.token_decimals`` for each
+            holding and for the vault underlying.
         """
         return sum(self._portfolio_position_values().values())
 
     def get_portfolio_pct_tvl(self) -> dict[str, float]:
         """Portfolio weights as fractions of PIT TVL (sum to ~1.0).
 
-        Combines ``get_portfolio()`` with ``PriceAdapterRegistry.get_prices()``.
+        Combines ``get_portfolio()`` with ``PriceAdapterRegistry.get_prices()``,
+        normalizing each holding by its token decimals.
 
         Returns:
             Mapping of checksummed token address to weight in [0, 1]. Empty if
