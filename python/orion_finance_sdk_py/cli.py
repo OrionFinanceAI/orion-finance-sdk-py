@@ -159,10 +159,24 @@ def _update_strategist_logic(new_strategist_address: str):
     format_transaction_logs(tx_result, "Strategist address updated successfully")
 
 
+def _format_cooldown_duration(seconds: int) -> str:
+    """Format a cooldown duration in seconds for console output."""
+    if seconds >= 86_400 and seconds % 86_400 == 0:
+        days = seconds // 86_400
+        return f"{days} day{'s' if days != 1 else ''}"
+    if seconds >= 3_600 and seconds % 3_600 == 0:
+        hours = seconds // 3_600
+        return f"{hours} hour{'s' if hours != 1 else ''}"
+    if seconds >= 60 and seconds % 60 == 0:
+        minutes = seconds // 60
+        return f"{minutes} minute{'s' if minutes != 1 else ''}"
+    return f"{seconds} second{'s' if seconds != 1 else ''}"
+
+
 def _update_fee_model_logic(
     fee_type_value: int, performance_fee_bp: int, management_fee_bp: int
 ):
-    """Logic for updating fee model."""
+    """Logic for updating fee model (schedules a change; cooldown applies)."""
     vault_address = validate_var(
         os.getenv("ORION_VAULT_ADDRESS"),
         error_message=(
@@ -180,7 +194,24 @@ def _update_fee_model_logic(
             performance_fee=performance_fee_bp,
             management_fee=management_fee_bp,
         )
-    format_transaction_logs(tx_result, "Fee model updated successfully")
+        cooldown_seconds = config.fee_change_cooldown_duration
+
+    format_transaction_logs(tx_result, "Fee model change scheduled")
+    cooldown_label = _format_cooldown_duration(cooldown_seconds)
+    print_warn(
+        "New fee rates are not active yet. The previous activeFeeModel stays in "
+        "effect until the fee-change cooldown ends (protects LPs from griefing)."
+    )
+    print_key_value(
+        [
+            ("Cooldown", f"{cooldown_label} ({cooldown_seconds}s)"),
+            (
+                "Active fees",
+                "Unchanged until newFeeRatesTimestamp; then the scheduled model applies",
+            ),
+        ],
+        title="Fee change timelock",
+    )
 
 
 def _update_deposit_access_control_logic(new_dac_address: str):
@@ -431,7 +462,9 @@ def _main_menu_choices():
         _menu_section("Vault"),
         _menu_choice("Deploy Vault", "Create a new Orion vault"),
         _menu_choice("Update Strategist", "Change vault strategist"),
-        _menu_choice("Update Fee Model", "Change fee type and rates"),
+        _menu_choice(
+            "Update Fee Model", "Schedule fee type/rates (cooldown applies)"
+        ),
         _menu_choice("Remove Vault", "Start irreversible decommission"),
         _menu_section("Strategist"),
         _menu_choice("Submit Intent", "Submit strategist weights"),
@@ -884,7 +917,12 @@ def update_fee_model(
         ..., help="Management fee in percentage i.e. 2.1 (maximum 3%)"
     ),
 ) -> None:
-    """Update the fee model for an Orion vault."""
+    """Schedule a fee-model change for an Orion vault.
+
+    New rates are stored onchain immediately but become active only after
+    ``feeChangeCooldownDuration`` (timelock against fee griefing). Until then,
+    ``activeFeeModel`` still returns the previous fees.
+    """
     fee_type_int = fee_type_to_int[fee_type.value]
     _update_fee_model_logic(
         fee_type_int,

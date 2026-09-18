@@ -102,7 +102,7 @@ orion --help
 Or install from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=2.2.3"
+pip install "orion-finance-sdk-py>=2.2.4"
 ```
 
 Running `orion` with no arguments opens the {ref}`interactive console <orion-console>`.
@@ -272,6 +272,11 @@ orion update-fee-model \
   --performance-fee 5.5 \
   --management-fee 0.1
 ```
+
+`update-fee-model` **schedules** a fee change. New rates are stored onchain
+immediately but become active only after `feeChangeCooldownDuration` (a
+timelock that protects LPs from fee griefing). Until then,
+`active_fee_model` still returns the previous fees.
 
 ### LP deposit / redeem
 

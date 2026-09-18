@@ -1431,7 +1431,13 @@ class OrionVault(OrionSmartContract):
     def update_fee_model(
         self, fee_type: int, performance_fee: int, management_fee: int
     ) -> TransactionResult:
-        """Update the fee model for the vault."""
+        """Schedule a fee-model change for the vault.
+
+        Stores the new rates immediately and sets ``newFeeRatesTimestamp`` to
+        ``block.timestamp + OrionConfig.fee_change_cooldown_duration``. Until
+        that timestamp, ``active_fee_model`` still returns the previous fees
+        (LP griefing protection).
+        """
         config = OrionConfig()
         if not config.is_system_idle():
             raise SystemNotIdleError(

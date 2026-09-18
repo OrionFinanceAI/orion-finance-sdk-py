@@ -1264,7 +1264,7 @@ wheels = [
 
 [[package]]
 name = "orion-finance-sdk-py"
-version = "2.2.3"
+version = "2.2.4"
 source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },

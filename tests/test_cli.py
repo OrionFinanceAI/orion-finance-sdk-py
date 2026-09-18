@@ -234,11 +234,12 @@ def test_update_strategist(mock_ensure, MockConfig, MockVault):
 @patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")
 def test_update_fee_model(mock_ensure, MockConfig, MockVault):
-    """Test update fee model."""
+    """Test update fee model schedules change and surfaces cooldown."""
     mock_config = MockConfig.return_value
     mock_config.is_encrypted_vault.return_value = False
     mock_config.orion_transparent_vaults = ["0xVault"]
     mock_config.is_orion_vault.return_value = True
+    mock_config.fee_change_cooldown_duration = 86400
 
     mock_vault = MockVault.return_value
     mock_vault.update_fee_model.return_value = MagicMock(decoded_logs=[])
@@ -257,8 +258,12 @@ def test_update_fee_model(mock_ensure, MockConfig, MockVault):
         env={"ORION_VAULT_ADDRESS": "0xVault", "CHAIN_ID": "11155111"},
     )
 
+    out = _cli_output(result)
     assert result.exit_code == 0
-    assert "Fee model updated successfully" in _cli_output(result)
+    assert "Fee model change scheduled" in out
+    assert "not active yet" in out
+    assert "Cooldown" in out
+    assert "1 day" in out or "86400" in out
 
 
 @patch("orion_finance_sdk_py.cli.VaultFactory")
