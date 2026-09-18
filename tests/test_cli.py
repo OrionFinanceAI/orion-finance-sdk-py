@@ -154,6 +154,38 @@ def test_submit_intent_transparent(
     assert "Intent submitted successfully" in _cli_output(result)
 
 
+@patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+@patch("orion_finance_sdk_py.cli.validate_order")
+def test_submit_intent_skips_when_unchanged(
+    mock_validate, mock_ensure, MockConfig, MockVault, tmp_path
+):
+    """CLI skips success logs when vault returns None for unchanged intent."""
+    mock_config = MockConfig.return_value
+    mock_config.is_encrypted_vault.return_value = False
+    mock_config.orion_transparent_vaults = ["0xTransVault"]
+    mock_config.is_orion_vault.return_value = True
+
+    mock_validate.return_value = {"0xA": 1000}
+    mock_vault = MockVault.return_value
+    mock_vault.submit_order_intent.return_value = None
+
+    order_file = tmp_path / "order.json"
+    order_file.write_text('{"0xA": 1.0}')
+
+    result = runner.invoke(
+        app,
+        ["submit-intent", "--intent-path", str(order_file)],
+        env={"ORION_VAULT_ADDRESS": "0xTransVault", "CHAIN_ID": "11155111"},
+    )
+
+    out = _cli_output(result)
+    assert result.exit_code == 0
+    assert "Intent unchanged; skipped submit." in out
+    assert "Intent submitted successfully" not in out
+
+
 @patch("orion_finance_sdk_py.cli.OrionEncryptedVault")
 @patch("orion_finance_sdk_py.cli.OrionConfig")
 @patch("orion_finance_sdk_py.cli.ensure_env_file")

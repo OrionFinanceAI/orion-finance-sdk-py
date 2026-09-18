@@ -1770,8 +1770,8 @@ class TestOrionVaults:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
-    def test_transparent_vault_submit(self, MockConfig):
-        """Test transparent vault submit."""
+    def test_transparent_vault_submit(self, MockConfig, mock_w3):
+        """Test transparent vault submit when onchain intent differs."""
         # Mock config validation
         config_instance = MockConfig.return_value
         config_instance.orion_transparent_vaults = ["0xVault"]
@@ -1781,6 +1781,7 @@ class TestOrionVaults:
         vault.contract.functions.strategist.return_value.call.return_value = (
             "0xDeployer"
         )
+        vault.contract.functions.getIntent.return_value.call.return_value = ([], [])
 
         order = {"0xToken": 100}
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
@@ -1792,6 +1793,29 @@ class TestOrionVaults:
 
         # Verify it used the contract function
         vault.contract.functions.submitIntent.assert_called()
+        mock_w3.eth.send_raw_transaction.assert_called()
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_transparent_submit_skips_when_intent_unchanged(self, MockConfig, mock_w3):
+        """Skip broadcast when proposed scaled intent matches onchain getIntent."""
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = ["0xVault"]
+        config_instance.is_system_idle.return_value = True
+
+        vault = OrionTransparentVault()
+        vault.contract.functions.strategist.return_value.call.return_value = (
+            "0xDeployer"
+        )
+        vault.contract.functions.getIntent.return_value.call.return_value = (
+            ["0xToken"],
+            [100],
+        )
+
+        res = vault.submit_order_intent({"0xToken": 100})
+        assert res is None
+        mock_w3.eth.send_raw_transaction.assert_not_called()
+        vault.contract.functions.submitIntent.assert_not_called()
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -1817,6 +1841,7 @@ class TestOrionVaults:
         vault.contract.functions.strategist.return_value.call.return_value = (
             "0xDeployer"
         )
+        vault.contract.functions.getIntent.return_value.call.return_value = ([], [])
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
             100
         )

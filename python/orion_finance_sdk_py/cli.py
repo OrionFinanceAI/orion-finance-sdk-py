@@ -137,6 +137,10 @@ def _submit_intent_logic(intent_source: str):
         output_order_intent = validate_order(order_intent=order_intent)
         tx_result = vault.submit_order_intent(order_intent=output_order_intent)
 
+    if tx_result is None:
+        print_info("Intent unchanged; skipped submit.")
+        return
+
     format_transaction_logs(tx_result, "Intent submitted successfully")
 
 

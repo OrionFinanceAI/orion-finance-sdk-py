@@ -12,7 +12,7 @@ from web3 import Web3
 from web3.exceptions import BadFunctionCallOutput
 from web3.types import HexStr, TxReceipt
 
-from .console_ui import progress_step
+from .console_ui import print_warn, progress_step
 from .orion_config_env import (
     MAINNET_CHAIN_ID,
     has_explicit_chain_selection,
@@ -1928,14 +1928,17 @@ class OrionTransparentVault(OrionVault):
     def submit_order_intent(
         self,
         order_intent: dict[str, int],
-    ) -> TransactionResult:
+    ) -> TransactionResult | None:
         """Submit a portfolio order intent.
+
+        Skips the broadcast (returns ``None``) when the proposed scaled weights
+        already match onchain ``getIntent()``.
 
         Args:
             order_intent: Dictionary mapping token addresses to values
 
         Returns:
-            TransactionResult
+            TransactionResult, or ``None`` if the intent is unchanged.
         """
         config = OrionConfig()
         progress_step("Verifying protocol is idle")
@@ -1960,6 +1963,19 @@ class OrionTransparentVault(OrionVault):
             raise ValueError(
                 f"Signer {account.address} is not the vault strategist {self.strategist_address}. Cannot submit order."
             )
+
+        progress_step("Comparing to onchain intent")
+        tokens, weights = _call_view(self.contract.functions.getIntent())
+        onchain = {
+            checksum_address(token): int(weight)
+            for token, weight in zip(tokens, weights, strict=True)
+        }
+        proposed = {
+            checksum_address(token): int(value) for token, value in order_intent.items()
+        }
+        if onchain == proposed:
+            print_warn("Onchain intent already matches; skipping submit.")
+            return None
 
         nonce = self.w3.eth.get_transaction_count(account.address, "pending")
 
