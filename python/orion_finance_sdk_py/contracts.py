@@ -9,7 +9,7 @@ from typing import Any, Iterable, cast
 
 from dotenv import load_dotenv
 from web3 import Web3
-from web3.exceptions import BadFunctionCallOutput
+from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 from web3.types import HexStr, TxReceipt
 
 from .console_ui import print_warn, progress_step
@@ -682,6 +682,8 @@ class PriceAdapterRegistry(OrionSmartContract):
         self,
         block: int | None = None,
         assets: Iterable[str] | None = None,
+        *,
+        skip_unavailable: bool = False,
     ) -> dict[str, int]:
         """Fetch point-in-time prices for the investment universe (or a subset).
 
@@ -689,6 +691,9 @@ class PriceAdapterRegistry(OrionSmartContract):
             block: Optional block number for historical prices.
             assets: Optional token addresses to price. Defaults to the full
                 whitelisted investment universe from ``OrionConfig``.
+            skip_unavailable: If True, omit assets whose ``getPrice`` call fails
+                (empty return / decode error, or custom reverts such as an
+                unsupported asset at that block) instead of raising.
 
         Returns:
             Mapping of checksummed asset address to price (scaled by
@@ -697,10 +702,17 @@ class PriceAdapterRegistry(OrionSmartContract):
         if assets is None:
             config = OrionConfig()
             assets = config.whitelisted_assets
-        return {
-            checksum_address(asset): self.get_price(asset, block=block)
-            for asset in assets
-        }
+        prices: dict[str, int] = {}
+        for asset in assets:
+            addr = checksum_address(asset)
+            try:
+                prices[addr] = self.get_price(addr, block=block)
+            except (BadFunctionCallOutput, ContractLogicError):
+                # Empty historical return, or custom reverts (e.g. unsupported
+                # asset / missing adapter at that block).
+                if not skip_unavailable:
+                    raise
+        return prices
 
     def price_history(
         self,
@@ -716,6 +728,9 @@ class PriceAdapterRegistry(OrionSmartContract):
         dicts; wrap in pandas in your notebook for return / distribution
         analysis. Public RPCs are rate-limited - use a dedicated ``SEPOLIA_RPC_URL`` /
         ``MAINNET_RPC_URL`` for long series.
+
+        Samples before the registry was deployed, or days where no requested
+        asset has a readable price, are omitted.
 
         Args:
             start: Start as ``datetime``, unix timestamp, or block number
@@ -737,15 +752,33 @@ class PriceAdapterRegistry(OrionSmartContract):
 
         if assets is None:
             assets = OrionConfig().whitelisted_assets
+        asset_list = list(assets)
 
-        return [
-            {
-                "timestamp": timestamp,
-                "block": block,
-                "prices": self.get_prices(block=block, assets=assets),
-            }
-            for timestamp, block in self._daily_sample_points(start, end)
-        ]
+        points = self._daily_sample_points(start, end)
+        if not points:
+            return []
+
+        deployed = self._earliest_code_block(points[0][1], points[-1][1])
+        if deployed is None:
+            return []
+
+        result: list[dict] = []
+        for timestamp, block in points:
+            if block < deployed:
+                continue
+            prices = self.get_prices(
+                block=block, assets=asset_list, skip_unavailable=True
+            )
+            if not prices:
+                continue
+            result.append(
+                {
+                    "timestamp": timestamp,
+                    "block": block,
+                    "prices": prices,
+                }
+            )
+        return result
 
 
 class LiquidityOrchestrator(OrionSmartContract):
@@ -1176,6 +1209,12 @@ class OrionVault(OrionSmartContract):
     def total_supply(self) -> int:
         """Fetch vault share total supply."""
         return _call_view(self.contract.functions.totalSupply())
+
+    def total_supply_at(self, block: int) -> int:
+        """Fetch ``totalSupply`` at a historical block."""
+        return _call_view(
+            self.contract.functions.totalSupply(), block_identifier=block
+        )
 
     def allowance(self, owner: str, spender: str) -> int:
         """Fetch vault share allowance."""
@@ -1660,7 +1699,9 @@ class OrionVault(OrionSmartContract):
         return result
 
     def _portfolio_position_values(
-        self, portfolio: dict[str, int] | None = None
+        self,
+        portfolio: dict[str, int] | None = None,
+        block: int | None = None,
     ) -> dict[str, int]:
         """Value each portfolio position using PIT prices from the registry.
 
@@ -1672,9 +1713,13 @@ class OrionVault(OrionSmartContract):
         ``getPortfolio`` balances and ``OrionConfig.token_decimals`` are both in
         raw ERC-20 base units; registry prices are scaled by
         ``price_adapter_decimals`` as ~underlying per 1 whole token.
+
+        Args:
+            portfolio: Optional token→shares map. Defaults to ``get_portfolio``.
+            block: Optional block for historical portfolio and oracle prices.
         """
         if portfolio is None:
-            raw_portfolio = self.get_portfolio()
+            raw_portfolio = self.get_portfolio(block=block)
             if isinstance(raw_portfolio, bytes):
                 raise TypeError(
                     "Encrypted vault portfolios are opaque ciphertext; "
@@ -1687,7 +1732,7 @@ class OrionVault(OrionSmartContract):
         config = OrionConfig()
         underlying_decimals = config.token_decimals(config.underlying_asset)
         registry = PriceAdapterRegistry()
-        prices = registry.get_prices(assets=portfolio.keys())
+        prices = registry.get_prices(block=block, assets=portfolio.keys())
         price_scale = 10**registry.price_adapter_decimals
         underlying_scale = 10**underlying_decimals
 
@@ -1709,27 +1754,33 @@ class OrionVault(OrionSmartContract):
             ) // (price_scale * token_scale)
         return values
 
-    def point_in_time_total_assets(self) -> int:
+    def point_in_time_total_assets(self, block: int | None = None) -> int:
         """Estimate vault TVL from portfolio shares and PIT oracle prices.
+
+        Args:
+            block: Optional block for historical ``getPortfolio`` and prices.
 
         Returns:
             Sum of position values in underlying base units (same scaling as
             ``total_assets``). Uses ``OrionConfig.token_decimals`` for each
             holding and for the vault underlying.
         """
-        return sum(self._portfolio_position_values().values())
+        return sum(self._portfolio_position_values(block=block).values())
 
-    def get_portfolio_pct_tvl(self) -> dict[str, float]:
+    def get_portfolio_pct_tvl(self, block: int | None = None) -> dict[str, float]:
         """Portfolio weights as fractions of PIT TVL (sum to ~1.0).
 
         Combines ``get_portfolio()`` with ``PriceAdapterRegistry.get_prices()``,
         normalizing each holding by its token decimals.
 
+        Args:
+            block: Optional block for historical portfolio and prices.
+
         Returns:
             Mapping of checksummed token address to weight in [0, 1]. Empty if
             the portfolio is empty or PIT total is zero.
         """
-        position_values = self._portfolio_position_values()
+        position_values = self._portfolio_position_values(block=block)
         total = sum(position_values.values())
         if total <= 0:
             return {}
