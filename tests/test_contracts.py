@@ -1180,11 +1180,14 @@ class TestOrionVaults:
             reg = MockRegistry.return_value
             reg.get_prices.return_value = {"0xA": 10**8, "0xB": 10**8}
             reg.price_adapter_decimals = 8
+            portfolio = {"0xA": 100, "0xB": 200}
+            get_portfolio_call = vault.contract.functions.getPortfolio().call
             assert vault.point_in_time_total_assets(block=77) == 300
-            reg.get_prices.assert_called_with(
-                block=77, assets=vault.get_portfolio(block=77).keys()
-            )
+            assert get_portfolio_call.call_args.kwargs["block_identifier"] == 77
+            reg.get_prices.assert_called_with(block=77, assets=portfolio.keys())
             pct = vault.get_portfolio_pct_tvl(block=77)
+            assert get_portfolio_call.call_args.kwargs["block_identifier"] == 77
+            reg.get_prices.assert_called_with(block=77, assets=portfolio.keys())
             assert abs(pct["0xA"] - 100 / 300) < 1e-9
             assert abs(pct["0xB"] - 200 / 300) < 1e-9
 
