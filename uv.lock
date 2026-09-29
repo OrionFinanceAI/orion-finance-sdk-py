@@ -1724,14 +1724,14 @@ wheels = [
 
 [[package]]
 name = "pydeps"
-version = "3.0.7"
+version = "3.0.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "stdlib-list" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/5e/1e4dc6069a2768a73b33f0dc2d5c1b5e1d264b0016ee931c23628324b052/pydeps-3.0.7.tar.gz", hash = "sha256:69903a434bb0b9d8ba179545159d067ac6281a63229191b3fd1327e3e6c145da", size = 55664, upload-time = "2026-08-03T11:56:24.027Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/7b/4c40de7ca4c27395adc772bec625674d874f6983657fd8763fb36bee9444/pydeps-3.0.8.tar.gz", hash = "sha256:e54b19d22c8f94b4787bc0bbb3bbe4afc074e32ff9e7868d7750340faec9f8ec", size = 59676, upload-time = "2026-09-07T13:58:56.692Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/31/9a72d5de5042c8ca740a00a350c8780f307a40168aa3baf94521e11da0e7/pydeps-3.0.7-py3-none-any.whl", hash = "sha256:39e8a484788a054defaefba7f127f975389de0c609dbfb66014203a65ba86d16", size = 48467, upload-time = "2026-08-03T11:56:22.765Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/5b/84b74df24b6c958dce0b8d99dc3f5b510f04828ade387ef4ae4a846f2b0a/pydeps-3.0.8-py3-none-any.whl", hash = "sha256:e7d8479292d427c87f7a05e96601c1495ca4147f5e160c48254197f4fc68601f", size = 50215, upload-time = "2026-09-07T13:58:55.576Z" },
 ]
 
 [[package]]
@@ -2224,7 +2224,7 @@ wheels = [
 
 [[package]]
 name = "skfolio"
-version = "1.0.6"
+version = "1.2.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "clarabel" },
@@ -2238,9 +2238,9 @@ dependencies = [
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/af/18/42b5d14d047fb605d5a71ff068cf9c5a0d0a9bff83b8e92184207ab5910c/skfolio-1.0.6.tar.gz", hash = "sha256:61957c8967416f489b75e51dfa6667ddb27ebbc0de3840f3728709a7191dfc04", size = 1149629, upload-time = "2026-09-08T07:54:43.512Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/64/6c628c343abde401c3c0c8f7fca9059c2840810f104707b441ea9c2e9514/skfolio-1.2.8.tar.gz", hash = "sha256:0fb43938a9c6e95b2e7e911adeb39980d2025c9866e19dc12f129d3b0e621529", size = 1171353, upload-time = "2026-09-16T12:13:26.47Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/34/a1/ab25422a3643746266e7394fc18a13d50e8a7e203493f7eddfe18eb98a6a/skfolio-1.0.6-py3-none-any.whl", hash = "sha256:21919b457d11c1d0fb7d4c574ffb7695ef92a70738e8254a7c2fd787c3f8607f", size = 1368076, upload-time = "2026-09-08T07:54:41.804Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/2c/5baa1e663c726679216847b1bbf75562f11bc9f512320474ce752d0eae14/skfolio-1.2.8-py3-none-any.whl", hash = "sha256:0c1a60d81423954fe43727074cf5fede06f60757fd3884d0160c29d77e7b70ac", size = 1381757, upload-time = "2026-09-16T12:13:24.532Z" },
 ]
 
 [[package]]
