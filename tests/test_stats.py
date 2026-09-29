@@ -69,13 +69,18 @@ def test_short_track_confidence_scales_sasr() -> None:
     assert metrics.sasr < metrics.dasr
 
 
-def test_negative_lag1_keeps_teff_and_w_nonnegative() -> None:
-    """Strong mean-reversion (ρ ≤ -0.5) must not yield negative T_eff or w."""
+def test_negative_lag1_does_not_inflate_track_record() -> None:
+    """Negative ρ is floored at 0, so T_eff stays at n and w stays below 1."""
     values = np.tile([0.02, -0.01], 20)
     metrics = rank_column(pd.Series(values, index=_daily_index(len(values))), RFR)
     assert metrics.rho is not None and metrics.rho < -0.4
-    assert metrics.t_eff is not None and metrics.t_eff > 0.0
-    assert metrics.w is not None and 0.0 <= metrics.w <= 1.0
+    assert metrics.t_eff == pytest.approx(float(len(values)))
+    assert metrics.n == len(values)
+    expected_w = min(1.0, (len(values) / 7.0) / TRACK_RECORD_FULL_TRUST_WEEKS)
+    assert metrics.w == pytest.approx(expected_w)
+    assert metrics.w is not None and metrics.w < 1.0
+    assert metrics.sasr is not None and metrics.dasr is not None
+    assert metrics.sasr == pytest.approx(metrics.dasr * metrics.w)
 
 
 def test_long_track_full_confidence() -> None:
@@ -93,8 +98,8 @@ def test_positive_lag1_lowers_sasr_not_dasr() -> None:
     positives = np.full(18, 0.02)
     negatives = np.full(18, -0.01)
     blocked = np.concatenate([positives, negatives])
-    # Contiguous shuffle of the same values → near-zero lag-1 (not a perfect
-    # alternating pattern, which would drive ρ → −1 and make Lo T_eff negative).
+    # Contiguous shuffle of the same values → near-zero lag-1. An alternating
+    # pattern drives ρ → −1; that ρ is floored at 0, so T_eff stays at n.
     rng = np.random.default_rng(7)
     shuffled = rng.permutation(blocked)
     blocked_m = rank_column(pd.Series(blocked, index=_daily_index(36)), RFR)
