@@ -86,7 +86,7 @@ def update_fee_model(
     *,
     vault_address: str | None = None,
 ) -> TransactionResult:
-    """Update the vault fee model."""
+    """Schedule a vault fee-model change (cooldown before rates activate)."""
     vault = resolve_vault(vault_address)
     return vault.update_fee_model(fee_type, performance_fee, management_fee)
 

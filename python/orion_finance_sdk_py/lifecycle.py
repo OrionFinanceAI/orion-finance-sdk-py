@@ -121,7 +121,10 @@ class IntentSession:
         """Seal the fitted intent (does not broadcast)."""
         return Intent(self.intent).encrypt(pk_r)
 
-    def submit(self) -> TransactionResult:
-        """Submit the fitted intent via the strategist path."""
+    def submit(self) -> TransactionResult | None:
+        """Submit the fitted intent via the strategist path.
+
+        Returns ``None`` when a transparent vault already holds the same intent.
+        """
         address = self.vault_address or os.getenv("ORION_VAULT_ADDRESS")
         return submit_intent(self.intent, vault_address=address)

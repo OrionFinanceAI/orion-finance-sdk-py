@@ -91,12 +91,22 @@ def test_vault_abi_includes_272_methods():
         "holderAccessControl",
         "transferAccessControl",
         "claimUnderlying",
+        "claimShares",
+        "pendingShareClaim",
+        "totalPendingShareClaims",
     ):
         assert name in names, f"OrionVault ABI missing {name}"
+    events = {
+        item["name"]
+        for item in abi
+        if isinstance(item, dict) and item.get("type") == "event"
+    }
+    for name in ("DepositShareEscrowed", "ShareClaimed", "RedeemUnderlyingEscrowed"):
+        assert name in events, f"OrionVault ABI missing {name}"
 
 
 def test_access_control_interface_abis():
-    """Interface ABIs from abis-v2.7.6 include the ACL view methods."""
+    """Interface ABIs from abis-v2.7.10 include the ACL view methods."""
     deposit = {
         item["name"]
         for item in load_contract_abi("IOrionDepositAccessControl")

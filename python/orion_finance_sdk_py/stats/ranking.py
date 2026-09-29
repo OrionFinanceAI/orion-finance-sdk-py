@@ -3,6 +3,8 @@
 SASR is the only ranking score. This module does not compute Probabilistic Sharpe
 Ratio, MinTRL, or Deflated Sharpe. Moments used for Bailey's ``vSr`` are
 population (``n`` in the denominator); sample Sharpe uses Bessel-corrected std.
+Track-record length matches the ingestor: lag-1 ρ is floored at 0 and capped at
+0.99, so effective sample size never exceeds the number of observations.
 """
 
 from __future__ import annotations
@@ -39,20 +41,32 @@ class RankingMetrics:
 
 
 def _lag1_autocorr(values: np.ndarray) -> float:
-    """Sample lag-1 autocorrelation; 0 if ``n < 3`` or zero variance."""
+    """Lag-1 autocorrelation; 0 if ``n < 3`` or zero variance.
+
+    Same estimator as the ingestor: products of adjacent deviations from the
+    full-sample mean, over the sum of squared deviations.
+    """
     n = values.size
     if n < 3:
         return 0.0
-    if float(np.std(values, ddof=1)) == 0.0:
+    dev = values - float(np.mean(values))
+    den = float(np.dot(dev, dev))
+    if den == 0.0:
         return 0.0
-    lagged = values[:-1]
-    lead = values[1:]
-    if float(np.std(lagged, ddof=1)) == 0.0 or float(np.std(lead, ddof=1)) == 0.0:
+    rho = float(np.dot(dev[1:], dev[:-1])) / den
+    if not np.isfinite(rho):
         return 0.0
-    corr = np.corrcoef(lagged, lead)[0, 1]
-    if not np.isfinite(corr):
-        return 0.0
-    return float(corr)
+    return rho
+
+
+def _effective_sample_size(n: int, rho: float) -> float:
+    """Lo effective sample size, matching the ingestor.
+
+    ``T_eff = n / (1 + 2ρ)`` with ρ floored at 0 and capped at 0.99.
+    Negative autocorrelation is not rewarded, so ``T_eff`` never exceeds ``n``.
+    """
+    rho_lo = min(0.99, max(0.0, rho))
+    return n / (1.0 + 2.0 * rho_lo)
 
 
 def _empty_metrics(n: int) -> RankingMetrics:
@@ -110,14 +124,14 @@ def rank_column(
 
     vsr = 1.0 - skew * sr_daily + ((kurt_full - 1.0) / 4.0) * sr_daily**2
     rho = _lag1_autocorr(values)
-    lo_factor = max(1.0 + 2.0 * rho, 1e-6)
-    t_eff = n / lo_factor
+    t_eff = _effective_sample_size(n, rho)
     t_weeks = t_eff / 7.0
 
     dasr: float | None = None
     sasr: float | None = None
     w: float | None = None
-    if vsr > 0.0:
+    # Ingestor withholds DASR/SASR until Lo-adjusted length is at least 4.
+    if vsr > 0.0 and t_eff >= 4.0:
         dasr = (sr_daily / np.sqrt(vsr)) * np.sqrt(ppy)
         w = min(1.0, max(0.0, t_weeks / TRACK_RECORD_FULL_TRUST_WEEKS))
         sasr = dasr * w

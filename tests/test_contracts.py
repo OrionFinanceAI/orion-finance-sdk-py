@@ -715,13 +715,14 @@ class TestPriceAdapterRegistry:
             }.get(ts, 10)
         )
 
-        def get_prices_side_effect(block=None, assets=None):
+        def get_prices_side_effect(block=None, assets=None, skip_unavailable=False):
             return {
                 "0xA": 100 + (block or 0),
                 "0xB": 200 + (block or 0),
             }
 
         registry.get_prices = MagicMock(side_effect=get_prices_side_effect)
+        registry._earliest_code_block = MagicMock(return_value=10)
 
         series = registry.price_history(start=10, end=30, interval="1d")
         assert len(series) >= 2
@@ -745,15 +746,45 @@ class TestPriceAdapterRegistry:
         registry._daily_sample_points = MagicMock(
             return_value=[(1_700_000_000, 10), (1_700_086_400, 20)]
         )
+        registry._earliest_code_block = MagicMock(return_value=10)
         registry.get_prices = MagicMock(return_value={"0xA": 100})
 
         series = registry.price_history(start=10, end=20, interval="1d", assets=["0xA"])
         assert len(series) == 2
         assert all(
             call.kwargs.get("assets") == ["0xA"]
+            and call.kwargs.get("skip_unavailable") is True
             for call in registry.get_prices.call_args_list
         )
         assert all(point["prices"] == {"0xA": 100} for point in series)
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_get_prices_skip_unavailable(self, MockConfig):
+        """skip_unavailable omits assets whose getPrice call fails."""
+        from web3.exceptions import BadFunctionCallOutput, ContractCustomError
+
+        MockConfig.return_value.price_adapter_registry = "0xRegistry"
+        registry = PriceAdapterRegistry()
+
+        def get_price(asset, block=None):
+            if asset == "0xBad":
+                raise BadFunctionCallOutput("empty")
+            if asset == "0xCustom":
+                raise ContractCustomError("0xa091855e", data="0xa091855e")
+            return 42
+
+        registry.get_price = MagicMock(side_effect=get_price)
+        prices = registry.get_prices(
+            assets=["0xA", "0xBad", "0xCustom"], skip_unavailable=True
+        )
+        assert prices == {"0xA": 42}
+
+        with pytest.raises(BadFunctionCallOutput):
+            registry.get_prices(assets=["0xA", "0xBad"], skip_unavailable=False)
+
+        with pytest.raises(ContractCustomError):
+            registry.get_prices(assets=["0xA", "0xCustom"], skip_unavailable=False)
 
 
 class TestVaultFactory:
@@ -1119,6 +1150,10 @@ class TestOrionVaults:
         assert vault.convert_to_assets(10, block=50) == 100
         assert vault.get_portfolio(block=50) == {"0xA": 100, "0xB": 200}
 
+        vault.contract.functions.totalSupply().call.return_value = 1_000_000
+        assert vault.total_supply == 1_000_000
+        assert vault.total_supply_at(50) == 1_000_000
+
         config_instance.underlying_asset = "0xUnderlying"
         config_instance.token_decimals = MagicMock(return_value=6)
 
@@ -1134,7 +1169,27 @@ class TestOrionVaults:
             pct = vault.get_portfolio_pct_tvl()
             assert abs(pct["0xA"] - 100 / 300) < 1e-9
             assert abs(pct["0xB"] - 200 / 300) < 1e-9
-            reg.get_prices.assert_called_with(assets=vault.get_portfolio().keys())
+            reg.get_prices.assert_called_with(
+                block=None, assets=vault.get_portfolio().keys()
+            )
+
+        # Historical PIT valuation forwards block to portfolio + prices
+        with patch(
+            "orion_finance_sdk_py.contracts.PriceAdapterRegistry"
+        ) as MockRegistry:
+            reg = MockRegistry.return_value
+            reg.get_prices.return_value = {"0xA": 10**8, "0xB": 10**8}
+            reg.price_adapter_decimals = 8
+            portfolio = {"0xA": 100, "0xB": 200}
+            get_portfolio_call = vault.contract.functions.getPortfolio().call
+            assert vault.point_in_time_total_assets(block=77) == 300
+            assert get_portfolio_call.call_args.kwargs["block_identifier"] == 77
+            reg.get_prices.assert_called_with(block=77, assets=portfolio.keys())
+            pct = vault.get_portfolio_pct_tvl(block=77)
+            assert get_portfolio_call.call_args.kwargs["block_identifier"] == 77
+            reg.get_prices.assert_called_with(block=77, assets=portfolio.keys())
+            assert abs(pct["0xA"] - 100 / 300) < 1e-9
+            assert abs(pct["0xB"] - 200 / 300) < 1e-9
 
         # Mixed 6- vs 18-decimal holdings: equal whole-token notionals → equal weights
         vault.contract.functions.getPortfolio().call.return_value = (
@@ -1636,6 +1691,18 @@ class TestOrionVaults:
         assert res.receipt["status"] == 1
         vault.contract.functions.claimUnderlying.assert_called_with()
 
+        vault.contract.functions.totalPendingShareClaims.return_value.call.return_value = 4
+        assert vault.total_pending_share_claims() == 4
+
+        vault.contract.functions.pendingShareClaim.return_value.call.return_value = 9
+        assert vault.pending_share_claim("0xUser") == 9
+
+        vault.contract.functions.claimShares.return_value.build_transaction.return_value = {}
+        res = vault.claim_shares()
+        assert isinstance(res, TransactionResult)
+        assert res.receipt["status"] == 1
+        vault.contract.functions.claimShares.assert_called_with()
+
         # cancel_deposit_request
         vault.contract.functions.cancelDepositRequest.return_value.build_transaction.return_value = {}
         res = vault.cancel_deposit_request(50)
@@ -1770,8 +1837,8 @@ class TestOrionVaults:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
-    def test_transparent_vault_submit(self, MockConfig):
-        """Test transparent vault submit."""
+    def test_transparent_vault_submit(self, MockConfig, mock_w3):
+        """Test transparent vault submit when onchain intent differs."""
         # Mock config validation
         config_instance = MockConfig.return_value
         config_instance.orion_transparent_vaults = ["0xVault"]
@@ -1781,6 +1848,7 @@ class TestOrionVaults:
         vault.contract.functions.strategist.return_value.call.return_value = (
             "0xDeployer"
         )
+        vault.contract.functions.getIntent.return_value.call.return_value = ([], [])
 
         order = {"0xToken": 100}
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
@@ -1792,6 +1860,29 @@ class TestOrionVaults:
 
         # Verify it used the contract function
         vault.contract.functions.submitIntent.assert_called()
+        mock_w3.eth.send_raw_transaction.assert_called()
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_transparent_submit_skips_when_intent_unchanged(self, MockConfig, mock_w3):
+        """Skip broadcast when proposed scaled intent matches onchain getIntent."""
+        config_instance = MockConfig.return_value
+        config_instance.orion_transparent_vaults = ["0xVault"]
+        config_instance.is_system_idle.return_value = True
+
+        vault = OrionTransparentVault()
+        vault.contract.functions.strategist.return_value.call.return_value = (
+            "0xDeployer"
+        )
+        vault.contract.functions.getIntent.return_value.call.return_value = (
+            ["0xToken"],
+            [100],
+        )
+
+        res = vault.submit_order_intent({"0xToken": 100})
+        assert res is None
+        mock_w3.eth.send_raw_transaction.assert_not_called()
+        vault.contract.functions.submitIntent.assert_not_called()
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
@@ -1817,6 +1908,7 @@ class TestOrionVaults:
         vault.contract.functions.strategist.return_value.call.return_value = (
             "0xDeployer"
         )
+        vault.contract.functions.getIntent.return_value.call.return_value = ([], [])
         vault.contract.functions.submitIntent.return_value.estimate_gas.return_value = (
             100
         )
