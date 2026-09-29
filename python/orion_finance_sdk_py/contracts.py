@@ -1872,6 +1872,24 @@ class OrionVault(OrionSmartContract):
             error_msg=f"{key_env} missing for claim underlying.",
         )
 
+    def total_pending_share_claims(self) -> int:
+        """Fetch total vault shares escrowed for later claimShares."""
+        return _call_view(self.contract.functions.totalPendingShareClaims())
+
+    def pending_share_claim(self, account: str) -> int:
+        """Fetch escrowed shares claimable by ``account`` (holder ACL)."""
+        return _call_view(
+            self.contract.functions.pendingShareClaim(checksum_address(account))
+        )
+
+    def claim_shares(self, *, key_env: str = "LP_PRIVATE_KEY") -> TransactionResult:
+        """Claim escrowed vault shares after the holder ACL allows holding them."""
+        return self._execute_vault_tx(
+            self.contract.functions.claimShares(),
+            key_env=key_env,
+            error_msg=f"{key_env} missing for claim shares.",
+        )
+
     def max_deposit(self, receiver: str) -> int:
         """Fetch the maximum deposit amount for a receiver."""
         return _call_view(

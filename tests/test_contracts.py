@@ -1688,6 +1688,18 @@ class TestOrionVaults:
         assert res.receipt["status"] == 1
         vault.contract.functions.claimUnderlying.assert_called_with()
 
+        vault.contract.functions.totalPendingShareClaims.return_value.call.return_value = 4
+        assert vault.total_pending_share_claims() == 4
+
+        vault.contract.functions.pendingShareClaim.return_value.call.return_value = 9
+        assert vault.pending_share_claim("0xUser") == 9
+
+        vault.contract.functions.claimShares.return_value.build_transaction.return_value = {}
+        res = vault.claim_shares()
+        assert isinstance(res, TransactionResult)
+        assert res.receipt["status"] == 1
+        vault.contract.functions.claimShares.assert_called_with()
+
         # cancel_deposit_request
         vault.contract.functions.cancelDepositRequest.return_value.build_transaction.return_value = {}
         res = vault.cancel_deposit_request(50)
