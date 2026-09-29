@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .console_ui import progress_step
-from .contracts import OrionConfig, SystemNotIdleError, TransactionResult
+from .contracts import OrionConfig, TransactionResult, require_system_idle
 from .erc20 import approve
 from .vault_resolve import resolve_vault
 
@@ -15,12 +15,8 @@ def request_deposit(
     key_env: str = "LP_PRIVATE_KEY",
 ) -> TransactionResult:
     """Approve underlying to the vault, then ``requestDeposit``."""
+    require_system_idle("request deposit")
     config = OrionConfig()
-    progress_step("Verifying protocol is idle")
-    if not config.is_system_idle():
-        raise SystemNotIdleError(
-            "System is not idle. Cannot request deposit at this time."
-        )
     if assets < config.min_deposit_amount:
         raise ValueError(
             f"assets {assets} below minDepositAmount {config.min_deposit_amount}"
@@ -53,11 +49,7 @@ def cancel_deposit_request(
     key_env: str = "LP_PRIVATE_KEY",
 ) -> TransactionResult:
     """Cancel a pending deposit request."""
-    config = OrionConfig()
-    if not config.is_system_idle():
-        raise SystemNotIdleError(
-            "System is not idle. Cannot cancel deposit request at this time."
-        )
+    require_system_idle("cancel deposit request")
     vault = resolve_vault(vault_address)
     return vault.cancel_deposit_request(amount, key_env=key_env)
 
@@ -69,12 +61,8 @@ def request_redeem(
     key_env: str = "LP_PRIVATE_KEY",
 ) -> TransactionResult:
     """Approve vault shares to the vault, then ``requestRedeem``."""
+    require_system_idle("request redeem")
     config = OrionConfig()
-    progress_step("Verifying protocol is idle")
-    if not config.is_system_idle():
-        raise SystemNotIdleError(
-            "System is not idle. Cannot request redeem at this time."
-        )
     if shares < config.min_redeem_amount:
         raise ValueError(
             f"shares {shares} below minRedeemAmount {config.min_redeem_amount}"
@@ -105,11 +93,7 @@ def cancel_redeem_request(
     key_env: str = "LP_PRIVATE_KEY",
 ) -> TransactionResult:
     """Cancel a pending redeem request."""
-    config = OrionConfig()
-    if not config.is_system_idle():
-        raise SystemNotIdleError(
-            "System is not idle. Cannot cancel redeem request at this time."
-        )
+    require_system_idle("cancel redeem request")
     vault = resolve_vault(vault_address)
     return vault.cancel_redeem_request(shares, key_env=key_env)
 

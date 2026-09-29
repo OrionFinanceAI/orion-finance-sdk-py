@@ -225,12 +225,18 @@ def print_error(
     *,
     operation: str | None = None,
     error_type: str | None = None,
+    details: Sequence[tuple[str, str]] | None = None,
 ) -> None:
-    """Print an error panel. ``operation`` and ``error_type`` are optional context."""
+    """Print an error panel. ``operation``, ``error_type``, and ``details`` are optional."""
     body = Text()
     body.append("✗ ", style="bold red")
     body.append(f"{operation or 'Error'}\n\n", style="bold")
     body.append(message)
+    if details:
+        body.append("\n")
+        for key, value in details:
+            body.append(f"\n{key:<16}", style="dim")
+            body.append(str(value))
     if error_type:
         body.append(f"\n\n{error_type}", style="dim")
     console.print(

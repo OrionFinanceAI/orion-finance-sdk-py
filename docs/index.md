@@ -319,6 +319,15 @@ orion submit-intent --order-intent '{"0x...": 0.5, "0x...": 0.5}'
 
 Intents are collected and executed at the **next rebalance** (bundling, batching, netting).
 
+**Idle requirement:** `submitIntent` is only allowed while the protocol is **Idle**.
+Check status with ``orion protocol-status``. If an epoch is in progress, either retry
+later or poll with ``--wait``:
+
+```bash
+orion protocol-status
+orion submit-intent --order-intent order_intent.json --wait --wait-timeout 600
+```
+
 ### Portfolio file schema
 
 | Column Name         | Type    | Description                                          |

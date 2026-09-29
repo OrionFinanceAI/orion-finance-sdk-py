@@ -1884,17 +1884,26 @@ class TestOrionVaults:
         mock_w3.eth.send_raw_transaction.assert_not_called()
         vault.contract.functions.submitIntent.assert_not_called()
 
+    @patch("orion_finance_sdk_py.protocol.protocol_status")
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
-    def test_submit_order_intent_system_not_idle(self, MockConfig):
+    def test_submit_order_intent_system_not_idle(self, MockConfig, mock_status):
         """Test submit_order_intent raises SystemNotIdleError when system not idle."""
         config_instance = MockConfig.return_value
         config_instance.orion_transparent_vaults = ["0xVault"]
         config_instance.is_system_idle.return_value = False
+        mock_status.return_value = {
+            "is_system_idle": False,
+            "phase": 2,
+            "phase_name": "SellingLeg",
+            "epoch_counter": 3,
+            "epoch_duration_s": 86400,
+        }
 
         vault = OrionTransparentVault()
-        with pytest.raises(SystemNotIdleError, match="Cannot submit order intent"):
+        with pytest.raises(SystemNotIdleError, match="Cannot submit order intent") as ei:
             vault.submit_order_intent({"0xToken": 1})
+        assert ei.value.status["phase_name"] == "SellingLeg"
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
