@@ -73,13 +73,29 @@ def test_get_cost_buy_uses_preview(MockConfig, MockLO, MockRegistry):
     est = ExecutionCostEstimator()
     with patch.object(est, "_preview_buy", return_value=2_000_000) as preview:
         # fair = 1e18 * 1e8 * 1e6 / (1e8 * 1e18) = 1e6
-        out = est.get_cost("WETH", 1.0)
+        out = est.get_cost("WETH", 1.0, block=12_345_678)
     preview.assert_called_once()
+    MockLO.return_value.execution_adapter_of.assert_called_once_with(
+        checksum_address("0x" + "11" * 20), block=12_345_678
+    )
     assert out.size == 1.0
     assert out.swap_size == 1.0
     assert out.fair_underlying == 1_000_000
     assert out.execution_underlying == 2_000_000
     assert out.cost_pct == pytest.approx(1.0)
+    assert out.block == 12_345_678
+
+
+@patch("orion_finance_sdk_py.costs.estimator.PriceAdapterRegistry")
+@patch("orion_finance_sdk_py.costs.estimator.LiquidityOrchestrator")
+@patch("orion_finance_sdk_py.costs.estimator.OrionConfig")
+def test_rejects_non_int_shares(MockConfig, MockLO, MockRegistry):
+    _mock_mainnet_stack(MockConfig, MockLO, MockRegistry)
+    est = ExecutionCostEstimator()
+    with pytest.raises(TypeError, match="shares must be an int"):
+        est.get_cost("WETH", 1.0, shares=1.5)  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="shares must be an int"):
+        est.get_cost("WETH", 1.0, shares=True)  # type: ignore[arg-type]
 
 
 @patch("orion_finance_sdk_py.costs.estimator.PriceAdapterRegistry")
@@ -92,6 +108,7 @@ def test_rejects_negative_or_zero_size(MockConfig, MockLO, MockRegistry):
         est.get_cost("WETH", 0.0)
     with pytest.raises(ValueError, match="size must be a positive"):
         est.get_cost("WETH", -1.0)
+
 
 
 @patch("orion_finance_sdk_py.costs.estimator.PriceAdapterRegistry")
@@ -185,9 +202,12 @@ def test_execution_adapter_of_rejects_zero():
     lo.contract.functions.executionAdapterOf.return_value = MagicMock()
     with patch(
         "orion_finance_sdk_py.contracts._call_view", return_value=ZERO_ADDRESS
-    ):
+    ) as call_view:
         with pytest.raises(ValueError, match="is not whitelisted"):
-            LiquidityOrchestrator.execution_adapter_of(lo, "0x" + "11" * 20)
+            LiquidityOrchestrator.execution_adapter_of(
+                lo, "0x" + "11" * 20, block=99
+            )
+    assert call_view.call_args.kwargs.get("block_identifier") == 99
 
 
 @patch("orion_finance_sdk_py.costs.estimator.PriceAdapterRegistry")

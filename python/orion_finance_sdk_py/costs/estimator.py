@@ -168,7 +168,9 @@ class ExecutionCostEstimator:
                 shares_i = to_base_units(human_q, token_decimals)
                 swap_size = float(human_q)
         else:
-            shares_i = int(shares)
+            if isinstance(shares, bool) or not isinstance(shares, int):
+                raise TypeError("shares must be an int of raw token units")
+            shares_i = shares
             if shares_i <= 0:
                 raise ValueError("shares must be positive")
             swap_size = shares_i / (10**token_decimals)
@@ -208,7 +210,7 @@ class ExecutionCostEstimator:
                 block=block,
             )
 
-        adapter = self.lo.execution_adapter_of(asset)
+        adapter = self.lo.execution_adapter_of(asset, block=block)
         price = int(self.registry.get_price(asset, block=block))
         underlying_decimals = int(self.config.token_decimals(underlying))
         fair = fair_underlying_amount(

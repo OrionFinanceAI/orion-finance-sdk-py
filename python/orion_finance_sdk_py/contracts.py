@@ -901,14 +901,19 @@ class LiquidityOrchestrator(OrionSmartContract):
         checksummed = [checksum_address(a) for a in assets]
         return list(_call_view(self.contract.functions.getAssetPrices(checksummed)))
 
-    def execution_adapter_of(self, asset: str) -> str:
+    def execution_adapter_of(self, asset: str, block: int | None = None) -> str:
         """Return the execution adapter address for ``asset``.
+
+        Args:
+            asset: Token contract address.
+            block: Optional block number for a historical ``eth_call``.
 
         Raises:
             ValueError: If ``asset`` is not whitelisted (adapter is ``address(0)``).
         """
         adapter = _call_view(
-            self.contract.functions.executionAdapterOf(checksum_address(asset))
+            self.contract.functions.executionAdapterOf(checksum_address(asset)),
+            block_identifier=block,
         )
         if adapter.lower() == ZERO_ADDRESS.lower():
             raise ValueError(
