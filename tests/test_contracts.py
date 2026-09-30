@@ -538,14 +538,17 @@ class TestOrionConfig:
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_orion_config_rejects_both_rpc_urls_without_chain(self):
         """Both RPC URLs set without CHAIN/CHAIN_ID is rejected."""
-        with patch.dict(
-            os.environ,
-            {
-                "MAINNET_RPC_URL": "http://mainnet",
-                "SEPOLIA_RPC_URL": "http://sepolia",
-                "SEPOLIA_ORION_CONFIG_ADDRESS": "0xbDe3025d08681a02a1c6cf70375baBe2152DD06f",
-            },
-            clear=True,
+        with (
+            patch("orion_finance_sdk_py.contracts.load_dotenv"),
+            patch.dict(
+                os.environ,
+                {
+                    "MAINNET_RPC_URL": "http://mainnet",
+                    "SEPOLIA_RPC_URL": "http://sepolia",
+                    "SEPOLIA_ORION_CONFIG_ADDRESS": "0xbDe3025d08681a02a1c6cf70375baBe2152DD06f",
+                },
+                clear=True,
+            ),
         ):
             with pytest.raises(ValueError, match="CHAIN or CHAIN_ID is required"):
                 OrionConfig()
@@ -553,15 +556,17 @@ class TestOrionConfig:
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_init_invalid_chain_id_env(self):
         """Invalid CHAIN_ID fails during chain resolution before RPC connect."""
-        with patch.dict(
-            os.environ,
-            {
-                "CHAIN_ID": "invalid",
-                "SEPOLIA_RPC_URL": "http://localhost",
-            },
-            clear=False,
+        with (
+            patch("orion_finance_sdk_py.contracts.load_dotenv"),
+            patch.dict(
+                os.environ,
+                {
+                    "CHAIN_ID": "invalid",
+                    "SEPOLIA_RPC_URL": "http://localhost",
+                },
+                clear=True,
+            ),
         ):
-            os.environ.pop("CHAIN", None)
             with pytest.raises(ValueError, match="Invalid CHAIN_ID"):
                 OrionSmartContract("Test", "0xAddress")
 

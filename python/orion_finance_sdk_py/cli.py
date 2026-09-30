@@ -885,6 +885,9 @@ def interactive_menu(chain_from_cli: str | None = None):
         except SystemNotIdleError as e:
             _print_system_not_idle(e, operation=choice)
             input("\nPress Enter to continue...")
+        except StopIteration:
+            # Exhausted mock answer streams in tests must not soft-loop forever.
+            raise
         except Exception as e:
             error_type = None if isinstance(e, ValueError) else type(e).__name__
             print_error(str(e), operation=choice, error_type=error_type)

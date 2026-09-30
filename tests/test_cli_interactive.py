@@ -140,17 +140,16 @@ def test_interactive_menu_submit_intent(
     # Sequence:
     # 1. Main menu -> "Submit Intent"
     # 2. Path -> "order.json"
-    # 3. Main menu -> "Exit"
+    # 3. Wait confirm -> False
+    # 4. Main menu -> "Exit"
 
     ask_side_effect = [
         "Submit Intent",
         "order.json",
+        False,  # Wait until Idle?
         "Exit",
     ]
-    iterator = iter(ask_side_effect)
-
-    mock_questionary.select.return_value.ask.side_effect = lambda: next(iterator)
-    mock_questionary.text.return_value.ask.side_effect = lambda: next(iterator)
+    _wire_questionary(mock_questionary, ask_side_effect)
 
     interactive_menu(chain_from_cli="sepolia")
 
@@ -510,6 +509,7 @@ def test_main_menu_choice_values():
         "Update Fee Model",
         "Remove Vault",
         "Submit Intent",
+        "Protocol Status",
         "Request Deposit",
         "Cancel Deposit Request",
         "Request Redeem",
