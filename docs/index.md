@@ -510,28 +510,25 @@ mv = portfolio.min_variance(train)
 
 ## Estimate execution cost
 
-Estimate Uniswap v3 execution cost (pool fee plus price impact) for a signed trade in an Orion universe asset versus USDC.
+Compare mainnet **``previewBuy``** quotes to **price-adapter** oracle fair value. The resulting ``cost_pct`` is the all-in buy-side execution cost of a rebalance (LP fees, slippage, and other venue effects on the Orion path).
 
-`signed_size` is human units of the risk asset: positive buys that many tokens (exact-output, matching adapter `buy`), negative sells them (exact-input, matching adapter `sell`).
-
-When constructing `ExecutionCostEstimator` without an explicit `rpc_url` or `MAINNET_RPC_URL`, the SDK probes public Ethereum mainnet RPCs (`publicnode` → Alchemy public → `1rpc` → `drpc`). Set `MAINNET_RPC_URL` to an archival endpoint for historical `timestamp` queries and higher rate limits — public RPCs often cannot serve old `eth_call` snapshots.
+Requires `CHAIN=mainnet`, `MAINNET_RPC_URL`, and `MAINNET_ORION_CONFIG_ADDRESS`.
 
 ```python
 from orion_finance_sdk_py import ExecutionCostEstimator
 
 est = ExecutionCostEstimator()
-now = est.get_cost("WETH", 1.5)
-btc = est.get_cost("WBTC", 0.5)
-past = est.get_cost("WETH", 1.5, timestamp="2026-08-01")
-netted = est.get_cost("WETH", 1.5, timestamp="2026-08-01", netting_eta=0.3)
-# now.fee_pct, now.slippage_pct, now.cost_pct
+buy = est.get_cost("WETH", 1.5)
+netted = est.get_cost("WETH", 1.5, netting_eta=0.3)
+# buy.cost_pct, buy.execution_underlying, buy.fair_underlying
 ```
 
-- **symbol:** ticker (`WETH`, `WBTC`) or **mainnet** token address. Not a Sepolia twin — see {ref}`testnet-sandbox`.
-- **timestamp:** UTC `YYYY-MM-DD`. Omitted means now. Unix seconds and block numbers are internal.
-- **netting_eta:** shrinks the swap to `(1 - η) * signed_size`, then runs the full non-linear cost model on that size.
+- **symbol:** whitelisted ticker (`WETH`, `WBTC`, …) or **mainnet** token address. Not a Sepolia twin — see {ref}`testnet-sandbox`.
+- **size:** positive human units of the risk asset to buy. The protocol **underlying** (numeraire) is a no-op with ``cost_pct = 0``.
+- **netting_eta:** shrinks the swap to `(1 - η) * size`, then runs the full non-linear cost model on that size (do not scale ``cost_pct`` by ``(1 - η)``).
+- **block:** optional historical block for eth_call / getPrice.
 
-Cost coverage is a **subset** of the onchain {ref}`investment universe <investment-universe>`: WETH, WBTC, XAUt, USDT, and DAI versus USDC.
+Positive ``cost_pct`` means worse than oracle (buy pays more underlying than mark). Coverage is the onchain {ref}`investment universe <investment-universe>` on mainnet.
 
 ---
 

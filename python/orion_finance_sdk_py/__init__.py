@@ -15,7 +15,11 @@ from orion_finance_sdk_py.contracts import (
     VaultFactory,
     require_system_idle,
 )
-from orion_finance_sdk_py.costs import ExecutionCost, ExecutionCostEstimator, get_cost
+from orion_finance_sdk_py.costs import (
+    ExecutionCost,
+    ExecutionCostEstimator,
+    get_cost,
+)
 from orion_finance_sdk_py.hpke import seal_intent, seal_portfolio
 from orion_finance_sdk_py.intent import Intent
 from orion_finance_sdk_py.lifecycle import IntentSession, weights_to_intent

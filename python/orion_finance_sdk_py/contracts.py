@@ -901,6 +901,21 @@ class LiquidityOrchestrator(OrionSmartContract):
         checksummed = [checksum_address(a) for a in assets]
         return list(_call_view(self.contract.functions.getAssetPrices(checksummed)))
 
+    def execution_adapter_of(self, asset: str) -> str:
+        """Return the execution adapter address for ``asset``.
+
+        Raises:
+            ValueError: If ``asset`` is not whitelisted (adapter is ``address(0)``).
+        """
+        adapter = _call_view(
+            self.contract.functions.executionAdapterOf(checksum_address(asset))
+        )
+        if adapter.lower() == ZERO_ADDRESS.lower():
+            raise ValueError(
+                f"Asset {checksum_address(asset)} is not whitelisted"
+            )
+        return checksum_address(adapter)
+
 
 class VaultFactory(OrionSmartContract):
     """VaultFactory contract."""

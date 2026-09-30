@@ -1,224 +1,268 @@
-"""Estimate execution cost of a signed asset trade."""
+"""Estimate execution cost via mainnet adapters vs oracle fair value."""
 
 from __future__ import annotations
 
 import math
-import os
-from datetime import datetime, timezone
+from decimal import ROUND_DOWN, Decimal
 
-from dotenv import load_dotenv
 from web3 import Web3
+from web3.exceptions import ContractLogicError
 
-from orion_finance_sdk_py.costs.dates import parse_cost_timestamp
-from orion_finance_sdk_py.costs.registry import (
-    VenueAsset,
-    looks_like_address,
-    resolve_symbol,
-    resolve_symbol_onchain,
+from orion_finance_sdk_py.contracts import (
+    LiquidityOrchestrator,
+    OrionConfig,
+    PriceAdapterRegistry,
+    load_contract_abi,
 )
 from orion_finance_sdk_py.costs.types import ExecutionCost
-from orion_finance_sdk_py.costs.venues.uniswap_v3.constants import USDC_ADDRESS
-from orion_finance_sdk_py.costs.venues.uniswap_v3.pool_state import (
-    PoolMeta,
-    PoolState,
-    enrich_pool_meta,
-    fetch_pool_state,
-)
-from orion_finance_sdk_py.costs.venues.uniswap_v3.rpc import connect_mainnet
-from orion_finance_sdk_py.costs.venues.uniswap_v3.simulator import simulate_asset_swap
-from orion_finance_sdk_py.rpc import block_at_timestamp, pick_default_mainnet_rpc
+from orion_finance_sdk_py.orion_config_env import MAINNET_CHAIN_ID
+from orion_finance_sdk_py.utils import checksum_address, to_base_units
 
-from ..utils import checksum_address
 
-load_dotenv()
+def looks_like_address(symbol: str) -> bool:
+    """Return True if ``symbol`` looks like a 20-byte hex address."""
+    return symbol.startswith("0x") and len(symbol) == 42
 
-_SUPPORTED_VENUES = frozenset({"uniswap_v3"})
+
+def _quantize_human_size(size: float, token_decimals: int) -> Decimal:
+    """Floor ``size`` to ``token_decimals`` so float noise does not reject conversion."""
+    quantum = Decimal(1).scaleb(-int(token_decimals))
+    return Decimal(str(abs(size))).quantize(quantum, rounding=ROUND_DOWN)
+
+
+def _require_mainnet(config: OrionConfig) -> None:
+    if int(config.chain_id) != MAINNET_CHAIN_ID:
+        raise ValueError(
+            "Execution cost estimation requires mainnet Orion deployment "
+            f"(active chain_id={config.chain_id}). Set CHAIN=mainnet and "
+            "MAINNET_RPC_URL / MAINNET_ORION_CONFIG_ADDRESS."
+        )
+
+
+def _resolve_asset(config: OrionConfig, symbol: str) -> tuple[str, str]:
+    """Return ``(label, checksummed_address)`` for a ticker or address."""
+    raw = symbol.strip()
+    if looks_like_address(raw):
+        addr = checksum_address(raw)
+        whitelist = [checksum_address(a) for a in config.whitelisted_assets]
+        if addr not in whitelist:
+            raise ValueError(
+                f"Asset {addr} is not in the mainnet whitelisted investment universe."
+            )
+        names = list(config.whitelisted_asset_names)
+        label = raw
+        for i, a in enumerate(whitelist):
+            if a == addr and i < len(names) and names[i]:
+                label = names[i]
+                break
+        return label, addr
+
+    needle = raw.upper()
+    names = [n.strip() for n in config.whitelisted_asset_names]
+    assets = [checksum_address(a) for a in config.whitelisted_assets]
+    for name, addr in zip(names, assets, strict=False):
+        if name and name.upper() == needle:
+            return name, addr
+    raise ValueError(
+        f"Unknown symbol {symbol!r}. Pass a whitelisted ticker or mainnet address."
+    )
+
+
+def fair_underlying_amount(
+    *,
+    shares: int,
+    price: int,
+    price_adapter_decimals: int,
+    token_decimals: int,
+    underlying_decimals: int,
+) -> int:
+    """Oracle mark of ``shares`` in underlying base units (PIT TVL scaling)."""
+    if shares < 0 or price < 0:
+        raise ValueError("shares and price must be non-negative")
+    price_scale = 10**price_adapter_decimals
+    token_scale = 10**token_decimals
+    underlying_scale = 10**underlying_decimals
+    return (int(shares) * int(price) * underlying_scale) // (price_scale * token_scale)
+
+
+def cost_pct(execution: int, fair: int) -> float:
+    """Positive means worse than oracle (buy pays more underlying than mark)."""
+    if fair <= 0:
+        raise ValueError("fair_underlying must be positive to compute cost_pct")
+    return (execution - fair) / fair
 
 
 class ExecutionCostEstimator:
     """Manager-facing execution cost estimator.
 
-    v1 wraps Uniswap v3 on Ethereum mainnet (the venue Orion will use). If
-    ``rpc_url`` and ``MAINNET_RPC_URL`` are unset, public mainnet RPCs are
-    probed in order. Set ``MAINNET_RPC_URL`` to an archival endpoint for
-    historical ``timestamp`` queries and higher rate limits. Optional
-    ``block_number`` pins snapshots for research reproducibility and is not
-    part of ``get_cost``.
+    Compares mainnet ``previewBuy`` quotes to price-adapter oracle fair value.
+    Requires ``CHAIN=mainnet``, ``MAINNET_RPC_URL``, and
+    ``MAINNET_ORION_CONFIG_ADDRESS``.
     """
 
-    def __init__(
-        self,
-        *,
-        rpc_url: str | None = None,
-        block_number: int | None = None,
-    ) -> None:
-        """Initialize with an optional RPC URL and pinned block."""
-        self._rpc_url = (rpc_url or os.environ.get("MAINNET_RPC_URL") or "").strip()
-        self._block_override = block_number
-        self._w3: Web3 | None = None
-        self._snapshots: dict[tuple[str, int], PoolState] = {}
-        self._extra_assets: dict[str, VenueAsset] = {}
-
-    def _web3(self) -> Web3:
-        if self._w3 is None:
-            url = self._rpc_url
-            if not url:
-                url = (pick_default_mainnet_rpc() or "").strip()
-                self._rpc_url = url
-            if not url:
-                raise RuntimeError(
-                    "No public Ethereum mainnet RPC responded. Set "
-                    "MAINNET_RPC_URL to an Ethereum mainnet RPC "
-                    "(archival for historical timestamps)."
-                )
-            self._w3 = connect_mainnet(url)
-        return self._w3
-
-    def preload_uniswap_state(self, symbol: str, state: PoolState) -> None:
-        """Inject a pool snapshot (tests and research pipelines)."""
-        spec = self._spec_from_preloaded_state(symbol, state)
-        pool_mismatch = spec.pool.lower() != str(state.meta.address).lower()
-        fee_mismatch = int(spec.fee) != int(state.meta.fee)
-        if pool_mismatch or fee_mismatch:
-            raise ValueError(
-                f"Preloaded pool {state.meta.address} fee={state.meta.fee} "
-                f"does not match {symbol} pool {spec.pool} fee={spec.fee}"
-            )
-        self._extra_assets[spec.symbol.upper()] = spec
-        self._extra_assets[spec.address.lower()] = spec
-        self._snapshots[(spec.pool.lower(), state.block_number)] = state
-
-    def _spec_from_preloaded_state(self, symbol: str, state: PoolState) -> VenueAsset:
-        try:
-            return resolve_symbol(symbol)
-        except KeyError:
-            pass
-        usdc = USDC_ADDRESS.lower()
-        t0, t1 = state.meta.token0.lower(), state.meta.token1.lower()
-        if t0 == usdc:
-            address, ticker = state.meta.token1, state.meta.symbol1 or symbol
-        elif t1 == usdc:
-            address, ticker = state.meta.token0, state.meta.symbol0 or symbol
-        else:
-            raise ValueError(f"Preloaded pool {state.meta.address} is not an USDC pair")
-        if looks_like_address(str(symbol).strip()):
-            address = checksum_address(symbol)
-        return VenueAsset(
-            symbol=str(ticker),
-            address=checksum_address(address),
-            pool=checksum_address(state.meta.address),
-            fee=int(state.meta.fee),
-        )
+    def __init__(self) -> None:
+        """Bind OrionConfig / LO / registry on the active (mainnet) chain."""
+        self.config = OrionConfig()
+        _require_mainnet(self.config)
+        self.lo = LiquidityOrchestrator()
+        self.registry = PriceAdapterRegistry()
+        self.w3: Web3 = self.config.w3
 
     def get_cost(
         self,
         symbol: str,
-        signed_size: float,
-        timestamp: str | None = None,
+        size: float,
         *,
         netting_eta: float = 0.0,
-        venue: str = "uniswap_v3",
+        block: int | None = None,
+        shares: int | None = None,
     ) -> ExecutionCost:
-        """Estimate execution cost of a signed trade in human asset units.
+        """Estimate buy-side execution cost in human asset units.
 
         Args:
-            symbol: Ticker (e.g. ``WETH``, ``WBTC``) or mainnet token address.
-            signed_size: Human units of the risk asset. Positive buys (exact
-                output), negative sells (exact input).
-            timestamp: UTC calendar date ``YYYY-MM-DD``. ``None`` means now.
+            symbol: Whitelisted ticker or mainnet asset address.
+            size: Positive human units of the risk asset to buy. Ignored
+                when ``shares`` is set. The protocol **underlying**
+                (numeraire) is a no-op: ``cost_pct`` is always ``0``.
             netting_eta: Fraction of the nominal size that is internally
-                netted. The venue swap is ``(1 - eta) * signed_size``; cost
-                percentages are those of that swap, not scaled by ``(1-eta)``.
-            venue: Backend selector. Only ``uniswap_v3`` is implemented.
+                netted. The adapter quote uses ``(1 - eta) * size``;
+                ``cost_pct`` is that of the residual swap, not scaled by
+                ``(1 - eta)``.
+            block: Optional historical block for eth_call / getPrice.
+            shares: Optional raw ERC-20 units for the residual swap;
+                overrides ``swap_size`` when provided.
         """
-        if venue not in _SUPPORTED_VENUES:
-            raise ValueError(
-                f"Unsupported venue {venue!r}. v1 supports uniswap_v3 only."
-            )
-        size = float(signed_size)
-        if not math.isfinite(size) or size == 0:
-            raise ValueError("signed_size must be non-zero")
+        size_f = float(size)
+        if not math.isfinite(size_f) or size_f <= 0:
+            raise ValueError("size must be a positive finite number")
         if not 0.0 <= float(netting_eta) <= 1.0:
             raise ValueError("netting_eta must be in [0, 1]")
 
-        as_of, unix = parse_cost_timestamp(timestamp)
-        swap_size = (1.0 - float(netting_eta)) * size
-        block = self._block_override
-        if block is not None:
-            as_of = self._date_at_block(block)
-        if swap_size == 0:
+        swap_size = (1.0 - float(netting_eta)) * size_f
+
+        label, asset = _resolve_asset(self.config, symbol)
+        token_decimals = int(self.config.token_decimals(asset))
+
+        if swap_size == 0 and shares is None:
             return ExecutionCost(
-                symbol=str(symbol).strip(),
-                timestamp=as_of,
-                signed_size=size,
+                symbol=label,
+                asset=asset,
+                size=size_f,
                 netting_eta=float(netting_eta),
                 swap_size=0.0,
-                fee_pct=0.0,
-                slippage_pct=0.0,
+                shares=0,
                 cost_pct=0.0,
-                amount_in=0.0,
-                amount_out=0.0,
+                execution_underlying=0,
+                fair_underlying=0,
+                price=0,
+                execution_adapter="",
+                block=block,
             )
 
-        if block is None:
-            block = self._resolve_block(unix)
-        spec = self._resolve_asset(symbol, block)
-        state = self._snapshot(spec, block)
-        result = simulate_asset_swap(state, spec.address, swap_size)
+        if shares is None:
+            human_q = _quantize_human_size(swap_size, token_decimals)
+            if human_q <= 0:
+                shares_i = 0
+                swap_size = 0.0
+            else:
+                shares_i = to_base_units(human_q, token_decimals)
+                swap_size = float(human_q)
+        else:
+            shares_i = int(shares)
+            if shares_i <= 0:
+                raise ValueError("shares must be positive")
+            swap_size = shares_i / (10**token_decimals)
+
+        if shares_i <= 0:
+            return ExecutionCost(
+                symbol=label,
+                asset=asset,
+                size=size_f,
+                netting_eta=float(netting_eta),
+                swap_size=float(swap_size),
+                shares=0,
+                cost_pct=0.0,
+                execution_underlying=0,
+                fair_underlying=0,
+                price=0,
+                execution_adapter="",
+                block=block,
+            )
+
+        underlying = checksum_address(self.config.underlying_asset)
+        # Numeraire: buying underlying with underlying is a no-op onchain.
+        if asset.lower() == underlying.lower():
+            price = int(self.registry.get_price(asset, block=block))
+            return ExecutionCost(
+                symbol=label,
+                asset=asset,
+                size=size_f,
+                netting_eta=float(netting_eta),
+                swap_size=float(swap_size),
+                shares=shares_i,
+                cost_pct=0.0,
+                execution_underlying=shares_i,
+                fair_underlying=shares_i,
+                price=price,
+                execution_adapter="",
+                block=block,
+            )
+
+        adapter = self.lo.execution_adapter_of(asset)
+        price = int(self.registry.get_price(asset, block=block))
+        underlying_decimals = int(self.config.token_decimals(underlying))
+        fair = fair_underlying_amount(
+            shares=shares_i,
+            price=price,
+            price_adapter_decimals=int(self.registry.price_adapter_decimals),
+            token_decimals=token_decimals,
+            underlying_decimals=underlying_decimals,
+        )
+        if fair <= 0:
+            raise ValueError(
+                f"Oracle fair value is zero for {label} ({asset}); cannot compute cost."
+            )
+
+        execution = self._preview_buy(adapter, asset, shares_i, block=block)
         return ExecutionCost(
-            symbol=spec.symbol,
-            timestamp=as_of,
-            signed_size=size,
+            symbol=label,
+            asset=asset,
+            size=size_f,
             netting_eta=float(netting_eta),
-            swap_size=swap_size,
-            fee_pct=result.fee_pct,
-            slippage_pct=result.slippage_pct,
-            cost_pct=result.cost_pct,
-            amount_in=result.amount_in,
-            amount_out=result.amount_out,
+            swap_size=float(swap_size),
+            shares=shares_i,
+            cost_pct=cost_pct(int(execution), int(fair)),
+            execution_underlying=int(execution),
+            fair_underlying=int(fair),
+            price=price,
+            execution_adapter=adapter,
+            block=block,
         )
 
-    def _resolve_asset(self, symbol: str, block: int) -> VenueAsset:
-        raw = str(symbol).strip()
-        extra = self._extra_assets.get(raw.upper()) or self._extra_assets.get(
-            raw.lower()
+    def _adapter_contract(self, adapter: str):
+        return self.w3.eth.contract(
+            address=checksum_address(adapter),
+            abi=load_contract_abi("IExecutionAdapter"),
         )
-        if extra is not None:
-            return extra
+
+    def _preview_buy(
+        self,
+        adapter: str,
+        asset: str,
+        shares: int,
+        *,
+        block: int | None,
+    ) -> int:
+        contract = self._adapter_contract(adapter)
+        fn = contract.functions.previewBuy(checksum_address(asset), int(shares))
         try:
-            return resolve_symbol(symbol)
-        except KeyError:
-            if not looks_like_address(raw):
-                raise
-            return resolve_symbol_onchain(symbol, self._web3(), block)
-
-    def _resolve_block(self, unix: int) -> int:
-        if self._block_override is not None:
-            return self._block_override
-        return block_at_timestamp(self._web3(), unix)
-
-    def _date_at_block(self, block: int) -> str:
-        header = self._web3().eth.get_block(block)
-        return datetime.fromtimestamp(
-            int(header["timestamp"]), tz=timezone.utc
-        ).strftime("%Y-%m-%d")
-
-    def _snapshot(self, spec: VenueAsset, block: int) -> PoolState:
-        key = (spec.pool.lower(), block)
-        cached = self._snapshots.get(key)
-        if cached is not None:
-            return cached
-
-        w3 = self._web3()
-        meta = PoolMeta(address=checksum_address(spec.pool), fee=spec.fee)
-        enrich_pool_meta(w3, meta, block)
-        state = fetch_pool_state(w3, meta, block)
-        if state.liquidity == 0:
+            if block is None:
+                return int(fn.call())
+            return int(fn.call(block_identifier=block))
+        except ContractLogicError as exc:
             raise RuntimeError(
-                f"Uniswap v3 pool {spec.pool} has zero liquidity at block {block}"
-            )
-        self._snapshots[key] = state
-        return state
+                f"previewBuy reverted for asset {asset} on adapter {adapter}: {exc}"
+            ) from exc
 
 
 _DEFAULT_ESTIMATOR: ExecutionCostEstimator | None = None
@@ -226,11 +270,11 @@ _DEFAULT_ESTIMATOR: ExecutionCostEstimator | None = None
 
 def get_cost(
     symbol: str,
-    signed_size: float,
-    timestamp: str | None = None,
+    size: float,
     *,
     netting_eta: float = 0.0,
-    venue: str = "uniswap_v3",
+    block: int | None = None,
+    shares: int | None = None,
 ) -> ExecutionCost:
     """Module-level wrapper around a process-default :class:`ExecutionCostEstimator`."""
     global _DEFAULT_ESTIMATOR
@@ -238,8 +282,8 @@ def get_cost(
         _DEFAULT_ESTIMATOR = ExecutionCostEstimator()
     return _DEFAULT_ESTIMATOR.get_cost(
         symbol,
-        signed_size,
-        timestamp,
+        size,
         netting_eta=netting_eta,
-        venue=venue,
+        block=block,
+        shares=shares,
     )
