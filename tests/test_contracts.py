@@ -538,14 +538,17 @@ class TestOrionConfig:
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_orion_config_rejects_both_rpc_urls_without_chain(self):
         """Both RPC URLs set without CHAIN/CHAIN_ID is rejected."""
-        with patch.dict(
-            os.environ,
-            {
-                "MAINNET_RPC_URL": "http://mainnet",
-                "SEPOLIA_RPC_URL": "http://sepolia",
-                "SEPOLIA_ORION_CONFIG_ADDRESS": "0xbDe3025d08681a02a1c6cf70375baBe2152DD06f",
-            },
-            clear=True,
+        with (
+            patch("orion_finance_sdk_py.contracts.load_dotenv"),
+            patch.dict(
+                os.environ,
+                {
+                    "MAINNET_RPC_URL": "http://mainnet",
+                    "SEPOLIA_RPC_URL": "http://sepolia",
+                    "SEPOLIA_ORION_CONFIG_ADDRESS": "0xbDe3025d08681a02a1c6cf70375baBe2152DD06f",
+                },
+                clear=True,
+            ),
         ):
             with pytest.raises(ValueError, match="CHAIN or CHAIN_ID is required"):
                 OrionConfig()
@@ -553,15 +556,17 @@ class TestOrionConfig:
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi")
     def test_init_invalid_chain_id_env(self):
         """Invalid CHAIN_ID fails during chain resolution before RPC connect."""
-        with patch.dict(
-            os.environ,
-            {
-                "CHAIN_ID": "invalid",
-                "SEPOLIA_RPC_URL": "http://localhost",
-            },
-            clear=False,
+        with (
+            patch("orion_finance_sdk_py.contracts.load_dotenv"),
+            patch.dict(
+                os.environ,
+                {
+                    "CHAIN_ID": "invalid",
+                    "SEPOLIA_RPC_URL": "http://localhost",
+                },
+                clear=True,
+            ),
         ):
-            os.environ.pop("CHAIN", None)
             with pytest.raises(ValueError, match="Invalid CHAIN_ID"):
                 OrionSmartContract("Test", "0xAddress")
 
@@ -1884,17 +1889,26 @@ class TestOrionVaults:
         mock_w3.eth.send_raw_transaction.assert_not_called()
         vault.contract.functions.submitIntent.assert_not_called()
 
+    @patch("orion_finance_sdk_py.protocol.protocol_status")
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
-    def test_submit_order_intent_system_not_idle(self, MockConfig):
+    def test_submit_order_intent_system_not_idle(self, MockConfig, mock_status):
         """Test submit_order_intent raises SystemNotIdleError when system not idle."""
         config_instance = MockConfig.return_value
         config_instance.orion_transparent_vaults = ["0xVault"]
         config_instance.is_system_idle.return_value = False
+        mock_status.return_value = {
+            "is_system_idle": False,
+            "phase": 2,
+            "phase_name": "SellingLeg",
+            "epoch_counter": 3,
+            "epoch_duration_s": 86400,
+        }
 
         vault = OrionTransparentVault()
-        with pytest.raises(SystemNotIdleError, match="Cannot submit order intent"):
+        with pytest.raises(SystemNotIdleError, match="Cannot submit order intent") as ei:
             vault.submit_order_intent({"0xToken": 1})
+        assert ei.value.status["phase_name"] == "SellingLeg"
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")

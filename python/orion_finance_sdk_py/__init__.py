@@ -11,13 +11,24 @@ from orion_finance_sdk_py.contracts import (
     OrionTransparentVault,
     OrionVault,
     PriceAdapterRegistry,
+    SystemNotIdleError,
     VaultFactory,
+    require_system_idle,
 )
-from orion_finance_sdk_py.costs import ExecutionCost, ExecutionCostEstimator, get_cost
+from orion_finance_sdk_py.costs import (
+    ExecutionCost,
+    ExecutionCostEstimator,
+    get_cost,
+)
 from orion_finance_sdk_py.hpke import seal_intent, seal_portfolio
 from orion_finance_sdk_py.intent import Intent
 from orion_finance_sdk_py.lifecycle import IntentSession, weights_to_intent
 from orion_finance_sdk_py.order_intent_io import load_order_intent
+from orion_finance_sdk_py.protocol import (
+    PHASE_NAMES,
+    protocol_status,
+    wait_until_idle,
+)
 from orion_finance_sdk_py.stats import ReturnSeries, covariance, measures, rank_products
 
 from . import lp, manager, stats, strategist, views
@@ -34,8 +45,10 @@ __all__ = [
     "OrionEncryptedVault",
     "OrionTransparentVault",
     "OrionVault",
+    "PHASE_NAMES",
     "PriceAdapterRegistry",
     "ReturnSeries",
+    "SystemNotIdleError",
     "VaultFactory",
     "build_asset_address_map",
     "covariance",
@@ -45,12 +58,15 @@ __all__ = [
     "lp",
     "manager",
     "measures",
+    "protocol_status",
     "rank_products",
+    "require_system_idle",
     "seal_intent",
     "seal_portfolio",
     "stats",
     "strategist",
     "submit_intent",
     "views",
+    "wait_until_idle",
     "weights_to_intent",
 ]

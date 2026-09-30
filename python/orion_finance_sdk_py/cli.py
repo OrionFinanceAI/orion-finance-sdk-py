@@ -28,6 +28,7 @@ from .contracts import (
     OrionConfig,
     OrionEncryptedVault,
     OrionTransparentVault,
+    SystemNotIdleError,
     VaultFactory,
 )
 from .erc20 import decimals as erc20_decimals
@@ -38,6 +39,7 @@ from .orion_config_env import (
     apply_chain_selection,
     resolve_active_chain_id,
 )
+from .protocol import protocol_status, wait_until_idle
 from .types import (
     ZERO_ADDRESS,
     FeeType,
@@ -115,7 +117,13 @@ def _deploy_vault_logic(
         print_error("Could not extract vault address from transaction")
 
 
-def _submit_intent_logic(intent_source: str):
+def _submit_intent_logic(
+    intent_source: str,
+    *,
+    wait: bool = False,
+    wait_timeout: float = 600.0,
+    wait_poll: float = 5.0,
+):
     """Logic for submitting a strategist intent.
 
     ``intent_source`` may be a path to ``.json`` / ``.csv`` / ``.parquet``, or an
@@ -130,6 +138,17 @@ def _submit_intent_logic(intent_source: str):
     )
 
     with operation_progress("Submit intent"):
+        if wait:
+            progress_step("Waiting until protocol is Idle")
+            wait_until_idle(
+                wait_timeout,
+                poll_s=wait_poll,
+                operation="submit order intent",
+                on_tick=lambda status: print_info(
+                    f"Waiting for Idle… phase={status['phase_name']} "
+                    f"epoch={status['epoch_counter']}"
+                ),
+            )
         progress_step("Loading intent from source")
         order_intent = load_order_intent(intent_source)
         config = OrionConfig()
@@ -142,6 +161,55 @@ def _submit_intent_logic(intent_source: str):
         return
 
     format_transaction_logs(tx_result, "Intent submitted successfully")
+
+
+def _protocol_status_logic() -> None:
+    """Print idle / phase / epoch snapshot for operators."""
+    status = protocol_status()
+    print_key_value(
+        [
+            ("idle", str(status["is_system_idle"])),
+            ("phase", f"{status['phase_name']} ({status['phase']})"),
+            ("epoch", str(status["epoch_counter"])),
+            ("epoch_duration_s", str(status["epoch_duration_s"])),
+        ],
+        title="Protocol status",
+    )
+    if status["is_system_idle"]:
+        print_info("Writes (submit intent, deposits, fee updates) are allowed.")
+    else:
+        print_warn(
+            "Protocol is not Idle. Writes will fail until the epoch returns to Idle. "
+            "Use: orion submit-intent --wait …"
+        )
+
+
+def _system_not_idle_details(exc: SystemNotIdleError) -> list[tuple[str, str]]:
+    """Structured rows for ``print_error`` from a ``SystemNotIdleError``."""
+    status = exc.status or {}
+    rows: list[tuple[str, str]] = []
+    if status:
+        rows.append(("idle", str(status.get("is_system_idle"))))
+        phase = status.get("phase")
+        name = status.get("phase_name", "?")
+        rows.append(("phase", f"{name} ({phase})"))
+        if "epoch_counter" in status:
+            rows.append(("epoch", str(status["epoch_counter"])))
+        if "epoch_duration_s" in status:
+            rows.append(("epoch_duration_s", str(status["epoch_duration_s"])))
+    if exc.hint:
+        rows.append(("hint", exc.hint))
+    return rows
+
+
+def _print_system_not_idle(exc: SystemNotIdleError, *, operation: str | None = None) -> None:
+    """Render a friendly not-idle failure panel."""
+    print_error(
+        str(exc),
+        operation=operation or exc.operation or "Protocol not idle",
+        error_type="SystemNotIdleError",
+        details=_system_not_idle_details(exc),
+    )
 
 
 def _update_strategist_logic(new_strategist_address: str):
@@ -472,6 +540,8 @@ def _main_menu_choices():
         _menu_choice("Remove Vault", "Start irreversible decommission"),
         _menu_section("Strategist"),
         _menu_choice("Submit Intent", "Submit strategist weights"),
+        _menu_section("Protocol"),
+        _menu_choice("Protocol Status", "Idle / phase / epoch snapshot"),
         _menu_section("Deposits"),
         _menu_choice("Request Deposit", "Request an underlying deposit"),
         _menu_choice("Cancel Deposit Request", "Cancel a pending deposit"),
@@ -660,7 +730,21 @@ def interactive_menu(chain_from_cli: str | None = None):
                         "Intent: path to .json/.csv/.parquet or inline JSON object:",
                     )
                 )
-                _submit_intent_logic(path)
+                wait = ask_or_exit(
+                    _q_confirm("Wait until Idle before submit?", default=False)
+                )
+                if wait:
+                    timeout_str = ask_or_exit(
+                        _q_text("Wait timeout (seconds):", default="600")
+                    )
+                    _submit_intent_logic(
+                        path, wait=True, wait_timeout=float(timeout_str)
+                    )
+                else:
+                    _submit_intent_logic(path)
+
+            elif choice == "Protocol Status":
+                _protocol_status_logic()
 
             elif choice == "Request Deposit":
                 token_symbol, token_decimals = _underlying_token_meta()
@@ -798,11 +882,15 @@ def interactive_menu(chain_from_cli: str | None = None):
         except KeyboardInterrupt:
             print_info("Operation cancelled.")
             continue  # Go back to main menu loop
+        except SystemNotIdleError as e:
+            _print_system_not_idle(e, operation=choice)
+            input("\nPress Enter to continue...")
+        except StopIteration:
+            # Exhausted mock answer streams in tests must not soft-loop forever.
+            raise
         except Exception as e:
-            extra: dict[str, str] = {}
-            if not isinstance(e, ValueError):
-                extra["error_type"] = type(e).__name__
-            print_error(str(e), operation=choice, **extra)
+            error_type = None if isinstance(e, ValueError) else type(e).__name__
+            print_error(str(e), operation=choice, error_type=error_type)
             input("\nPress Enter to continue...")
 
 
@@ -827,6 +915,9 @@ def entry_point():
     """Entry point for the CLI."""
     try:
         app()
+    except SystemNotIdleError as e:
+        _print_system_not_idle(e)
+        sys.exit(1)
     except ValueError as e:
         print_error(str(e))
         sys.exit(1)
@@ -889,13 +980,42 @@ def submit_intent(
             "Python dict literal, e.g. '{\"0xabc...\": 0.5, ...}'"
         ),
     ),
+    wait: bool = typer.Option(
+        False,
+        "--wait",
+        help="Poll until the protocol is Idle before submitting",
+    ),
+    wait_timeout: float = typer.Option(
+        600.0,
+        "--wait-timeout",
+        help="Seconds to wait for Idle when --wait is set (default 600)",
+    ),
+    wait_poll: float = typer.Option(
+        5.0,
+        "--wait-poll",
+        help="Seconds between Idle polls when --wait is set (default 5)",
+    ),
 ) -> None:
     """Submit an intent to an Orion vault.
 
     Transparent vaults submit plaintext weights. Encrypted vaults HPKE-seal the
     intent automatically before calling ``submitIntent(bytes)``.
+
+    Intents can only be submitted while the protocol is Idle. Use ``--wait`` to
+    poll until Idle, or ``orion protocol-status`` to inspect the current phase.
     """
-    _submit_intent_logic(intent)
+    _submit_intent_logic(
+        intent,
+        wait=wait,
+        wait_timeout=wait_timeout,
+        wait_poll=wait_poll,
+    )
+
+
+@app.command("protocol-status")
+def protocol_status_cmd() -> None:
+    """Show whether the protocol is Idle and the current LO phase / epoch."""
+    _protocol_status_logic()
 
 
 @app.command()

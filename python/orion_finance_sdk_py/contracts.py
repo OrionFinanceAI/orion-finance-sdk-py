@@ -92,7 +92,60 @@ class TransactionResult:
 
 
 class SystemNotIdleError(RuntimeError):
-    """Raised when the protocol is not idle for the requested operation."""
+    """Raised when the protocol is not idle for the requested operation.
+
+    Attributes:
+        operation: Short verb phrase (e.g. ``"submit order intent"``).
+        status: Protocol snapshot from ``protocol_status()`` when available.
+        hint: Optional extra guidance for operators.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        operation: str | None = None,
+        status: dict | None = None,
+        hint: str | None = None,
+    ):
+        """Attach operation context and optional protocol status to the error."""
+        super().__init__(message)
+        self.operation = operation
+        self.status = status or {}
+        self.hint = hint
+
+
+def require_system_idle(operation: str) -> None:
+    """Raise ``SystemNotIdleError`` with phase/epoch context if not Idle.
+
+    Logs a one-line warning and advances ``progress_step`` when inside
+    ``operation_progress``, so CLI submit flows stay transparent.
+    """
+    progress_step("Verifying protocol is idle")
+    if OrionConfig().is_system_idle():
+        return
+
+    # Lazy import avoids circular dependency with ``protocol``.
+    from .protocol import format_not_idle_message, protocol_status
+
+    try:
+        status = protocol_status()
+        message = format_not_idle_message(operation, status)
+        summary = (
+            f"Protocol not idle: {status['phase_name']} (phase {status['phase']}), "
+            f"epoch {status['epoch_counter']}"
+        )
+    except Exception:
+        status = {}
+        message = (
+            f"Cannot {operation}: system is not idle. "
+            "Writes are only allowed while Idle. Run: orion protocol-status"
+        )
+        summary = "Protocol not idle"
+
+    progress_step(summary)
+    print_warn(summary)
+    raise SystemNotIdleError(message, operation=operation, status=status)
 
 
 class TransactionFailedError(RuntimeError):
@@ -584,11 +637,7 @@ class OrionConfig(OrionSmartContract):
         Signs with ``MANAGER_PRIVATE_KEY`` and verifies the signer is the vault
         manager.
         """
-        progress_step("Verifying protocol is idle")
-        if not self.is_system_idle():
-            raise SystemNotIdleError(
-                "System is not idle. Cannot remove Orion vault at this time."
-            )
+        require_system_idle("remove Orion vault")
 
         vault_address = checksum_address(vault_address)
         progress_step("Verifying vault registration")
@@ -852,6 +901,26 @@ class LiquidityOrchestrator(OrionSmartContract):
         checksummed = [checksum_address(a) for a in assets]
         return list(_call_view(self.contract.functions.getAssetPrices(checksummed)))
 
+    def execution_adapter_of(self, asset: str, block: int | None = None) -> str:
+        """Return the execution adapter address for ``asset``.
+
+        Args:
+            asset: Token contract address.
+            block: Optional block number for a historical ``eth_call``.
+
+        Raises:
+            ValueError: If ``asset`` is not whitelisted (adapter is ``address(0)``).
+        """
+        adapter = _call_view(
+            self.contract.functions.executionAdapterOf(checksum_address(asset)),
+            block_identifier=block,
+        )
+        if adapter.lower() == ZERO_ADDRESS.lower():
+            raise ValueError(
+                f"Asset {checksum_address(asset)} is not whitelisted"
+            )
+        return checksum_address(adapter)
+
 
 class VaultFactory(OrionSmartContract):
     """VaultFactory contract."""
@@ -949,11 +1018,7 @@ class VaultFactory(OrionSmartContract):
                 f"Management fee {management_fee} exceeds maximum {MAX_MANAGEMENT_FEE}"
             )
 
-        progress_step("Verifying protocol is idle")
-        if not config.is_system_idle():
-            raise SystemNotIdleError(
-                "System is not idle. Cannot deploy vault at this time."
-            )
+        require_system_idle("deploy vault")
 
         progress_step("Estimating gas and checking ETH balance")
         account = self.w3.eth.account.from_key(manager_private_key)
@@ -1422,11 +1487,7 @@ class OrionVault(OrionSmartContract):
 
     def update_strategist(self, new_strategist_address: str) -> TransactionResult:
         """Update the strategist address for the vault."""
-        config = OrionConfig()
-        if not config.is_system_idle():
-            raise SystemNotIdleError(
-                "System is not idle. Cannot update strategist at this time."
-            )
+        require_system_idle("update strategist")
 
         manager_private_key = validate_var(
             os.getenv("MANAGER_PRIVATE_KEY"),
@@ -1477,11 +1538,7 @@ class OrionVault(OrionSmartContract):
         that timestamp, ``active_fee_model`` still returns the previous fees
         (LP griefing protection).
         """
-        config = OrionConfig()
-        if not config.is_system_idle():
-            raise SystemNotIdleError(
-                "System is not idle. Cannot update fee model at this time."
-            )
+        require_system_idle("update fee model")
 
         if performance_fee > self.max_performance_fee:
             raise ValueError(
@@ -1550,11 +1607,7 @@ class OrionVault(OrionSmartContract):
 
     def transfer_manager_fees(self, amount: int) -> TransactionResult:
         """Transfer manager fees (claimVaultFees)."""
-        config = OrionConfig()
-        if not config.is_system_idle():
-            raise SystemNotIdleError(
-                "System is not idle. Cannot transfer manager fees at this time."
-            )
+        require_system_idle("transfer manager fees")
 
         manager_private_key = validate_var(
             os.getenv("MANAGER_PRIVATE_KEY"),
@@ -1790,11 +1843,7 @@ class OrionVault(OrionSmartContract):
         self, setter_name: str, access_control_address: str, action: str
     ) -> TransactionResult:
         """Set a vault access-control address. Manager signer; protocol must be idle."""
-        config = OrionConfig()
-        if not config.is_system_idle():
-            raise SystemNotIdleError(
-                f"System is not idle. Cannot {action} at this time."
-            )
+        require_system_idle(action)
 
         manager_private_key = validate_var(
             os.getenv("MANAGER_PRIVATE_KEY"),
@@ -2009,12 +2058,7 @@ class OrionTransparentVault(OrionVault):
         Returns:
             TransactionResult, or ``None`` if the intent is unchanged.
         """
-        config = OrionConfig()
-        progress_step("Verifying protocol is idle")
-        if not config.is_system_idle():
-            raise SystemNotIdleError(
-                "System is not idle. Cannot submit order intent at this time."
-            )
+        require_system_idle("submit order intent")
 
         strategist_private_key = validate_var(
             os.getenv("STRATEGIST_PRIVATE_KEY"),
@@ -2133,13 +2177,9 @@ class OrionEncryptedVault(OrionVault):
         """
         from .intent import Intent
 
-        config = OrionConfig()
-        progress_step("Verifying protocol is idle")
-        if not config.is_system_idle():
-            raise SystemNotIdleError(
-                "System is not idle. Cannot submit order intent at this time."
-            )
+        require_system_idle("submit order intent")
 
+        config = OrionConfig()
         strategist_private_key = validate_var(
             os.getenv("STRATEGIST_PRIVATE_KEY"),
             error_message=(

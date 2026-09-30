@@ -1,4 +1,4 @@
-"""Venue-agnostic execution cost types."""
+"""Execution cost types (adapter vs oracle)."""
 
 from __future__ import annotations
 
@@ -7,18 +7,22 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ExecutionCost:
-    """Estimated execution cost of a signed asset trade.
+    """Estimated buy-side execution cost of an asset trade.
 
-    Fields apply to any venue and any vault.
+    ``cost_pct`` is the ``previewBuy`` quote versus price-adapter fair value
+    (positive means worse than oracle). That gap embeds LP fees, slippage,
+    and other venue effects on the Orion execution path.
     """
 
     symbol: str
-    timestamp: str
-    signed_size: float
+    asset: str
+    size: float
     netting_eta: float
     swap_size: float
-    fee_pct: float
-    slippage_pct: float
+    shares: int
     cost_pct: float
-    amount_in: float
-    amount_out: float
+    execution_underlying: int
+    fair_underlying: int
+    price: int
+    execution_adapter: str
+    block: int | None

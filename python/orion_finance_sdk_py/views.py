@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .contracts import LiquidityOrchestrator, OrionConfig
+from .protocol import protocol_status
 from .vault_resolve import resolve_vault
 
 
@@ -75,8 +76,9 @@ def eligibility_snapshot(vault_address: str | None = None) -> dict:
         hpke_key: bytes | None = config.hpke_public_key
     except ValueError:
         hpke_key = None
+    status = protocol_status()
     return {
-        "is_system_idle": config.is_system_idle(),
+        "is_system_idle": status["is_system_idle"],
         "min_deposit_amount": config.min_deposit_amount,
         "min_redeem_amount": config.min_redeem_amount,
         "vault_type": (
@@ -90,5 +92,8 @@ def eligibility_snapshot(vault_address: str | None = None) -> dict:
         "hpke_public_key": hpke_key,
         "whitelisted_assets": config.whitelisted_assets,
         "lo_buffer_amount": LiquidityOrchestrator().buffer_amount,
-        "lo_current_phase": LiquidityOrchestrator().current_phase,
+        "lo_current_phase": status["phase"],
+        "lo_phase_name": status["phase_name"],
+        "epoch_counter": status["epoch_counter"],
+        "epoch_duration_s": status["epoch_duration_s"],
     }

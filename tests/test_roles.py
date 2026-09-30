@@ -35,10 +35,11 @@ def mock_env():
         yield
 
 
+@patch("orion_finance_sdk_py.lp.require_system_idle")
 @patch("orion_finance_sdk_py.lp.approve")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
 @patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_request_deposit_approves_then_calls(MockConfig, mock_resolve, mock_approve):
+def test_lp_request_deposit_approves_then_calls(MockConfig, mock_resolve, mock_approve, _idle):
     """LP request_deposit approves underlying then requestDeposit."""
     config = MockConfig.return_value
     config.is_system_idle.return_value = True
@@ -62,10 +63,11 @@ def test_lp_request_deposit_approves_then_calls(MockConfig, mock_resolve, mock_a
     assert res.tx_hash == "0x1"
 
 
+@patch("orion_finance_sdk_py.lp.require_system_idle")
 @patch("orion_finance_sdk_py.lp.approve")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
 @patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_request_redeem_approves_shares(MockConfig, mock_resolve, mock_approve):
+def test_lp_request_redeem_approves_shares(MockConfig, mock_resolve, mock_approve, _idle):
     config = MockConfig.return_value
     config.is_system_idle.return_value = True
     config.min_redeem_amount = 1
@@ -87,11 +89,19 @@ def test_lp_request_redeem_approves_shares(MockConfig, mock_resolve, mock_approv
     vault.request_redeem.assert_called_once_with(50, key_env="LP_PRIVATE_KEY")
 
 
+@patch("orion_finance_sdk_py.protocol.protocol_status")
+@patch("orion_finance_sdk_py.contracts.OrionConfig")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
-@patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_request_deposit_rejects_when_not_idle(MockConfig, mock_resolve):
+def test_lp_request_deposit_rejects_when_not_idle(mock_resolve, MockConfig, mock_status):
     MockConfig.return_value.is_system_idle.return_value = False
-    with pytest.raises(SystemNotIdleError):
+    mock_status.return_value = {
+        "is_system_idle": False,
+        "phase": 1,
+        "phase_name": "StateCommitment",
+        "epoch_counter": 1,
+        "epoch_duration_s": 10,
+    }
+    with pytest.raises(SystemNotIdleError, match="request deposit"):
         lp.request_deposit(100)
 
 
@@ -178,12 +188,12 @@ def test_exports_exclude_admin_and_acl():
     assert "manager" in sdk.__all__
 
 
+@patch("orion_finance_sdk_py.views.protocol_status")
 @patch("orion_finance_sdk_py.views.LiquidityOrchestrator")
 @patch("orion_finance_sdk_py.views.resolve_vault")
 @patch("orion_finance_sdk_py.views.OrionConfig")
-def test_views_eligibility_snapshot(MockConfig, mock_resolve, MockLO):
+def test_views_eligibility_snapshot(MockConfig, mock_resolve, MockLO, mock_status):
     config = MockConfig.return_value
-    config.is_system_idle.return_value = True
     config.min_deposit_amount = 1
     config.min_redeem_amount = 2
     config.is_encrypted_vault.return_value = False
@@ -198,12 +208,21 @@ def test_views_eligibility_snapshot(MockConfig, mock_resolve, MockLO):
     mock_resolve.return_value = vault
 
     MockLO.return_value.buffer_amount = 99
-    MockLO.return_value.current_phase = 0
+    mock_status.return_value = {
+        "is_system_idle": True,
+        "phase": 0,
+        "phase_name": "Idle",
+        "epoch_counter": 1,
+        "epoch_duration_s": 86400,
+    }
 
     snap = views.eligibility_snapshot()
     assert snap["is_system_idle"] is True
     assert snap["vault_type"] == "transparent"
     assert snap["lo_buffer_amount"] == 99
+    assert snap["lo_phase_name"] == "Idle"
+    assert snap["epoch_counter"] == 1
+    assert snap["epoch_duration_s"] == 86400
 
 
 def test_decode_revert_system_not_idle():
@@ -228,10 +247,15 @@ def test_vault_redeem_requires_decommissioned(MockConfig, mock_exec):
         os.environ,
         {
             "SEPOLIA_RPC_URL": "http://localhost:8545",
+            "CHAIN_ID": "11155111",
+            "CHAIN": "sepolia",
             "ORION_VAULT_ADDRESS": "0xVault",
             "LP_PRIVATE_KEY": "0xPrivate",
         },
+        clear=False,
     ):
+        # Avoid leftover CHAIN_ID=1 from other CLI tests in the same session.
+        os.environ.pop("MAINNET_RPC_URL", None)
         with patch("orion_finance_sdk_py.contracts.Web3") as MockWeb3:
             MockWeb3.HTTPProvider.return_value = MagicMock()
             w3 = MagicMock()
@@ -252,9 +276,10 @@ def test_vault_redeem_requires_decommissioned(MockConfig, mock_exec):
                     mock_exec.assert_not_called()
 
 
+@patch("orion_finance_sdk_py.lp.require_system_idle")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
 @patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_request_deposit_below_min(MockConfig, mock_resolve):
+def test_lp_request_deposit_below_min(MockConfig, mock_resolve, _idle):
     config = MockConfig.return_value
     config.is_system_idle.return_value = True
     config.min_deposit_amount = 100
@@ -262,9 +287,10 @@ def test_lp_request_deposit_below_min(MockConfig, mock_resolve):
         lp.request_deposit(10)
 
 
+@patch("orion_finance_sdk_py.lp.require_system_idle")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
 @patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_request_deposit_rejects_decommissioning(MockConfig, mock_resolve):
+def test_lp_request_deposit_rejects_decommissioning(MockConfig, mock_resolve, _idle):
     config = MockConfig.return_value
     config.is_system_idle.return_value = True
     config.min_deposit_amount = 1
@@ -277,9 +303,10 @@ def test_lp_request_deposit_rejects_decommissioning(MockConfig, mock_resolve):
         lp.request_deposit(10)
 
 
+@patch("orion_finance_sdk_py.lp.require_system_idle")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
 @patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_request_redeem_below_min(MockConfig, mock_resolve):
+def test_lp_request_redeem_below_min(MockConfig, mock_resolve, _idle):
     config = MockConfig.return_value
     config.is_system_idle.return_value = True
     config.min_redeem_amount = 50
@@ -287,9 +314,10 @@ def test_lp_request_redeem_below_min(MockConfig, mock_resolve):
         lp.request_redeem(1)
 
 
+@patch("orion_finance_sdk_py.lp.require_system_idle")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
 @patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_request_redeem_rejects_decommissioned(MockConfig, mock_resolve):
+def test_lp_request_redeem_rejects_decommissioned(MockConfig, mock_resolve, _idle):
     config = MockConfig.return_value
     config.is_system_idle.return_value = True
     config.min_redeem_amount = 1
@@ -302,7 +330,7 @@ def test_lp_request_redeem_rejects_decommissioned(MockConfig, mock_resolve):
 
 
 @patch("orion_finance_sdk_py.lp.resolve_vault")
-@patch("orion_finance_sdk_py.lp.OrionConfig")
+@patch("orion_finance_sdk_py.contracts.OrionConfig")
 def test_lp_cancel_deposit_and_redeem(MockConfig, mock_resolve):
     config = MockConfig.return_value
     config.is_system_idle.return_value = True
@@ -321,26 +349,50 @@ def test_lp_cancel_deposit_and_redeem(MockConfig, mock_resolve):
     vault.cancel_redeem_request.assert_called_once_with(7, key_env="LP_PRIVATE_KEY")
 
 
+@patch("orion_finance_sdk_py.protocol.protocol_status")
+@patch("orion_finance_sdk_py.contracts.OrionConfig")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
-@patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_cancel_deposit_not_idle(MockConfig, mock_resolve):
+def test_lp_cancel_deposit_not_idle(mock_resolve, MockConfig, mock_status):
     MockConfig.return_value.is_system_idle.return_value = False
+    mock_status.return_value = {
+        "is_system_idle": False,
+        "phase": 1,
+        "phase_name": "StateCommitment",
+        "epoch_counter": 1,
+        "epoch_duration_s": 10,
+    }
     with pytest.raises(SystemNotIdleError):
         lp.cancel_deposit_request(1)
 
 
+@patch("orion_finance_sdk_py.protocol.protocol_status")
+@patch("orion_finance_sdk_py.contracts.OrionConfig")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
-@patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_cancel_redeem_not_idle(MockConfig, mock_resolve):
+def test_lp_cancel_redeem_not_idle(mock_resolve, MockConfig, mock_status):
     MockConfig.return_value.is_system_idle.return_value = False
+    mock_status.return_value = {
+        "is_system_idle": False,
+        "phase": 1,
+        "phase_name": "StateCommitment",
+        "epoch_counter": 1,
+        "epoch_duration_s": 10,
+    }
     with pytest.raises(SystemNotIdleError):
         lp.cancel_redeem_request(1)
 
 
+@patch("orion_finance_sdk_py.protocol.protocol_status")
+@patch("orion_finance_sdk_py.contracts.OrionConfig")
 @patch("orion_finance_sdk_py.lp.resolve_vault")
-@patch("orion_finance_sdk_py.lp.OrionConfig")
-def test_lp_request_redeem_not_idle(MockConfig, mock_resolve):
+def test_lp_request_redeem_not_idle(mock_resolve, MockConfig, mock_status):
     MockConfig.return_value.is_system_idle.return_value = False
+    mock_status.return_value = {
+        "is_system_idle": False,
+        "phase": 1,
+        "phase_name": "StateCommitment",
+        "epoch_counter": 1,
+        "epoch_duration_s": 10,
+    }
     with pytest.raises(SystemNotIdleError):
         lp.request_redeem(1)
 
@@ -441,13 +493,15 @@ def test_views_lo_helpers(MockLO):
     assert views.lo_epoch_state() == {"phase": 1}
 
 
+@patch("orion_finance_sdk_py.views.protocol_status")
 @patch("orion_finance_sdk_py.views.LiquidityOrchestrator")
 @patch("orion_finance_sdk_py.views.resolve_vault")
 @patch("orion_finance_sdk_py.views.OrionConfig")
-def test_views_eligibility_snapshot_hpke_error(MockConfig, mock_resolve, MockLO):
+def test_views_eligibility_snapshot_hpke_error(
+    MockConfig, mock_resolve, MockLO, mock_status
+):
     config = MockConfig.return_value
     type(config).hpke_public_key = PropertyMock(side_effect=ValueError("bad key"))
-    config.is_system_idle.return_value = True
     config.min_deposit_amount = 1
     config.min_redeem_amount = 1
     config.is_encrypted_vault.return_value = True
@@ -460,12 +514,19 @@ def test_views_eligibility_snapshot_hpke_error(MockConfig, mock_resolve, MockLO)
     vault.deposit_access_control = "0x0"
     mock_resolve.return_value = vault
     MockLO.return_value.buffer_amount = 0
-    MockLO.return_value.current_phase = 2
+    mock_status.return_value = {
+        "is_system_idle": True,
+        "phase": 2,
+        "phase_name": "SellingLeg",
+        "epoch_counter": 7,
+        "epoch_duration_s": 100,
+    }
 
     snap = views.eligibility_snapshot()
     assert snap["hpke_public_key"] is None
     assert snap["vault_type"] == "encrypted"
     assert snap["lo_current_phase"] == 2
+    assert snap["lo_phase_name"] == "SellingLeg"
 
 
 def test_decode_revert_edge_cases():

@@ -821,3 +821,95 @@ def test_cli_rejects_unknown_chain(mock_ensure_env):
     assert "Unsupported chain" in _cli_output(result) or "Unsupported chain" in str(
         result.exception
     )
+
+
+@patch("orion_finance_sdk_py.cli.protocol_status")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+def test_protocol_status_command(mock_ensure, mock_status):
+    mock_status.return_value = {
+        "is_system_idle": False,
+        "phase": 2,
+        "phase_name": "SellingLeg",
+        "epoch_counter": 11,
+        "epoch_duration_s": 86400,
+    }
+    result = runner.invoke(app, ["protocol-status"], env={"CHAIN_ID": "11155111"})
+    assert result.exit_code == 0
+    out = _cli_output(result)
+    assert "SellingLeg" in out
+    assert "11" in out
+    assert "not Idle" in out or "not idle" in out.lower()
+
+
+@patch("orion_finance_sdk_py.cli.wait_until_idle")
+@patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+@patch("orion_finance_sdk_py.cli.validate_order")
+def test_submit_intent_wait_calls_wait_until_idle(
+    mock_validate, mock_ensure, MockConfig, MockVault, mock_wait, tmp_path
+):
+    mock_config = MockConfig.return_value
+    mock_config.is_encrypted_vault.return_value = False
+    mock_config.is_orion_vault.return_value = True
+    MockVault.return_value.submit_order_intent.return_value = MagicMock(decoded_logs=[])
+
+    order_file = tmp_path / "order.json"
+    order_file.write_text('{"0xA": 1.0}')
+
+    result = runner.invoke(
+        app,
+        [
+            "submit-intent",
+            "--intent-path",
+            str(order_file),
+            "--wait",
+            "--wait-timeout",
+            "30",
+            "--wait-poll",
+            "1",
+        ],
+        env={"ORION_VAULT_ADDRESS": "0xTransVault", "CHAIN_ID": "11155111"},
+    )
+    assert result.exit_code == 0
+    mock_wait.assert_called_once()
+    assert mock_wait.call_args.args[0] == 30.0
+
+
+@patch("orion_finance_sdk_py.cli.OrionTransparentVault")
+@patch("orion_finance_sdk_py.cli.OrionConfig")
+@patch("orion_finance_sdk_py.cli.ensure_env_file")
+@patch("orion_finance_sdk_py.cli.validate_order")
+def test_submit_intent_not_idle_shows_phase(
+    mock_validate, mock_ensure, MockConfig, MockVault, tmp_path
+):
+    from orion_finance_sdk_py.contracts import SystemNotIdleError
+
+    mock_config = MockConfig.return_value
+    mock_config.is_encrypted_vault.return_value = False
+    mock_config.is_orion_vault.return_value = True
+    MockVault.return_value.submit_order_intent.side_effect = SystemNotIdleError(
+        "Cannot submit order intent: protocol is in SellingLeg (phase 2), epoch 4.",
+        operation="submit order intent",
+        status={
+            "is_system_idle": False,
+            "phase": 2,
+            "phase_name": "SellingLeg",
+            "epoch_counter": 4,
+            "epoch_duration_s": 86400,
+        },
+    )
+
+    order_file = tmp_path / "order.json"
+    order_file.write_text('{"0xA": 1.0}')
+
+    result = runner.invoke(
+        app,
+        ["submit-intent", "--intent-path", str(order_file)],
+        env={"ORION_VAULT_ADDRESS": "0xTransVault", "CHAIN_ID": "11155111"},
+    )
+    # Typer surfaces the exception unless entry_point wraps it; CliRunner catches it.
+    assert result.exit_code != 0
+    assert isinstance(result.exception, SystemNotIdleError)
+    assert result.exception.status["phase_name"] == "SellingLeg"
+    assert "SellingLeg" in str(result.exception)

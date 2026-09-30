@@ -96,11 +96,14 @@ def test_print_error_with_operation_and_type(capture_console):
         "System is not idle",
         operation="Request Deposit",
         error_type="SystemNotIdleError",
+        details=[("phase", "SellingLeg (2)"), ("epoch", "17")],
     )
     out = capture_console.getvalue()
     assert "Request Deposit" in out
     assert "System is not idle" in out
     assert "SystemNotIdleError" in out
+    assert "SellingLeg" in out
+    assert "17" in out
 
 
 def test_print_confirm_warning(capture_console):
