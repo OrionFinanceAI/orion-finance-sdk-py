@@ -486,7 +486,6 @@ table = measures.product_scoreboard(rs, rfr=rfr)
 cov = covariance.sample(rs)
 ```
 
-Vault share-price panels use `ReturnSeries.from_share_price_histories`.
 
 **Hygiene.** Ranking, Sharpe, covariance, PCA, and MeanRisk use only **contiguous one-calendar-day** observations: a gap longer than one day drops the gap-boundary return so a multi-day jump is not treated as a daily return. Path stats (total return, CAGR, max drawdown, normalized wealth) use the price path **including** gaps. Missing prices are not forward-filled.
 
@@ -503,6 +502,46 @@ train, test = portfolio.chronological_split(excess)
 mv = portfolio.min_variance(train)
 # mv.weights  — labeled Series
 ```
+
+(benchmark-intent-analytics)=
+
+## Benchmark and intent history
+
+Compare a vault column to a benchmark column with ``compare_to_benchmark`` / ``benchmark_relative`` (IR, Jensen alpha, beta, capture ratios). Reconstruct transparent strategist intents from ``OrderSubmitted`` logs.
+
+```python
+from datetime import datetime, timedelta, timezone
+
+from orion_finance_sdk_py import OrionTransparentVault, ReturnSeries
+from orion_finance_sdk_py.stats import compare_to_benchmark, from_price_history, from_share_price_histories, measures, rfr_decimal
+from orion_finance_sdk_py import OrionConfig, PriceAdapterRegistry
+
+config = OrionConfig()
+registry = PriceAdapterRegistry()
+vault = OrionTransparentVault("0xa52426E3922db2Bd9411cB05e6e2e874453064Ce")
+end = datetime.now(timezone.utc)
+start = end - timedelta(days=90)
+
+names = dict(zip(config.whitelisted_assets, config.whitelisted_asset_names))
+wbtc = next(a for a, n in names.items() if "WBTC" in n.upper())
+
+vault_px = from_share_price_histories({vault.symbol: vault.share_price_history(start, end)})
+asset_px = from_price_history(
+    registry.price_history(start=start, end=end, assets=[wbtc]),
+    decimals=registry.price_adapter_decimals,
+    names=names,
+)
+prices = vault_px.join(asset_px, how="outer").sort_index()
+rs = ReturnSeries.from_prices(prices)
+rfr = rfr_decimal(config.risk_free_rate)
+table = measures.summary(rs, rfr=rfr)
+relative = compare_to_benchmark(rs, vault.symbol, names[wbtc], rfr=rfr)
+
+intents = vault.intent_history(start=start, end=end)
+# also: vault.get_intent(block=...)
+```
+
+Transparent-only: ``get_intent(block=...)`` and ``intent_history`` use ``OrderSubmitted`` logs. Encrypted vaults do not expose intent payloads.
 
 ---
 

@@ -1,6 +1,18 @@
 """Return-series statistics, SASR ranking, and skfolio-backed measures."""
 
-from orion_finance_sdk_py.stats import covariance, factors, measures, panels, portfolio
+from orion_finance_sdk_py.stats import (
+    benchmark,
+    covariance,
+    factors,
+    measures,
+    panels,
+    portfolio,
+)
+from orion_finance_sdk_py.stats.benchmark import (
+    active_returns,
+    benchmark_relative,
+    compare_to_benchmark,
+)
 from orion_finance_sdk_py.stats.factors import PCAResult, pca
 from orion_finance_sdk_py.stats.measures import product_scoreboard, summary
 from orion_finance_sdk_py.stats.panels import (
@@ -37,7 +49,11 @@ __all__ = [
     "PortfolioEstimator",
     "RankingMetrics",
     "ReturnSeries",
+    "active_returns",
+    "benchmark",
+    "benchmark_relative",
     "chronological_split",
+    "compare_to_benchmark",
     "covariance",
     "daily_rfr",
     "expanding_sasr",

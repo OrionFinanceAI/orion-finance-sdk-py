@@ -1,4 +1,4 @@
-"""LP deposit/redeem event helpers (receipt parsing + optional log filters)."""
+"""LP deposit/redeem and transparent OrderSubmitted event helpers."""
 
 from __future__ import annotations
 
@@ -17,6 +17,8 @@ _LP_EVENT_NAMES = (
     "RedeemRequestCancelled",
 )
 
+_ORDER_SUBMITTED_EVENT = "OrderSubmitted"
+
 
 def _vault_event_abis() -> list[dict[str, Any]]:
     """Return OrionVault ABI entries for LP queue events."""
@@ -25,6 +27,16 @@ def _vault_event_abis() -> list[dict[str, Any]]:
         item
         for item in abi
         if item.get("type") == "event" and item.get("name") in _LP_EVENT_NAMES
+    ]
+
+
+def _order_submitted_abis() -> list[dict[str, Any]]:
+    """Return OrionTransparentVault ABI entry for ``OrderSubmitted``."""
+    abi = load_contract_abi("OrionTransparentVault")
+    return [
+        item
+        for item in abi
+        if item.get("type") == "event" and item.get("name") == _ORDER_SUBMITTED_EVENT
     ]
 
 
@@ -103,6 +115,60 @@ def get_lp_events(
                     "logIndex": parsed.get("logIndex"),
                 }
             )
+    results.sort(
+        key=lambda item: (
+            item.get("blockNumber") or 0,
+            item.get("logIndex") or 0,
+        )
+    )
+    return results
+
+
+def get_order_submitted_events(
+    w3: Web3,
+    vault_address: str,
+    *,
+    from_block: int | str = 0,
+    to_block: int | str = "latest",
+) -> list[dict[str, Any]]:
+    """Fetch historical ``OrderSubmitted`` events for a transparent vault.
+
+    Each result includes raw scaled ``weights`` (divide by
+    ``10 ** OrionConfig.strategist_intent_decimals`` for fractions).
+
+    Returns:
+        Sorted list of dicts with ``blockNumber``, ``transactionHash``,
+        ``strategist``, ``assets``, ``weights``, ``logIndex``, ``address``.
+    """
+    vault = checksum_address(vault_address)
+    abis = _order_submitted_abis()
+    if not abis:
+        raise ValueError(
+            "OrderSubmitted event not found in OrionTransparentVault ABI"
+        )
+    contract = w3.eth.contract(address=vault, abi=abis)
+    event = contract.events.OrderSubmitted
+    results: list[dict[str, Any]] = []
+    for parsed in event.get_logs(from_block=from_block, to_block=to_block):
+        args = dict(parsed["args"])
+        assets = [checksum_address(a) for a in args.get("assets", [])]
+        weights = [int(w) for w in args.get("weights", [])]
+        results.append(
+            {
+                "event": parsed["event"],
+                "strategist": checksum_address(args["strategist"]),
+                "assets": assets,
+                "weights": weights,
+                "address": checksum_address(parsed["address"]),
+                "blockNumber": parsed.get("blockNumber"),
+                "transactionHash": (
+                    parsed["transactionHash"].hex()
+                    if parsed.get("transactionHash") is not None
+                    else None
+                ),
+                "logIndex": parsed.get("logIndex"),
+            }
+        )
     results.sort(
         key=lambda item: (
             item.get("blockNumber") or 0,
