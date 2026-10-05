@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from decimal import ROUND_DOWN, Decimal
+from typing import Literal
 
 from web3 import Web3
 from web3.exceptions import ContractLogicError
@@ -14,9 +15,12 @@ from orion_finance_sdk_py.contracts import (
     PriceAdapterRegistry,
     load_contract_abi,
 )
+from orion_finance_sdk_py.costs.state_override import probe_erc20_overrides
 from orion_finance_sdk_py.costs.types import ExecutionCost
 from orion_finance_sdk_py.orion_config_env import MAINNET_CHAIN_ID
 from orion_finance_sdk_py.utils import checksum_address, to_base_units
+
+Side = Literal["buy", "sell"]
 
 
 def looks_like_address(symbol: str) -> bool:
@@ -85,18 +89,32 @@ def fair_underlying_amount(
     return (int(shares) * int(price) * underlying_scale) // (price_scale * token_scale)
 
 
-def cost_pct(execution: int, fair: int) -> float:
-    """Positive means worse than oracle (buy pays more underlying than mark)."""
+def cost_pct(execution: int, fair: int, *, side: Side = "buy") -> float:
+    """Positive means worse than oracle for the given ``side``."""
     if fair <= 0:
         raise ValueError("fair_underlying must be positive to compute cost_pct")
-    return (execution - fair) / fair
+    if side == "buy":
+        return (execution - fair) / fair
+    if side == "sell":
+        return (fair - execution) / fair
+    raise ValueError("side must be 'buy' or 'sell'")
+
+
+def _normalize_side(side: str) -> Side:
+    s = str(side).strip().lower()
+    if s == "buy":
+        return "buy"
+    if s == "sell":
+        return "sell"
+    raise ValueError("side must be 'buy' or 'sell'")
 
 
 class ExecutionCostEstimator:
     """Manager-facing execution cost estimator.
 
-    Compares mainnet ``previewBuy`` quotes to price-adapter oracle fair value.
-    Requires ``CHAIN=mainnet``, ``MAINNET_RPC_URL``, and
+    Compares mainnet adapter quotes to price-adapter oracle fair value.
+    Buys use ``previewBuy``; sells simulate ``sell`` with ERC-20 state
+    overrides. Requires ``CHAIN=mainnet``, ``MAINNET_RPC_URL``, and
     ``MAINNET_ORION_CONFIG_ADDRESS``.
     """
 
@@ -113,17 +131,19 @@ class ExecutionCostEstimator:
         symbol: str,
         size: float,
         *,
+        side: Side | str = "buy",
         netting_eta: float = 0.0,
         block: int | None = None,
         shares: int | None = None,
     ) -> ExecutionCost:
-        """Estimate buy-side execution cost in human asset units.
+        """Estimate execution cost in human asset units.
 
         Args:
             symbol: Whitelisted ticker or mainnet asset address.
-            size: Positive human units of the risk asset to buy. Ignored
-                when ``shares`` is set. The protocol **underlying**
-                (numeraire) is a no-op: ``cost_pct`` is always ``0``.
+            size: Positive human units of the risk asset. Ignored when
+                ``shares`` is set. The protocol **underlying** (numeraire)
+                is a no-op: ``cost_pct`` is always ``0``.
+            side: ``"buy"`` (default) or ``"sell"``.
             netting_eta: Fraction of the nominal size that is internally
                 netted. The adapter quote uses ``(1 - eta) * size``;
                 ``cost_pct`` is that of the residual swap, not scaled by
@@ -132,6 +152,7 @@ class ExecutionCostEstimator:
             shares: Optional raw ERC-20 units for the residual swap;
                 overrides ``swap_size`` when provided.
         """
+        side_n = _normalize_side(side)
         size_f = float(size)
         if not math.isfinite(size_f) or size_f <= 0:
             raise ValueError("size must be a positive finite number")
@@ -157,6 +178,7 @@ class ExecutionCostEstimator:
                 price=0,
                 execution_adapter="",
                 block=block,
+                side=side_n,
             )
 
         if shares is None:
@@ -189,10 +211,11 @@ class ExecutionCostEstimator:
                 price=0,
                 execution_adapter="",
                 block=block,
+                side=side_n,
             )
 
         underlying = checksum_address(self.config.underlying_asset)
-        # Numeraire: buying underlying with underlying is a no-op onchain.
+        # Numeraire: trading underlying for underlying is a no-op onchain.
         if asset.lower() == underlying.lower():
             price = int(self.registry.get_price(asset, block=block))
             return ExecutionCost(
@@ -208,6 +231,7 @@ class ExecutionCostEstimator:
                 price=price,
                 execution_adapter="",
                 block=block,
+                side=side_n,
             )
 
         adapter = self.lo.execution_adapter_of(asset, block=block)
@@ -225,7 +249,11 @@ class ExecutionCostEstimator:
                 f"Oracle fair value is zero for {label} ({asset}); cannot compute cost."
             )
 
-        execution = self._preview_buy(adapter, asset, shares_i, block=block)
+        if side_n == "buy":
+            execution = self._preview_buy(adapter, asset, shares_i, block=block)
+        else:
+            execution = self._simulate_sell(adapter, asset, shares_i, block=block)
+
         return ExecutionCost(
             symbol=label,
             asset=asset,
@@ -233,12 +261,13 @@ class ExecutionCostEstimator:
             netting_eta=float(netting_eta),
             swap_size=float(swap_size),
             shares=shares_i,
-            cost_pct=cost_pct(int(execution), int(fair)),
+            cost_pct=cost_pct(int(execution), int(fair), side=side_n),
             execution_underlying=int(execution),
             fair_underlying=int(fair),
             price=price,
             execution_adapter=adapter,
             block=block,
+            side=side_n,
         )
 
     def _adapter_contract(self, adapter: str):
@@ -266,6 +295,47 @@ class ExecutionCostEstimator:
                 f"previewBuy reverted for asset {asset} on adapter {adapter}: {exc}"
             ) from exc
 
+    def _simulate_sell(
+        self,
+        adapter: str,
+        asset: str,
+        shares: int,
+        *,
+        block: int | None,
+    ) -> int:
+        """eth_call ``sell`` with ERC-20 balance/allowance state overrides.
+
+        Live sells are invoked by the LiquidityOrchestrator, so the call uses
+        ``from=LO`` and overrides LO's asset balance and allowance to the
+        adapter.
+        """
+        lo_addr = checksum_address(self.config.liquidity_orchestrator)
+        adapter_c = checksum_address(adapter)
+        asset_c = checksum_address(asset)
+        overrides = probe_erc20_overrides(
+            self.w3,
+            asset_c,
+            holder=lo_addr,
+            spender=adapter_c,
+            amount=int(shares),
+            block=block,
+        )
+        contract = self._adapter_contract(adapter_c)
+        fn = contract.functions.sell(asset_c, int(shares))
+        try:
+            return int(
+                fn.call(
+                    {"from": lo_addr},
+                    block_identifier=block if block is not None else "latest",
+                    state_override=overrides,
+                )
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"sell simulation reverted for asset {asset_c} on adapter "
+                f"{adapter_c}: {exc}"
+            ) from exc
+
 
 _DEFAULT_ESTIMATOR: ExecutionCostEstimator | None = None
 
@@ -274,6 +344,7 @@ def get_cost(
     symbol: str,
     size: float,
     *,
+    side: Side | str = "buy",
     netting_eta: float = 0.0,
     block: int | None = None,
     shares: int | None = None,
@@ -285,6 +356,7 @@ def get_cost(
     return _DEFAULT_ESTIMATOR.get_cost(
         symbol,
         size,
+        side=side,
         netting_eta=netting_eta,
         block=block,
         shares=shares,

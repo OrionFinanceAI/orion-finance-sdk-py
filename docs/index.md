@@ -102,7 +102,7 @@ orion --help
 Or install from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=2.2.4"
+pip install "orion-finance-sdk-py>=2.3.0"
 ```
 
 Running `orion` with no arguments opens the {ref}`interactive console <orion-console>`.
@@ -549,7 +549,10 @@ Transparent-only: ``get_intent(block=...)`` and ``intent_history`` use ``OrderSu
 
 ## Estimate execution cost
 
-Compare mainnet **``previewBuy``** quotes to **price-adapter** oracle fair value. The resulting ``cost_pct`` is the all-in buy-side execution cost of a rebalance (LP fees, slippage, and other venue effects on the Orion path).
+Compare mainnet adapter quotes to **price-adapter** oracle fair value. The resulting ``cost_pct`` is the all-in execution cost of a residual rebalance swap (LP fees, slippage, and other venue effects on the Orion path).
+
+- **Buy** uses onchain ``previewBuy``.
+- **Sell** has no ``previewSell`` on ``IExecutionAdapter``; the SDK simulates ``sell`` with an ``eth_call`` plus ERC-20 balance/allowance **state overrides** (msg.sender = LiquidityOrchestrator). Prefer Alchemy/Infura-style RPCs that support ``stateOverride``. Exotic token storage layouts may fail until the protocol adds ``previewSell``.
 
 Requires `CHAIN=mainnet`, `MAINNET_RPC_URL`, and `MAINNET_ORION_CONFIG_ADDRESS`.
 
@@ -558,16 +561,18 @@ from orion_finance_sdk_py import ExecutionCostEstimator
 
 est = ExecutionCostEstimator()
 buy = est.get_cost("WETH", 1.5)
-netted = est.get_cost("WETH", 1.5, netting_eta=0.3)
-# buy.cost_pct, buy.execution_underlying, buy.fair_underlying
+sell = est.get_cost("WETH", 1.5, side="sell")
+netted = est.get_cost("WETH", 1.5, side="sell", netting_eta=0.3)
+# buy.cost_pct, sell.cost_pct, *.execution_underlying, *.fair_underlying
 ```
 
 - **symbol:** whitelisted ticker (`WETH`, `WBTC`, …) or **mainnet** token address. Not a Sepolia twin — see {ref}`testnet-sandbox`.
-- **size:** positive human units of the risk asset to buy. The protocol **underlying** (numeraire) is a no-op with ``cost_pct = 0``.
+- **size:** positive human units of the risk asset. The protocol **underlying** (numeraire) is a no-op with ``cost_pct = 0``.
+- **side:** ``"buy"`` (default) or ``"sell"``.
 - **netting_eta:** shrinks the swap to `(1 - η) * size`, then runs the full non-linear cost model on that size (do not scale ``cost_pct`` by ``(1 - η)``).
 - **block:** optional historical block for eth_call / getPrice.
 
-Positive ``cost_pct`` means worse than oracle (buy pays more underlying than mark). Coverage is the onchain {ref}`investment universe <investment-universe>` on mainnet.
+Positive ``cost_pct`` means worse than oracle: buys pay more underlying than mark; sells receive less. Coverage is the onchain {ref}`investment universe <investment-universe>` on mainnet.
 
 ---
 
