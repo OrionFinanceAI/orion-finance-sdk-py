@@ -102,7 +102,7 @@ orion --help
 Or install from PyPI:
 
 ```bash
-pip install "orion-finance-sdk-py>=2.2.4"
+pip install "orion-finance-sdk-py>=2.3.0"
 ```
 
 Running `orion` with no arguments opens the {ref}`interactive console <orion-console>`.
@@ -486,7 +486,6 @@ table = measures.product_scoreboard(rs, rfr=rfr)
 cov = covariance.sample(rs)
 ```
 
-Vault share-price panels use `ReturnSeries.from_share_price_histories`.
 
 **Hygiene.** Ranking, Sharpe, covariance, PCA, and MeanRisk use only **contiguous one-calendar-day** observations: a gap longer than one day drops the gap-boundary return so a multi-day jump is not treated as a daily return. Path stats (total return, CAGR, max drawdown, normalized wealth) use the price path **including** gaps. Missing prices are not forward-filled.
 
@@ -504,13 +503,56 @@ mv = portfolio.min_variance(train)
 # mv.weights  — labeled Series
 ```
 
+(benchmark-intent-analytics)=
+
+## Benchmark and intent history
+
+Compare a vault column to a benchmark column with ``compare_to_benchmark`` / ``benchmark_relative`` (IR, Jensen alpha, beta, capture ratios). Reconstruct transparent strategist intents from ``OrderSubmitted`` logs.
+
+```python
+from datetime import datetime, timedelta, timezone
+
+from orion_finance_sdk_py import OrionTransparentVault, ReturnSeries
+from orion_finance_sdk_py.stats import compare_to_benchmark, from_price_history, from_share_price_histories, measures, rfr_decimal
+from orion_finance_sdk_py import OrionConfig, PriceAdapterRegistry
+
+config = OrionConfig()
+registry = PriceAdapterRegistry()
+vault = OrionTransparentVault("0xa52426E3922db2Bd9411cB05e6e2e874453064Ce")
+end = datetime.now(timezone.utc)
+start = end - timedelta(days=90)
+
+names = dict(zip(config.whitelisted_assets, config.whitelisted_asset_names))
+wbtc = next(a for a, n in names.items() if "WBTC" in n.upper())
+
+vault_px = from_share_price_histories({vault.symbol: vault.share_price_history(start, end)})
+asset_px = from_price_history(
+    registry.price_history(start=start, end=end, assets=[wbtc]),
+    decimals=registry.price_adapter_decimals,
+    names=names,
+)
+prices = vault_px.join(asset_px, how="outer").sort_index()
+rs = ReturnSeries.from_prices(prices)
+rfr = rfr_decimal(config.risk_free_rate)
+table = measures.summary(rs, rfr=rfr)
+relative = compare_to_benchmark(rs, vault.symbol, names[wbtc], rfr=rfr)
+
+intents = vault.intent_history(start=start, end=end)
+# also: vault.get_intent(block=...)
+```
+
+Transparent-only: ``get_intent(block=...)`` and ``intent_history`` use ``OrderSubmitted`` logs. Encrypted vaults do not expose intent payloads.
+
 ---
 
 (execution-cost)=
 
 ## Estimate execution cost
 
-Compare mainnet **``previewBuy``** quotes to **price-adapter** oracle fair value. The resulting ``cost_pct`` is the all-in buy-side execution cost of a rebalance (LP fees, slippage, and other venue effects on the Orion path).
+Compare mainnet adapter quotes to **price-adapter** oracle fair value. The resulting ``cost_pct`` is the all-in execution cost of a residual rebalance swap (LP fees, slippage, and other venue effects on the Orion path).
+
+- **Buy** uses onchain ``previewBuy``.
+- **Sell** has no ``previewSell`` on ``IExecutionAdapter``; the SDK simulates ``sell`` with an ``eth_call`` plus ERC-20 balance/allowance **state overrides** (msg.sender = LiquidityOrchestrator). Prefer Alchemy/Infura-style RPCs that support ``stateOverride``. Exotic token storage layouts may fail until the protocol adds ``previewSell``.
 
 Requires `CHAIN=mainnet`, `MAINNET_RPC_URL`, and `MAINNET_ORION_CONFIG_ADDRESS`.
 
@@ -519,16 +561,18 @@ from orion_finance_sdk_py import ExecutionCostEstimator
 
 est = ExecutionCostEstimator()
 buy = est.get_cost("WETH", 1.5)
-netted = est.get_cost("WETH", 1.5, netting_eta=0.3)
-# buy.cost_pct, buy.execution_underlying, buy.fair_underlying
+sell = est.get_cost("WETH", 1.5, side="sell")
+netted = est.get_cost("WETH", 1.5, side="sell", netting_eta=0.3)
+# buy.cost_pct, sell.cost_pct, *.execution_underlying, *.fair_underlying
 ```
 
 - **symbol:** whitelisted ticker (`WETH`, `WBTC`, …) or **mainnet** token address. Not a Sepolia twin — see {ref}`testnet-sandbox`.
-- **size:** positive human units of the risk asset to buy. The protocol **underlying** (numeraire) is a no-op with ``cost_pct = 0``.
+- **size:** positive human units of the risk asset. The protocol **underlying** (numeraire) is a no-op with ``cost_pct = 0``.
+- **side:** ``"buy"`` (default) or ``"sell"``.
 - **netting_eta:** shrinks the swap to `(1 - η) * size`, then runs the full non-linear cost model on that size (do not scale ``cost_pct`` by ``(1 - η)``).
 - **block:** optional historical block for eth_call / getPrice.
 
-Positive ``cost_pct`` means worse than oracle (buy pays more underlying than mark). Coverage is the onchain {ref}`investment universe <investment-universe>` on mainnet.
+Positive ``cost_pct`` means worse than oracle: buys pay more underlying than mark; sells receive less. Coverage is the onchain {ref}`investment universe <investment-universe>` on mainnet.
 
 ---
 

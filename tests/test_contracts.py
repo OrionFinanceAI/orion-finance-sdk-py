@@ -523,13 +523,16 @@ class TestOrionConfig:
         """Mainnet RPC with no CHAIN_ID uses MAINNET_ORION_CONFIG_ADDRESS."""
         mainnet_config = "0x1111111111111111111111111111111111111111"
         mock_w3.eth.chain_id = 1
-        with patch.dict(
-            os.environ,
-            {
-                "MAINNET_RPC_URL": "http://localhost",
-                "MAINNET_ORION_CONFIG_ADDRESS": mainnet_config,
-            },
-            clear=True,
+        with (
+            patch("orion_finance_sdk_py.contracts.load_dotenv"),
+            patch.dict(
+                os.environ,
+                {
+                    "MAINNET_RPC_URL": "http://localhost",
+                    "MAINNET_ORION_CONFIG_ADDRESS": mainnet_config,
+                },
+                clear=True,
+            ),
         ):
             config = OrionConfig()
             assert config.chain_id == 1
@@ -1631,6 +1634,100 @@ class TestOrionVaults:
 
         vault.contract.functions.getIntent().call.return_value = ([], [])
         assert vault.get_intent() == {}
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_get_intent_at_block(self, MockConfig):
+        """get_intent forwards block_identifier to eth_call."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        MockConfig.return_value.strategist_intent_decimals = 2
+        vault = OrionTransparentVault()
+        bound = vault.contract.functions.getIntent.return_value
+        bound.call.return_value = (["0xToken"], [50])
+
+        intent = vault.get_intent(block=77)
+        assert intent == {"0xToken": 0.5}
+        bound.call.assert_called()
+        kwargs = bound.call.call_args.kwargs
+        assert kwargs.get("block_identifier") == 77
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_intent_history_from_events(self, MockConfig, mock_w3):
+        """intent_history normalizes OrderSubmitted weights and attaches timestamps."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        MockConfig.return_value.strategist_intent_decimals = 2
+        vault = OrionTransparentVault()
+
+        with (
+            patch(
+                "orion_finance_sdk_py.events.get_order_submitted_events"
+            ) as mock_events,
+            patch("orion_finance_sdk_py.contracts.get_block") as mock_get_block,
+        ):
+            mock_events.return_value = [
+                {
+                    "blockNumber": 100,
+                    "transactionHash": "0xtx",
+                    "assets": ["0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],
+                    "weights": [80],
+                }
+            ]
+            mock_get_block.return_value = {"timestamp": 1_700_000_000}
+            hist = vault.intent_history(start=50, end=200)
+
+        assert len(hist) == 1
+        assert hist[0]["block"] == 100
+        assert hist[0]["timestamp"] == 1_700_000_000
+        assert hist[0]["tx"] == "0xtx"
+        assert list(hist[0]["intent"].values())[0] == pytest.approx(0.8)
+        mock_events.assert_called_once()
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_intent_history_timestamp_start_excludes_earlier_block(
+        self, MockConfig, mock_w3
+    ):
+        """Datetime/unix starts drop events before the bound; block starts keep them."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        MockConfig.return_value.strategist_intent_decimals = 2
+        vault = OrionTransparentVault()
+        asset = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        events = [
+            {
+                "blockNumber": 90,
+                "transactionHash": "0xearly",
+                "assets": [asset],
+                "weights": [50],
+            },
+            {
+                "blockNumber": 110,
+                "transactionHash": "0xlate",
+                "assets": [asset],
+                "weights": [80],
+            },
+        ]
+        blocks = {
+            90: {"timestamp": 1_700_000_000},
+            110: {"timestamp": 1_700_000_100},
+        }
+
+        with (
+            patch(
+                "orion_finance_sdk_py.events.get_order_submitted_events",
+                return_value=events,
+            ),
+            patch(
+                "orion_finance_sdk_py.contracts.get_block",
+                side_effect=lambda _w3, n: blocks[int(n)],
+            ),
+            patch.object(vault, "_resolve_block", return_value=90),
+        ):
+            by_ts = vault.intent_history(start=1_700_000_050, end=200)
+            by_block = vault.intent_history(start=90, end=200)
+
+        assert [row["tx"] for row in by_ts] == ["0xlate"]
+        assert [row["tx"] for row in by_block] == ["0xearly", "0xlate"]
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")

@@ -2026,14 +2026,19 @@ class OrionTransparentVault(OrionVault):
         """
         super().__init__("OrionTransparentVault", contract_address=contract_address)
 
-    def get_intent(self) -> dict[str, float]:
-        """Fetch the current strategist intent as fractional weights (sum ≈ 1).
+    def get_intent(self, block: int | None = None) -> dict[str, float]:
+        """Fetch the strategist intent as fractional weights (sum ≈ 1).
 
         onchain weights are scaled by ``OrionConfig.strategist_intent_decimals``.
         Returns an empty dict when no intent is set. Compare with
         ``get_portfolio_pct_tvl()`` to see expected rebalancing.
+
+        Args:
+            block: Optional block number for a historical ``eth_call``.
         """
-        tokens, weights = _call_view(self.contract.functions.getIntent())
+        tokens, weights = _call_view(
+            self.contract.functions.getIntent(), block_identifier=block
+        )
         if not tokens:
             return {}
         config = OrionConfig()
@@ -2042,6 +2047,81 @@ class OrionTransparentVault(OrionVault):
             checksum_address(token): int(weight) / scale
             for token, weight in zip(tokens, weights, strict=True)
         }
+
+    def intent_history(
+        self,
+        start: datetime | int,
+        end: datetime | int | None = None,
+    ) -> list[dict]:
+        """Reconstruct transparent intent submits from ``OrderSubmitted`` logs.
+
+        Sparse event series (one row per submit). Forward-fill onto a daily
+        index in your analysis notebook for IC / exposure studies.
+
+        Args:
+            start: Start as ``datetime``, unix timestamp, or block number.
+                Datetime / unix starts exclude events whose block timestamp is
+                earlier than ``start`` (``_resolve_block`` may select an earlier
+                block). Block-number starts are inclusive of that block.
+            end: End bound (same types as ``start``). Defaults to latest block.
+
+        Returns:
+            List of ``{"timestamp", "block", "tx", "intent"}`` dicts where
+            ``intent`` maps checksummed token address → fractional weight.
+        """
+        from .events import get_order_submitted_events
+
+        start_block = self._resolve_block(start)
+        end_block = (
+            call_with_rpc_retry(lambda: self.w3.eth.block_number)
+            if end is None
+            else self._resolve_block(end)
+        )
+        if end_block < start_block:
+            raise ValueError(
+                f"end block ({end_block}) is before start block ({start_block})"
+            )
+
+        min_ts: int | None = None
+        if isinstance(start, datetime):
+            aware = (
+                start
+                if start.tzinfo is not None
+                else start.replace(tzinfo=timezone.utc)
+            )
+            min_ts = int(aware.timestamp())
+        elif isinstance(start, int) and start >= _TIMESTAMP_THRESHOLD:
+            min_ts = start
+
+        config = OrionConfig()
+        scale = 10**config.strategist_intent_decimals
+        events = get_order_submitted_events(
+            self.w3,
+            self.contract_address,
+            from_block=start_block,
+            to_block=end_block,
+        )
+        result: list[dict] = []
+        for ev in events:
+            block = int(ev["blockNumber"])
+            ts = int(get_block(self.w3, block)["timestamp"])
+            if min_ts is not None and ts < min_ts:
+                continue
+            assets = ev["assets"]
+            weights = ev["weights"]
+            intent = {
+                checksum_address(token): int(weight) / scale
+                for token, weight in zip(assets, weights, strict=True)
+            }
+            result.append(
+                {
+                    "timestamp": ts,
+                    "block": block,
+                    "tx": ev.get("transactionHash"),
+                    "intent": intent,
+                }
+            )
+        return result
 
     def submit_order_intent(
         self,

@@ -1,8 +1,12 @@
-"""Tests for LP queue event helpers."""
+"""Tests for LP queue and OrderSubmitted event helpers."""
 
 from unittest.mock import MagicMock, patch
 
-from orion_finance_sdk_py.events import get_lp_events, parse_lp_events_from_receipt
+from orion_finance_sdk_py.events import (
+    get_lp_events,
+    get_order_submitted_events,
+    parse_lp_events_from_receipt,
+)
 
 VAULT = "0x1111111111111111111111111111111111111111"
 OTHER = "0x2222222222222222222222222222222222222222"
@@ -223,3 +227,75 @@ def test_get_lp_events_custom_names_and_null_tx_hash(mock_abi):
     results = get_lp_events(w3, VAULT, event_names=("DepositRequest",))
     assert len(results) == 1
     assert results[0]["transactionHash"] is None
+
+
+_ORDER_ABI = [
+    {
+        "type": "event",
+        "name": "OrderSubmitted",
+        "inputs": [
+            {"name": "strategist", "type": "address", "indexed": True},
+            {"name": "assets", "type": "address[]", "indexed": False},
+            {"name": "weights", "type": "uint256[]", "indexed": False},
+        ],
+        "anonymous": False,
+    },
+]
+
+
+@patch("orion_finance_sdk_py.events.load_contract_abi", return_value=_ORDER_ABI)
+def test_get_order_submitted_events_decodes_and_sorts(mock_abi):
+    w3 = MagicMock()
+    contract = MagicMock()
+    w3.eth.contract.return_value = contract
+    tx_hash = MagicMock()
+    tx_hash.hex.return_value = "0xabc"
+
+    later = {
+        "event": "OrderSubmitted",
+        "args": {
+            "strategist": "0x3333333333333333333333333333333333333333",
+            "assets": ["0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],
+            "weights": [75],
+        },
+        "address": VAULT,
+        "blockNumber": 30,
+        "transactionHash": tx_hash,
+        "logIndex": 1,
+    }
+    earlier = {
+        "event": "OrderSubmitted",
+        "args": {
+            "strategist": "0x3333333333333333333333333333333333333333",
+            "assets": [
+                "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            ],
+            "weights": [50, 50],
+        },
+        "address": VAULT,
+        "blockNumber": 10,
+        "transactionHash": tx_hash,
+        "logIndex": 0,
+    }
+    event = MagicMock()
+    event.get_logs.return_value = [later, earlier]
+    contract.events.OrderSubmitted = event
+
+    results = get_order_submitted_events(w3, VAULT, from_block=1, to_block=40)
+    assert len(results) == 2
+    assert results[0]["blockNumber"] == 10
+    assert results[0]["weights"] == [50, 50]
+    assert results[1]["weights"] == [75]
+    assert results[0]["transactionHash"] == "0xabc"
+    event.get_logs.assert_called_once_with(from_block=1, to_block=40)
+
+
+@patch("orion_finance_sdk_py.events.load_contract_abi", return_value=[])
+def test_get_order_submitted_events_requires_abi(mock_abi):
+    w3 = MagicMock()
+    try:
+        get_order_submitted_events(w3, VAULT)
+        raise AssertionError("expected ValueError")
+    except ValueError as exc:
+        assert "OrderSubmitted" in str(exc)
