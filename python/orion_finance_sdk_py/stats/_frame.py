@@ -34,7 +34,8 @@ def gap_boundary_mask(index: pd.Index) -> np.ndarray[Any, np.dtype[np.bool_]]:
     mask = np.zeros(n, dtype=bool)
     if n == 0:
         return mask
-    days = pd.DatetimeIndex(pd.to_datetime(index, utc=True)).asi8 // 86_400_000_000_000
+    di = pd.DatetimeIndex(pd.to_datetime(index, utc=True)).as_unit("ns")
+    days = di.asi8 // 86_400_000_000_000
     mask[1:] = np.diff(days) > 1
     return mask
 
