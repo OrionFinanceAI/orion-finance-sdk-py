@@ -17,11 +17,11 @@ description = "A Python SDK for interacting with Orion Finance smart contracts"
 dependencies = [
     "python-dotenv>=1.1.0,<2.0.0",
     "numpy>=1.21.0,<3.0.0",
-    "pandas>=2.0.0,<3.0.0",
+    "pandas>=2.0.0,<4.0.0",
     "skfolio>=1.0.0,<2.0.0",
     "typer>=0.16.0,<1.0.0",
     "rich>=13.0.0,<16.0.0",
-    "web3>=7.12.0,<8.0.0",
+    "web3>=7.12.0,<9.0.0",
     "questionary>=2.0.0,<3.0.0",
     "pyhpke>=0.6.0,<1.0.0",
 ]
