@@ -2060,6 +2060,9 @@ class OrionTransparentVault(OrionVault):
 
         Args:
             start: Start as ``datetime``, unix timestamp, or block number.
+                Datetime / unix starts exclude events whose block timestamp is
+                earlier than ``start`` (``_resolve_block`` may select an earlier
+                block). Block-number starts are inclusive of that block.
             end: End bound (same types as ``start``). Defaults to latest block.
 
         Returns:
@@ -2079,6 +2082,17 @@ class OrionTransparentVault(OrionVault):
                 f"end block ({end_block}) is before start block ({start_block})"
             )
 
+        min_ts: int | None = None
+        if isinstance(start, datetime):
+            aware = (
+                start
+                if start.tzinfo is not None
+                else start.replace(tzinfo=timezone.utc)
+            )
+            min_ts = int(aware.timestamp())
+        elif isinstance(start, int) and start >= _TIMESTAMP_THRESHOLD:
+            min_ts = start
+
         config = OrionConfig()
         scale = 10**config.strategist_intent_decimals
         events = get_order_submitted_events(
@@ -2091,6 +2105,8 @@ class OrionTransparentVault(OrionVault):
         for ev in events:
             block = int(ev["blockNumber"])
             ts = int(get_block(self.w3, block)["timestamp"])
+            if min_ts is not None and ts < min_ts:
+                continue
             assets = ev["assets"]
             weights = ev["weights"]
             intent = {

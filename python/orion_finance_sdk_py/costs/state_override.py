@@ -478,6 +478,8 @@ def probe_erc20_overrides(
             slots=balance_slots,
             layout=layout,  # type: ignore[arg-type]
         )
+        if bal_slot is None:
+            continue
         allow_slot = _find_allowance_slot(
             w3,
             token_c,
@@ -488,7 +490,7 @@ def probe_erc20_overrides(
             slots=balance_slots,
             layout=layout,  # type: ignore[arg-type]
         )
-        if bal_slot is None or allow_slot is None:
+        if allow_slot is None:
             continue
         overrides = build_erc20_state_override(
             token_c,

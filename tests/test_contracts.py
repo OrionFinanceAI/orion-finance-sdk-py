@@ -1685,6 +1685,52 @@ class TestOrionVaults:
 
     @patch("orion_finance_sdk_py.contracts.OrionConfig")
     @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
+    def test_intent_history_timestamp_start_excludes_earlier_block(
+        self, MockConfig, mock_w3
+    ):
+        """Datetime/unix starts drop events before the bound; block starts keep them."""
+        MockConfig.return_value.is_orion_vault.return_value = True
+        MockConfig.return_value.strategist_intent_decimals = 2
+        vault = OrionTransparentVault()
+        asset = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        events = [
+            {
+                "blockNumber": 90,
+                "transactionHash": "0xearly",
+                "assets": [asset],
+                "weights": [50],
+            },
+            {
+                "blockNumber": 110,
+                "transactionHash": "0xlate",
+                "assets": [asset],
+                "weights": [80],
+            },
+        ]
+        blocks = {
+            90: {"timestamp": 1_700_000_000},
+            110: {"timestamp": 1_700_000_100},
+        }
+
+        with (
+            patch(
+                "orion_finance_sdk_py.events.get_order_submitted_events",
+                return_value=events,
+            ),
+            patch(
+                "orion_finance_sdk_py.contracts.get_block",
+                side_effect=lambda _w3, n: blocks[int(n)],
+            ),
+            patch.object(vault, "_resolve_block", return_value=90),
+        ):
+            by_ts = vault.intent_history(start=1_700_000_050, end=200)
+            by_block = vault.intent_history(start=90, end=200)
+
+        assert [row["tx"] for row in by_ts] == ["0xlate"]
+        assert [row["tx"] for row in by_block] == ["0xearly", "0xlate"]
+
+    @patch("orion_finance_sdk_py.contracts.OrionConfig")
+    @pytest.mark.usefixtures("mock_w3", "mock_load_abi", "mock_env")
     def test_orion_vault_v2_features(self, MockConfig, mock_w3):
         """Test v2.0.0 vault features: async operations and new getters."""
         # Setup config
