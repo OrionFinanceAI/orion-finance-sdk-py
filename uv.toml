@@ -3,4 +3,5 @@
 # Override for one shot: UV_NO_CONFIG=1 uv sync  OR  uv sync --no-config
 # https://docs.astral.sh/uv/reference/settings/#exclude-newer
 exclude-newer = "7 days"
-exclude-newer-package = { skfolio = false }
+# certifi: allow CA-bundle security bumps through the cooldown (eMudhra / emSign incident)
+exclude-newer-package = { skfolio = false, certifi = false }

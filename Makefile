@@ -1,6 +1,7 @@
 .PHONY: uv-download
 uv-download:
 	@command -v uv >/dev/null 2>&1 || curl -LsSf https://astral.sh/uv/install.sh | sh
+	@uv self update >/dev/null 2>&1 || true
 
 .PHONY: venv
 venv:

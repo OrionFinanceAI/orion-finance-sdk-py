@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextvars
 import importlib.metadata
 import os
-from collections.abc import Iterator, Sequence
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -130,7 +130,7 @@ def progress_step(message: str) -> None:
 
 
 @contextmanager
-def operation_progress(title: str) -> Iterator[OperationProgress]:
+def operation_progress(title: str) -> Generator[OperationProgress]:
     """Show a live step checklist while a multi-phase CLI operation runs."""
     with OperationProgress(title) as op:
         yield op
@@ -204,7 +204,7 @@ def _receipt_int(tx_result, key: str) -> int | None:
 
 
 @contextmanager
-def rpc_status(message: str) -> Iterator[None]:
+def rpc_status(message: str) -> Generator[None]:
     """Show a spinner while an RPC or onchain operation is in progress."""
     with console.status(message, spinner="dots"):
         yield
