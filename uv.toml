@@ -2,6 +2,11 @@
 # Merged with user config ~/.config/uv/uv.toml; project wins for overlapping keys.
 # Override for one shot: UV_NO_CONFIG=1 uv sync  OR  uv sync --no-config
 # https://docs.astral.sh/uv/reference/settings/#exclude-newer
+override-dependencies = [
+    "filelock>=4.2.1",
+    "virtualenv>=21.14.9",
+]
+
 exclude-newer = "7 days"
 # certifi: allow CA-bundle security bumps through the cooldown (eMudhra / emSign incident)
 exclude-newer-package = { skfolio = false, certifi = false }
