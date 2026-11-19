@@ -5,6 +5,7 @@
 override-dependencies = [
     "filelock>=4.2.1",
     "virtualenv>=21.14.9",
+    "soupsieve>=4.0.0",
 ]
 
 exclude-newer = "7 days"
