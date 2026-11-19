@@ -50,6 +50,7 @@ docs = [
     "sphinx-design>=0.6.0,<1.0.0",
     "sphinx-autodoc-typehints>=3.0.0,<4.0.0",
     "sphinx-llms-txt>=0.7.0",
+    "soupsieve>=4.0.0",
 ]
 
 [project.scripts]
@@ -76,6 +77,19 @@ omit = [
     "*/tests/*",
     "*/test_*.py",
 ]
+
+# Supply-chain settings previously in uv.toml. Keep them here so
+# override-dependencies are not ignored by an adjacent uv.toml.
+# https://docs.astral.sh/uv/reference/settings/#exclude-newer
+[tool.uv]
+override-dependencies = [
+    "filelock>=4.2.1",
+    "virtualenv>=21.14.9",
+    "soupsieve>=4.0.0",
+]
+exclude-newer = "7 days"
+# certifi: allow CA-bundle security bumps through the cooldown (eMudhra / emSign incident)
+exclude-newer-package = { skfolio = false, certifi = false }
 
 [tool.ty]
 # Use project requires-python; check the package and tests
